@@ -521,7 +521,7 @@
                         </li>
 
                         <li>
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('network.routes.static.ipv4') }}" class="nav-link {{ request()->routeIs('network.routes.static.*') ? 'active' : '' }}">
                                 <i class="bi bi-sign-turn-right"></i> Rutas estáticas
                             </a>
                         </li>
