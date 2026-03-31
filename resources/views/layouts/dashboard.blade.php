@@ -394,7 +394,12 @@
             </div>
             <h1 class="brand-title">NuupNet</h1>
         </div>
-
+            <li>
+    <a href="{{ route('network.hostentries') }}" 
+       class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
+        <i class="bi bi-globe2"></i> Nombres de host
+    </a>
+</li>
         <div class="sidebar-body">
 
             <div class="menu-section">
@@ -514,10 +519,10 @@
                             </div>
                         </li>
 
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-globe2"></i> Nombres de host
-                            </a>
+                       <li>
+                                         <a href="{{ route('network.hostentries') }}" class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
+                                                 <i class="bi bi-globe2"></i> Nombres de host
+                                         </a>
                         </li>
 
                         <li>

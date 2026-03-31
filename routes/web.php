@@ -51,4 +51,8 @@ Route::prefix('red')->name('network.')->group(function () {
     Route::post('/rutas/estaticas/ipv6/guardar', [RoutesController::class, 'storeStaticIpv6'])->name('routes.static.ipv6.store');
     Route::get('/estado-conexion', [App\Http\Controllers\RoutesController::class, 'checkConnection'])->name('estado.conexion');
     Route::delete('/rutas/estaticas/ipv6/eliminar', [RoutesController::class, 'destroyStaticIpv6'])->name('routes.static.ipv6.destroy');
+    // Nombres de host
+    Route::get('/nombres-host', [NetworkController::class, 'hostEntries'])->name('hostentries');
+    Route::post('/nombres-host/agregar', [NetworkController::class, 'storeHostEntry'])->name('hostentries.store');
+    Route::delete('/nombres-host/eliminar', [NetworkController::class, 'destroyHostEntry'])->name('hostentries.destroy');
 });
