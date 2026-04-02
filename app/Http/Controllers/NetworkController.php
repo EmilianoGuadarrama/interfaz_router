@@ -288,7 +288,7 @@ public function destroyHostEntry(Request $request)
     //LEDS
      private array $ledNames     = ['green:lan','green:wan','green:wlan','mt76-phy0','orange:wan'];
     private array $disparadores = ['defaulton','netdev','none','phy0assoc','phy0radio','phy0rx','phy0tpt','phy0tx','switch0','timer'];
- 
+
     public function leds()
     {
         $leds = [];
@@ -315,16 +315,16 @@ public function destroyHostEntry(Request $request)
         } catch (\Throwable $e) {
             Log::error('LEDs: ' . $e->getMessage());
         }
-        return view('network.leds_index', compact('leds'));
+        return view('network.leds.leds_index', compact('leds'));
     }
- 
+
     public function createLed()
     {
-        return view('network.leds_form', [
+        return view('network.leds.leds_form', [
             'led' => null, 'ledNames' => $this->ledNames, 'disparadores' => $this->disparadores,
         ]);
     }
- 
+
     public function storeLed(Request $request)
     {
         $request->validate([
@@ -332,11 +332,11 @@ public function destroyHostEntry(Request $request)
             'led_name'   => ['required','string'],
             'disparador' => ['required','string'],
         ]);
- 
+
         try {
             $key     = strtolower(preg_replace('/\s+/', '_', $request->nombre));
             $default = $request->boolean('estado_predeterminado') ? '1' : '0';
- 
+
             $cmds = [
                 "uci set system.led_{$key}=led",
                 "uci set system.led_{$key}.name='{$request->nombre}'",
@@ -354,7 +354,7 @@ public function destroyHostEntry(Request $request)
             }
             $cmds[] = "uci commit system";
             $cmds[] = "/etc/init.d/led restart";
- 
+
             $result = $this->router->execute($cmds);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
@@ -365,7 +365,7 @@ public function destroyHostEntry(Request $request)
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
- 
+
     public function editLed($key)
     {
         $led = null;
@@ -392,11 +392,11 @@ public function destroyHostEntry(Request $request)
         } catch (\Throwable $e) {
             Log::error('editLed: ' . $e->getMessage());
         }
-        return view('network.leds_form', [
+        return view('network.leds.leds_form', [
             'led' => $led, 'ledNames' => $this->ledNames, 'disparadores' => $this->disparadores,
         ]);
     }
- 
+
     public function updateLed(Request $request, $key)
     {
         $request->validate([
@@ -404,7 +404,7 @@ public function destroyHostEntry(Request $request)
             'led_name'   => ['required','string'],
             'disparador' => ['required','string'],
         ]);
- 
+
         try {
             $default = $request->boolean('estado_predeterminado') ? '1' : '0';
             $cmds = [
@@ -423,7 +423,7 @@ public function destroyHostEntry(Request $request)
             }
             $cmds[] = "uci commit system";
             $cmds[] = "/etc/init.d/led restart";
- 
+
             $result = $this->router->execute($cmds);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
@@ -434,7 +434,7 @@ public function destroyHostEntry(Request $request)
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
- 
+
     public function destroyLed($key)
     {
         try {
@@ -452,5 +452,4 @@ public function destroyHostEntry(Request $request)
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
-
 }
