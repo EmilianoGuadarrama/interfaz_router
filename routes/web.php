@@ -57,12 +57,14 @@ Route::prefix('red')->name('network.')->group(function () {
     Route::post('/nombres-host/agregar', [NetworkController::class, 'storeHostEntry'])->name('hostentries.store');
     Route::delete('/nombres-host/eliminar', [NetworkController::class, 'destroyHostEntry'])->name('hostentries.destroy');
 
-    //LEDS
-   Route::get('/sistema/leds',                 [NetworkController::class, 'leds'])->name('leds.index');
-Route::get('/sistema/leds/crear',           [NetworkController::class, 'createLed'])->name('leds.create');
-Route::post('/sistema/leds',                [NetworkController::class, 'storeLed'])->name('leds.store');
-Route::get('/sistema/leds/{key}/editar',    [NetworkController::class, 'editLed'])->name('leds.edit');
-Route::post('/sistema/leds/{key}',          [NetworkController::class, 'updateLed'])->name('leds.update');
-Route::post('/sistema/leds/{key}/eliminar', [NetworkController::class, 'destroyLed'])->name('leds.destroy');
-    
+});
+
+// LEDS
+Route::prefix('sistema')->name('leds.')->group(function () {
+    Route::get('/leds',                 [NetworkController::class, 'leds'])->name('index');
+    Route::get('/leds/crear',           [NetworkController::class, 'createLed'])->name('create');
+    Route::post('/leds',                [NetworkController::class, 'storeLed'])->name('store');
+    Route::get('/leds/{key}/editar',    [NetworkController::class, 'editLed'])->name('edit');
+    Route::post('/leds/{key}',          [NetworkController::class, 'updateLed'])->name('update');
+    Route::post('/leds/{key}/eliminar', [NetworkController::class, 'destroyLed'])->name('destroy');
 });
