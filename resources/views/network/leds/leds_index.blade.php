@@ -1,19 +1,20 @@
 @extends('layouts.dashboard')
-@section('title', 'Configuración de LEDs')
+@section('page-title', 'Configuración de LEDs')
 
 @section('content')
 
-<p style="font-size:13px; color:var(--t3); margin-bottom:18px;">
-    Personaliza el comportamiento de los <a href="#" style="color:#60a5fa;">LEDs</a> del dispositivo, si es posible.
+<p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">
+    Personaliza el comportamiento de los <a href="#" style="color:var(--primary);">LEDs</a> del dispositivo, si es posible.
 </p>
 
-<div class="card">
+<div class="panel-card">
+
     @if(count($leds) > 0)
-        <table>
+        <table class="table-dark-custom">
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th>Nombre del <a href="#" style="color:#60a5fa;">LED</a></th>
+                    <th>Nombre del LED</th>
                     <th>Estado predeterminado</th>
                     <th>Disparador</th>
                     <th></th>
@@ -23,16 +24,19 @@
                 @foreach($leds as $led)
                 <tr>
                     <td>{{ $led['nombre'] }}</td>
-                    <td><span class="mono">{{ $led['led_name'] }}</span></td>
+                    <td><span class="soft-badge">{{ $led['led_name'] }}</span></td>
                     <td>{{ $led['estado'] }}</td>
                     <td>{{ $led['disparador'] }}</td>
-                    <td>
-                        <div class="td-actions">
-                            <a href="{{ route('leds.edit', $led['key']) }}" class="btn btn-blue btn-sm">EDITAR</a>
+                    <td style="text-align:right;">
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                            <a href="{{ route('leds.edit', $led['key']) }}" class="btn btn-main btn-sm">EDITAR</a>
                             <form action="{{ route('leds.destroy', $led['key']) }}" method="POST"
                                   onsubmit="return confirm('¿Eliminar este LED?')">
                                 @csrf
-                                <button type="submit" class="btn btn-red btn-sm">ELIMINAR</button>
+                                <button type="submit" class="btn btn-sm"
+                                        style="background:#dc3545; color:white; border:none; border-radius:8px; padding:6px 14px; font-weight:600; cursor:pointer;">
+                                    ELIMINAR
+                                </button>
                             </form>
                         </div>
                     </td>
@@ -41,31 +45,54 @@
             </tbody>
         </table>
     @else
-        <div class="empty">
-            <div class="empty-icon"></div>
-            <p class="empty-text">No hay LEDs configurados.</p>
+        <div style="display:flex; flex-direction:column; align-items:center; padding:52px 20px; gap:12px;">
+            <i class="bi bi-inbox" style="font-size:2.5rem; color:var(--text-muted); opacity:.4;"></i>
+            <p style="font-size:13.5px; color:var(--text-muted);">No hay LEDs configurados.</p>
         </div>
     @endif
 
-    <div style="padding:14px 18px;">
-        <a href="{{ route('leds.create') }}" class="btn btn-blue btn-sm">AÑADIR ACCIÓN LED</a>
+    <div style="padding:16px 20px;">
+        <a href="{{ route('leds.create') }}" class="btn btn-main btn-sm">+ AÑADIR ACCIÓN LED</a>
     </div>
+
 </div>
 
-<div class="bottom-bar">
-    <div class="dd-wrap">
-        <div class="split">
-            <button class="split-main">GUARDAR Y APLICAR</button>
-            <button class="split-caret" type="button"
-                    onclick="document.getElementById('dd1').classList.toggle('open')">▼</button>
+{{-- Bottom bar --}}
+<div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:22px;">
+
+    {{-- Guardar y Aplicar split --}}
+    <div style="position:relative;">
+        <div style="display:inline-flex; border-radius:14px; overflow:hidden;">
+            <button class="btn btn-main" style="border-radius:0;">GUARDAR Y APLICAR</button>
+            <button class="btn btn-main" style="border-radius:0; border-left:1px solid rgba(255,255,255,.2); padding:10px 12px;"
+                    onclick="document.getElementById('dd1').classList.toggle('show')">▼</button>
         </div>
-        <div class="dd-menu" id="dd1">
-            <button class="dd-item">GUARDAR Y APLICAR</button>
-            <button class="dd-item">APLICAR SIN RESTRICCIÓN</button>
+        <div id="dd1" class="dropdown-menu dropdown-menu-dark"
+             style="display:none; position:absolute; right:0; top:calc(100% + 4px); min-width:200px; z-index:100;">
+            <button class="dropdown-item" style="color:var(--text-main);">GUARDAR Y APLICAR</button>
+            <button class="dropdown-item" style="color:var(--text-main);">APLICAR SIN RESTRICCIÓN</button>
         </div>
     </div>
-    <button class="btn btn-gray">GUARDAR</button>
-    <button class="btn btn-red">RESTABLECER</button>
+
+    <button class="btn btn-sm"
+            style="background:rgba(255,255,255,.08); color:var(--text-main); border:1px solid var(--border-soft); border-radius:10px; padding:8px 18px; font-weight:600;">
+        GUARDAR
+    </button>
+
+    <button class="btn btn-sm"
+            style="background:#dc3545; color:white; border:none; border-radius:10px; padding:8px 18px; font-weight:600; cursor:pointer;">
+        RESTABLECER
+    </button>
+
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('click', e => {
+    if (!e.target.closest('[onclick]'))
+        document.querySelectorAll('.dropdown-menu').forEach(d => d.style.display = 'none');
+});
+</script>
+@endpush
 
 @endsection
