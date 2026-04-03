@@ -229,7 +229,7 @@ class SystemController extends Controller
             ];
         }
 
-        return view('system.grabado', compact('mtdblocks'));
+       return view('system.grabado.grabado', compact('mtdblocks'));
     }
 
     public function descargarBackup()
