@@ -7,10 +7,28 @@
     Configura el comportamiento del <a href="#" style="color:var(--primary);">LED</a> del dispositivo.
 </p>
 
+@php
+    $selectedLedName    = old('led_name',   $led['led_name']   ?? ($ledNames[0] ?? ''));
+    $selectedDisparador = old('disparador', $led['disparador'] ?? 'defaulton');
+    $modos              = old('modo_disparador', $led['modo']  ?? []);
+
+    {{-- estado puede llegar como bool (editLed) o string (leds/index tras old()) --}}
+    $estadoChecked = old('estado_predeterminado',
+        is_bool($led['estado'] ?? false)
+            ? ($led['estado'] ?? false)
+            : (($led['estado'] ?? '') === 'Encendido')
+    );
+@endphp
+
 <div class="panel-card">
 
-    <form action="{{ $led ? route('leds.update', $led['key']) : route('leds.store') }}" method="POST">
+    <form id="led-form"
+          action="{{ $led ? route('leds.update', $led['key']) : route('leds.store') }}"
+          method="POST">
         @csrf
+        @if($led)
+            @method('PUT')
+        @endif
 
         {{-- Nombre --}}
         <div class="form-row">
@@ -18,25 +36,40 @@
             <div>
                 <input type="text" name="nombre" class="form-input"
                        value="{{ old('nombre', $led['nombre'] ?? '') }}">
-                @error('nombre') <p class="form-err">{{ $message }}</p> @enderror
+                @error('nombre')
+                    <p class="form-err">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
         <div class="row-divider"></div>
 
-        {{-- Nombre del LED --}}
+        {{-- Nombre del LED — custom dropdown --}}
         <div class="form-row">
             <label class="form-label">Nombre del <a href="#" style="color:var(--primary);">LED</a></label>
-            <div class="sel-wrap">
-                <select name="led_name" class="form-select">
+            <div style="position:relative; min-width:220px;">
+
+                <input type="hidden" name="led_name" id="led_name_val" value="{{ $selectedLedName }}">
+
+                <button type="button" class="custom-select-btn" id="ledNameBtn"
+                        onclick="toggleDd('ddLedName','ledNameBtn')">
+                    <span id="ledNameLabel">{{ $selectedLedName }}</span>
+                    <span class="cs-arrow">▼</span>
+                </button>
+
+                <div class="custom-select-dd" id="ddLedName" style="display:none;">
                     @foreach($ledNames as $opt)
-                        <option value="{{ $opt }}"
-                            {{ old('led_name', $led['led_name'] ?? '') === $opt ? 'selected' : '' }}>
+                        <div class="cs-opt {{ $opt === $selectedLedName ? 'cs-opt-active' : '' }}"
+                             onclick="pickOption('led_name_val','ledNameLabel','ddLedName','{{ $opt }}')">
                             {{ $opt }}
-                        </option>
+                        </div>
                     @endforeach
-                </select>
+                </div>
+
             </div>
+            @error('led_name')
+                <p class="form-err">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="row-divider"></div>
@@ -47,78 +80,84 @@
             <div>
                 <input type="hidden" name="estado_predeterminado" value="0">
                 <input type="checkbox" name="estado_predeterminado" value="1" class="form-check"
-                       {{ old('estado_predeterminado', $led['estado'] ?? false) ? 'checked' : '' }}>
+                       {{ $estadoChecked ? 'checked' : '' }}>
             </div>
         </div>
 
         <div class="row-divider"></div>
 
-        {{-- Disparador --}}
+        {{-- Disparador — custom dropdown --}}
         <div class="form-row">
             <label class="form-label">Disparador</label>
-            <div class="sel-wrap">
-                <select name="disparador" id="disparador" class="form-select"
-                        onchange="onDisparador(this.value)">
+            <div style="position:relative; min-width:220px;">
+
+                <input type="hidden" name="disparador" id="disparador_val" value="{{ $selectedDisparador }}">
+
+                <button type="button" class="custom-select-btn" id="disparadorBtn"
+                        onclick="toggleDd('ddDisparador','disparadorBtn')">
+                    <span id="disparadorLabel">{{ $selectedDisparador }}</span>
+                    <span class="cs-arrow">▼</span>
+                </button>
+
+                <div class="custom-select-dd" id="ddDisparador" style="display:none;">
                     @foreach($disparadores as $opt)
-                        <option value="{{ $opt }}"
-                            {{ old('disparador', $led['disparador'] ?? 'defaulton') === $opt ? 'selected' : '' }}>
+                        <div class="cs-opt {{ $opt === $selectedDisparador ? 'cs-opt-active' : '' }}"
+                             onclick="pickDisparador('{{ $opt }}')">
                             {{ $opt }}
-                        </option>
+                        </div>
                     @endforeach
-                </select>
+                </div>
+
             </div>
+            @error('disparador')
+                <p class="form-err">{{ $message }}</p>
+            @enderror
         </div>
 
-        {{-- Modo de disparador — solo netdev --}}
-        @php $modos = old('modo_disparador', $led['modo'] ?? []); @endphp
-
+        {{-- ── Campos condicionales: netdev ───────────────────────── --}}
         <div class="row-divider" id="dividerModo"
-             style="{{ old('disparador', $led['disparador'] ?? 'defaulton') === 'netdev' ? '' : 'display:none' }}"></div>
+             style="{{ $selectedDisparador === 'netdev' ? '' : 'display:none' }}"></div>
 
         <div class="form-row" id="fieldModo"
-             style="{{ old('disparador', $led['disparador'] ?? 'defaulton') === 'netdev' ? '' : 'display:none' }}">
+             style="{{ $selectedDisparador === 'netdev' ? '' : 'display:none' }}">
             <label class="form-label">Modo de disparador</label>
-            <div>
-                <div class="ms">
-                    <div class="ms-display">
-                        <span class="soft-badge" id="tagLink" style="{{ in_array('link',$modos)?'':'display:none' }}">Enlace conectado</span>
-                        <span class="soft-badge" id="tagTx"   style="{{ in_array('tx',$modos)?'':'display:none' }}">Transmitir</span>
-                        <span class="soft-badge" id="tagRx"   style="{{ in_array('rx',$modos)?'':'display:none' }}">Recibir</span>
-                        <button type="button" class="btn btn-sm"
-                                style="background:rgba(255,255,255,.08); color:var(--text-main); border:1px solid var(--border-soft); border-radius:8px; padding:4px 10px;"
-                                onclick="document.getElementById('msOpts').classList.toggle('open')">▼</button>
-                    </div>
-                    <div class="ms-opts dropdown-menu dropdown-menu-dark" id="msOpts"
-                         style="position:relative; top:4px; min-width:200px;">
-                        <label class="dropdown-item" style="color:var(--text-main); cursor:pointer;">
-                            <input type="checkbox" name="modo_disparador[]" value="link" id="chkLink"
-                                   onchange="updateTags()" {{ in_array('link',$modos)?'checked':'' }}
-                                   style="margin-right:8px;">
-                            Enlace conectado
-                        </label>
-                        <label class="dropdown-item" style="color:var(--text-main); cursor:pointer;">
-                            <input type="checkbox" name="modo_disparador[]" value="tx" id="chkTx"
-                                   onchange="updateTags()" {{ in_array('tx',$modos)?'checked':'' }}
-                                   style="margin-right:8px;">
-                            Transmitir
-                        </label>
-                        <label class="dropdown-item" style="color:var(--text-main); cursor:pointer;">
-                            <input type="checkbox" name="modo_disparador[]" value="rx" id="chkRx"
-                                   onchange="updateTags()" {{ in_array('rx',$modos)?'checked':'' }}
-                                   style="margin-right:8px;">
-                            Recibir
-                        </label>
-                    </div>
+            <div style="position:relative;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                    <span class="soft-badge" id="tagLink" style="{{ in_array('link',$modos) ? '' : 'display:none' }}">Enlace conectado</span>
+                    <span class="soft-badge" id="tagTx"   style="{{ in_array('tx',$modos)   ? '' : 'display:none' }}">Transmitir</span>
+                    <span class="soft-badge" id="tagRx"   style="{{ in_array('rx',$modos)   ? '' : 'display:none' }}">Recibir</span>
+                    <button type="button" class="custom-select-btn" id="modoBtn"
+                            style="width:auto; padding:5px 12px;"
+                            onclick="toggleDd('msOpts','modoBtn')">
+                        Seleccionar <span class="cs-arrow">▼</span>
+                    </button>
+                </div>
+                <div class="custom-select-dd" id="msOpts" style="display:none; min-width:200px;">
+                    <label class="cs-opt" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" name="modo_disparador[]" value="link" id="chkLink"
+                               onchange="updateTags()" {{ in_array('link',$modos) ? 'checked' : '' }}>
+                        Enlace conectado
+                    </label>
+                    <label class="cs-opt" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" name="modo_disparador[]" value="tx" id="chkTx"
+                               onchange="updateTags()" {{ in_array('tx',$modos) ? 'checked' : '' }}>
+                        Transmitir
+                    </label>
+                    <label class="cs-opt" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" name="modo_disparador[]" value="rx" id="chkRx"
+                               onchange="updateTags()" {{ in_array('rx',$modos) ? 'checked' : '' }}>
+                        Recibir
+                    </label>
                 </div>
             </div>
         </div>
 
-        {{-- Timer — solo timer --}}
-        <div class="row-divider" id="dividerTimer"
-             style="{{ old('disparador', $led['disparador'] ?? '') === 'timer' ? '' : 'display:none' }}"></div>
+        {{-- ── Campos condicionales: timer ────────────────────────── --}}
+        <div class="row-divider" id="dividerTimerOn"
+             style="{{ $selectedDisparador === 'timer' ? '' : 'display:none' }}"></div>
 
         <div class="form-row" id="fieldTimerOn"
-             style="{{ old('disparador', $led['disparador'] ?? '') === 'timer' ? '' : 'display:none' }}">
+             style="{{ $selectedDisparador === 'timer' ? '' : 'display:none' }}">
             <label class="form-label">Tiempo encendido (ms)</label>
             <div>
                 <input type="number" name="timer_on" class="form-input" style="max-width:140px;"
@@ -127,10 +166,10 @@
         </div>
 
         <div class="row-divider" id="dividerTimerOff"
-             style="{{ old('disparador', $led['disparador'] ?? '') === 'timer' ? '' : 'display:none' }}"></div>
+             style="{{ $selectedDisparador === 'timer' ? '' : 'display:none' }}"></div>
 
         <div class="form-row" id="fieldTimerOff"
-             style="{{ old('disparador', $led['disparador'] ?? '') === 'timer' ? '' : 'display:none' }}">
+             style="{{ $selectedDisparador === 'timer' ? '' : 'display:none' }}">
             <label class="form-label">Tiempo apagado (ms)</label>
             <div>
                 <input type="number" name="timer_off" class="form-input" style="max-width:140px;"
@@ -145,25 +184,36 @@
 {{-- Bottom bar --}}
 <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:22px;">
 
-    {{-- Guardar y Aplicar split --}}
+    {{-- Split button: GUARDAR Y APLICAR (= commit + restart, que ya hace el controlador siempre) --}}
     <div style="position:relative;">
         <div style="display:inline-flex; border-radius:14px; overflow:hidden;">
-            <button form="led-form" type="submit" class="btn btn-main" style="border-radius:0;">GUARDAR Y APLICAR</button>
-            <button type="button" class="btn btn-main" style="border-radius:0; border-left:1px solid rgba(255,255,255,.2); padding:10px 12px;"
-                    onclick="document.getElementById('dd1').classList.toggle('show')">▼</button>
+            <button form="led-form" type="submit" class="btn btn-main" style="border-radius:0;">
+                GUARDAR Y APLICAR
+            </button>
+            <button type="button" class="btn btn-main"
+                    style="border-radius:0; border-left:1px solid rgba(255,255,255,.2); padding:10px 12px;"
+                    onclick="toggleBottomDd()">▼</button>
         </div>
         <div id="dd1" class="dropdown-menu dropdown-menu-dark"
              style="display:none; position:absolute; right:0; top:calc(100% + 4px); min-width:200px; z-index:100;">
-            <button class="dropdown-item" style="color:var(--text-main);">GUARDAR Y APLICAR</button>
-            <button class="dropdown-item" style="color:var(--text-main);">APLICAR SIN RESTRICCIÓN</button>
+            <button type="button" class="dropdown-item" style="color:var(--text-main);"
+                    onclick="document.getElementById('led-form').submit()">
+                GUARDAR Y APLICAR
+            </button>
+            <button type="button" class="dropdown-item" style="color:var(--text-main);"
+                    onclick="document.getElementById('led-form').submit()">
+                APLICAR SIN RESTRICCIÓN
+            </button>
         </div>
     </div>
 
+    {{-- GUARDAR: misma acción (el controlador siempre hace commit) --}}
     <button form="led-form" type="submit" class="btn btn-sm"
             style="background:rgba(255,255,255,.08); color:var(--text-main); border:1px solid var(--border-soft); border-radius:10px; padding:8px 18px; font-weight:600;">
         GUARDAR
     </button>
 
+    {{-- DESCARTAR: volver sin guardar --}}
     <a href="{{ route('leds.index') }}" class="btn btn-sm"
        style="background:#dc3545; color:white; border:none; border-radius:10px; padding:8px 18px; font-weight:600; cursor:pointer; text-decoration:none;">
         DESCARTAR
@@ -171,28 +221,123 @@
 
 </div>
 
+@push('styles')
+<style>
+.custom-select-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--input-bg, rgba(255,255,255,.05));
+    color: var(--text-main);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .15s;
+}
+.custom-select-btn:hover { border-color: var(--primary); }
+.custom-select-btn.open  { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,.2); }
+.cs-arrow { font-size: 10px; opacity: .6; margin-left: 8px; pointer-events: none; }
+
+.custom-select-dd {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 4px);
+    min-width: 100%;
+    background: var(--card-bg, #1a2744);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+.cs-opt {
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background .1s;
+    user-select: none;
+}
+.cs-opt:hover        { background: rgba(255,255,255,.08); }
+.cs-opt-active       { background: var(--primary, #3b82f6); color: #fff; font-weight: 600; }
+.cs-opt-active:hover { filter: brightness(1.1); }
+</style>
+@endpush
+
 @push('scripts')
 <script>
-function onDisparador(val) {
-    const show = (id, visible) => {
-        document.getElementById(id).style.display = visible ? '' : 'none';
-    };
-    show('fieldModo',     val === 'netdev');
-    show('dividerModo',   val === 'netdev');
-    show('fieldTimerOn',  val === 'timer');
-    show('fieldTimerOff', val === 'timer');
-    show('dividerTimer',  val === 'timer');
-    show('dividerTimerOff', val === 'timer');
+/* ── Dropdown helpers ──────────────────────────────────────── */
+function toggleDd(ddId, btnId) {
+    const dd     = document.getElementById(ddId);
+    const isOpen = dd.style.display !== 'none';
+    closeAllDd();
+    if (!isOpen) {
+        dd.style.display = '';
+        if (btnId) document.getElementById(btnId).classList.add('open');
+    }
 }
+function toggleBottomDd() {
+    const dd = document.getElementById('dd1');
+    dd.style.display = dd.style.display === 'none' ? '' : 'none';
+}
+function closeAllDd() {
+    document.querySelectorAll('.custom-select-dd').forEach(d => d.style.display = 'none');
+    document.querySelectorAll('.custom-select-btn').forEach(b => b.classList.remove('open'));
+    document.getElementById('dd1').style.display = 'none';
+}
+document.addEventListener('click', e => {
+    if (!e.target.closest('.custom-select-btn') &&
+        !e.target.closest('.custom-select-dd') &&
+        !e.target.closest('#dd1'))
+        closeAllDd();
+});
+
+/* ── Picker genérico para led_name ─────────────────────────── */
+function pickOption(inputId, labelId, ddId, val) {
+    document.getElementById(inputId).value      = val;
+    document.getElementById(labelId).textContent = val;
+    document.querySelectorAll('#' + ddId + ' .cs-opt').forEach(el => {
+        el.classList.toggle('cs-opt-active', el.textContent.trim() === val);
+    });
+    closeAllDd();
+}
+
+/* ── Picker disparador (también actualiza campos condicionales) */
+function pickDisparador(val) {
+    document.getElementById('disparador_val').value         = val;
+    document.getElementById('disparadorLabel').textContent  = val;
+    document.querySelectorAll('#ddDisparador .cs-opt').forEach(el => {
+        el.classList.toggle('cs-opt-active', el.textContent.trim() === val);
+    });
+    closeAllDd();
+    onDisparador(val);
+}
+
+/* ── Mostrar / ocultar campos condicionales ────────────────── */
+function onDisparador(val) {
+    const show = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = v ? '' : 'none';
+    };
+    show('dividerModo',    val === 'netdev');
+    show('fieldModo',      val === 'netdev');
+    show('dividerTimerOn', val === 'timer');
+    show('fieldTimerOn',   val === 'timer');
+    show('dividerTimerOff',val === 'timer');
+    show('fieldTimerOff',  val === 'timer');
+}
+
+/* ── Tags multiselect modo ─────────────────────────────────── */
 function updateTags() {
     document.getElementById('tagLink').style.display = document.getElementById('chkLink').checked ? '' : 'none';
     document.getElementById('tagTx').style.display   = document.getElementById('chkTx').checked   ? '' : 'none';
     document.getElementById('tagRx').style.display   = document.getElementById('chkRx').checked   ? '' : 'none';
 }
-document.addEventListener('click', e => {
-    if (!e.target.closest('[onclick]'))
-        document.querySelectorAll('.dropdown-menu').forEach(d => d.style.display = 'none');
-});
 </script>
 @endpush
 
