@@ -11,6 +11,14 @@
     $selectedLedName    = old('led_name',   $led['led_name']   ?? ($ledNames[0] ?? ''));
     $selectedDisparador = old('disparador', $led['disparador'] ?? 'defaulton');
     $modos              = old('modo_disparador', $led['modo']  ?? []);
+
+    $estado = $led['estado'] ?? null;
+
+    $estadoChecked = old('estado_predeterminado',
+        is_bool($estado)
+            ? $estado
+            : ($estado === 'Encendido')
+    );
 @endphp
 
 <div class="panel-card">
@@ -19,29 +27,35 @@
           action="{{ $led ? route('leds.update', $led['key']) : route('leds.store') }}"
           method="POST">
         @csrf
+        @if($led)
+            @method('PUT')
+        @endif
 
-        {{-- Nombre --}}
         <div class="form-row">
             <label class="form-label">Nombre</label>
             <div>
                 <input type="text" name="nombre" class="form-input"
                        value="{{ old('nombre', $led['nombre'] ?? '') }}">
-                @error('nombre') <p class="form-err">{{ $message }}</p> @enderror
+                @error('nombre')
+                    <p class="form-err">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
         <div class="row-divider"></div>
 
-        {{-- Nombre del LED — custom dropdown --}}
         <div class="form-row">
             <label class="form-label">Nombre del <a href="#" style="color:var(--primary);">LED</a></label>
             <div style="position:relative; min-width:220px;">
+
                 <input type="hidden" name="led_name" id="led_name_val" value="{{ $selectedLedName }}">
+
                 <button type="button" class="custom-select-btn" id="ledNameBtn"
                         onclick="toggleDd('ddLedName','ledNameBtn')">
                     <span id="ledNameLabel">{{ $selectedLedName }}</span>
                     <span class="cs-arrow">▼</span>
                 </button>
+
                 <div class="custom-select-dd" id="ddLedName" style="display:none;">
                     @foreach($ledNames as $opt)
                         <div class="cs-opt {{ $opt === $selectedLedName ? 'cs-opt-active' : '' }}"
@@ -50,33 +64,38 @@
                         </div>
                     @endforeach
                 </div>
+
             </div>
+            @error('led_name')
+                <p class="form-err">{{ $message }}</p>
+            @enderror
         </div>
 
         <div class="row-divider"></div>
 
-        {{-- Estado predeterminado --}}
         <div class="form-row">
             <label class="form-label">Estado predeterminado</label>
             <div>
                 <input type="hidden" name="estado_predeterminado" value="0">
                 <input type="checkbox" name="estado_predeterminado" value="1" class="form-check"
-                       {{ old('estado_predeterminado', $led['estado'] ?? false) ? 'checked' : '' }}>
+                       {{ (bool)$estadoChecked ? 'checked' : '' }}>
             </div>
         </div>
 
         <div class="row-divider"></div>
 
-        {{-- Disparador — custom dropdown --}}
         <div class="form-row">
             <label class="form-label">Disparador</label>
             <div style="position:relative; min-width:220px;">
+
                 <input type="hidden" name="disparador" id="disparador_val" value="{{ $selectedDisparador }}">
+
                 <button type="button" class="custom-select-btn" id="disparadorBtn"
                         onclick="toggleDd('ddDisparador','disparadorBtn')">
                     <span id="disparadorLabel">{{ $selectedDisparador }}</span>
                     <span class="cs-arrow">▼</span>
                 </button>
+
                 <div class="custom-select-dd" id="ddDisparador" style="display:none;">
                     @foreach($disparadores as $opt)
                         <div class="cs-opt {{ $opt === $selectedDisparador ? 'cs-opt-active' : '' }}"
@@ -85,10 +104,13 @@
                         </div>
                     @endforeach
                 </div>
+
             </div>
+            @error('disparador')
+                <p class="form-err">{{ $message }}</p>
+            @enderror
         </div>
 
-        {{-- Modo de disparador — solo netdev --}}
         <div class="row-divider" id="dividerModo"
              style="{{ $selectedDisparador === 'netdev' ? '' : 'display:none' }}"></div>
 
@@ -126,8 +148,7 @@
             </div>
         </div>
 
-        {{-- Timer — solo timer --}}
-        <div class="row-divider" id="dividerTimer"
+        <div class="row-divider" id="dividerTimerOn"
              style="{{ $selectedDisparador === 'timer' ? '' : 'display:none' }}"></div>
 
         <div class="form-row" id="fieldTimerOn"
@@ -155,12 +176,13 @@
 
 </div>
 
-{{-- Bottom bar --}}
 <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:22px;">
 
     <div style="position:relative;">
         <div style="display:inline-flex; border-radius:14px; overflow:hidden;">
-            <button form="led-form" type="submit" class="btn btn-main" style="border-radius:0;">GUARDAR Y APLICAR</button>
+            <button form="led-form" type="submit" class="btn btn-main" style="border-radius:0;">
+                GUARDAR Y APLICAR
+            </button>
             <button type="button" class="btn btn-main"
                     style="border-radius:0; border-left:1px solid rgba(255,255,255,.2); padding:10px 12px;"
                     onclick="toggleBottomDd()">▼</button>
@@ -168,9 +190,13 @@
         <div id="dd1" class="dropdown-menu dropdown-menu-dark"
              style="display:none; position:absolute; right:0; top:calc(100% + 4px); min-width:200px; z-index:100;">
             <button type="button" class="dropdown-item" style="color:var(--text-main);"
-                    onclick="document.getElementById('led-form').submit()">GUARDAR Y APLICAR</button>
+                    onclick="document.getElementById('led-form').submit()">
+                GUARDAR Y APLICAR
+            </button>
             <button type="button" class="dropdown-item" style="color:var(--text-main);"
-                    onclick="document.getElementById('led-form').submit()">APLICAR SIN RESTRICCIÓN</button>
+                    onclick="document.getElementById('led-form').submit()">
+                APLICAR SIN RESTRICCIÓN
+            </button>
         </div>
     </div>
 
@@ -186,54 +212,6 @@
 
 </div>
 
-@push('styles')
-<style>
-.custom-select-btn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 8px 12px;
-    background: var(--input-bg, rgba(255,255,255,.05));
-    color: var(--text-main);
-    border: 1px solid var(--border-soft);
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: left;
-    transition: border-color .15s;
-}
-.custom-select-btn:hover { border-color: var(--primary); }
-.custom-select-btn.open  { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,.2); }
-.cs-arrow { font-size: 10px; opacity: .6; margin-left: 8px; pointer-events: none; }
-
-.custom-select-dd {
-    position: absolute;
-    left: 0;
-    top: calc(100% + 4px);
-    min-width: 100%;
-    background: var(--card-bg, #1a2744);
-    border: 1px solid var(--border-soft);
-    border-radius: 8px;
-    overflow: hidden;
-    z-index: 200;
-    box-shadow: 0 4px 16px rgba(0,0,0,.4);
-}
-.cs-opt {
-    padding: 9px 14px;
-    font-size: 13px;
-    color: var(--text-main);
-    cursor: pointer;
-    transition: background .1s;
-    user-select: none;
-}
-.cs-opt:hover        { background: rgba(255,255,255,.08); }
-.cs-opt-active       { background: var(--primary, #3b82f6); color: #fff; font-weight: 600; }
-.cs-opt-active:hover { filter: brightness(1.1); }
-</style>
-@endpush
-
 @push('scripts')
 <script>
 function toggleDd(ddId, btnId) {
@@ -245,15 +223,19 @@ function toggleDd(ddId, btnId) {
         if (btnId) document.getElementById(btnId).classList.add('open');
     }
 }
+
 function toggleBottomDd() {
     const dd = document.getElementById('dd1');
-    dd.style.display = dd.style.display === 'none' ? '' : 'none';
+    if (dd) dd.style.display = dd.style.display === 'none' ? '' : 'none';
 }
+
 function closeAllDd() {
     document.querySelectorAll('.custom-select-dd').forEach(d => d.style.display = 'none');
     document.querySelectorAll('.custom-select-btn').forEach(b => b.classList.remove('open'));
-    document.getElementById('dd1').style.display = 'none';
+    const dd1 = document.getElementById('dd1');
+    if (dd1) dd1.style.display = 'none';
 }
+
 document.addEventListener('click', e => {
     if (!e.target.closest('.custom-select-btn') &&
         !e.target.closest('.custom-select-dd') &&
@@ -287,7 +269,7 @@ function onDisparador(val) {
     };
     show('dividerModo',     val === 'netdev');
     show('fieldModo',       val === 'netdev');
-    show('dividerTimer',    val === 'timer');
+    show('dividerTimerOn',  val === 'timer');
     show('fieldTimerOn',    val === 'timer');
     show('dividerTimerOff', val === 'timer');
     show('fieldTimerOff',   val === 'timer');
@@ -298,6 +280,13 @@ function updateTags() {
     document.getElementById('tagTx').style.display   = document.getElementById('chkTx').checked   ? '' : 'none';
     document.getElementById('tagRx').style.display   = document.getElementById('chkRx').checked   ? '' : 'none';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const disparador = document.getElementById('disparador_val');
+    if (disparador) {
+        onDisparador(disparador.value);
+    }
+});
 </script>
 @endpush
 
