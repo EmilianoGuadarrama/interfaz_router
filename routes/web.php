@@ -69,3 +69,11 @@ Route::prefix('sistema')->name('leds.')->group(function () {
     Route::post('/leds/{key}',          [SystemController::class, 'updateLed'])->name('update');
     Route::post('/leds/{key}/eliminar', [SystemController::class, 'destroyLed'])->name('destroy');
 });
+
+// GRABADO DE IMAGEN
+Route::get('/grabado',             [SystemController::class, 'grabado'])->name('grabado.index');
+Route::post('/grabado/backup',     [SystemController::class, 'descargarBackup'])->name('grabado.backup');
+Route::post('/grabado/restaurar',  [SystemController::class, 'restaurarBackup'])->name('grabado.restaurar');
+Route::post('/grabado/fabrica',    [SystemController::class, 'restablecerFabrica'])->name('grabado.fabrica');
+Route::post('/grabado/mtdblock',   [SystemController::class, 'descargarMtdblock'])->name('grabado.mtdblock');
+Route::post('/grabado/imagen',     [SystemController::class, 'grabarImagen'])->name('grabado.imagen');

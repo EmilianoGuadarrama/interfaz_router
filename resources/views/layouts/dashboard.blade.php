@@ -434,7 +434,7 @@
                         <li><a href="#" class="nav-link"><i class="bi bi-power"></i> Arranque</a></li>
                         <li><a href="#" class="nav-link"><i class="bi bi-clock-history"></i> Tareas programadas</a></li>
                        <li><a href="{{ route('leds.index') }}" class="nav-link"><i class="bi bi-lightbulb"></i> Configuración de LEDs</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
+                        <li><a href="{{ route('grabado.index') }}" class="nav-link {{ request()->routeIs('grabado.*') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
                         <li><a href="#" class="nav-link"><i class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
                     </ul>
                 </div>
