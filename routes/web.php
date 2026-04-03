@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\RoutesController;
+use App\Http\Controllers\SystemController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -59,12 +60,12 @@ Route::prefix('red')->name('network.')->group(function () {
 
 });
 
-// LEDS
+// LEDs
 Route::prefix('sistema')->name('leds.')->group(function () {
-    Route::get('/leds',                 [NetworkController::class, 'leds'])->name('index');
-    Route::get('/leds/crear',           [NetworkController::class, 'createLed'])->name('create');
-    Route::post('/leds',                [NetworkController::class, 'storeLed'])->name('store');
-    Route::get('/leds/{key}/editar',    [NetworkController::class, 'editLed'])->name('edit');
-    Route::post('/leds/{key}',          [NetworkController::class, 'updateLed'])->name('update');
-    Route::post('/leds/{key}/eliminar', [NetworkController::class, 'destroyLed'])->name('destroy');
+    Route::get('/leds',                 [SystemController::class, 'leds'])->name('index');
+    Route::get('/leds/crear',           [SystemController::class, 'createLed'])->name('create');
+    Route::post('/leds',                [SystemController::class, 'storeLed'])->name('store');
+    Route::get('/leds/{key}/editar',    [SystemController::class, 'editLed'])->name('edit');
+    Route::post('/leds/{key}',          [SystemController::class, 'updateLed'])->name('update');
+    Route::post('/leds/{key}/eliminar', [SystemController::class, 'destroyLed'])->name('destroy');
 });
