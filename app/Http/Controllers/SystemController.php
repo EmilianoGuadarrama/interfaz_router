@@ -54,14 +54,23 @@ class SystemController extends Controller
         } catch (\Throwable $e) {
             Log::error('LEDs: ' . $e->getMessage());
         }
+
+        if (empty($leds)) {
+            $leds = [
+                ['key' => 'wlan', 'nombre' => 'wlan', 'led_name' => 'green:wlan', 'estado' => 'Apagado', 'disparador' => 'netdev',  'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'wan',  'nombre' => 'wan',  'led_name' => 'orange:wan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'lan',  'nombre' => 'lan',  'led_name' => 'green:lan',  'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+            ];
+        }
+
         return view('system.leds.leds_index', compact('leds'));
     }
 
     public function createLed()
     {
         return view('system.leds.leds_form', [
-            'led'         => null,
-            'ledNames'    => $this->ledNames,
+            'led'          => null,
+            'ledNames'     => $this->ledNames,
             'disparadores' => $this->disparadores,
         ]);
     }
