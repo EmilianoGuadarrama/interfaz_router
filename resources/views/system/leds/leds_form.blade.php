@@ -12,7 +12,7 @@
     $selectedDisparador = old('disparador', $led['disparador'] ?? 'defaulton');
     $modos              = old('modo_disparador', $led['modo']  ?? []);
 
-    {{-- estado puede llegar como bool (editLed) o string (leds/index tras old()) --}}
+    // estado puede llegar como bool (editLed) o string (leds/index tras old())
     $estadoChecked = old('estado_predeterminado',
         is_bool($led['estado'] ?? false)
             ? ($led['estado'] ?? false)
@@ -114,7 +114,7 @@
             @enderror
         </div>
 
-        {{-- ── Campos condicionales: netdev ───────────────────────── --}}
+        {{-- Campos condicionales: netdev --}}
         <div class="row-divider" id="dividerModo"
              style="{{ $selectedDisparador === 'netdev' ? '' : 'display:none' }}"></div>
 
@@ -152,7 +152,7 @@
             </div>
         </div>
 
-        {{-- ── Campos condicionales: timer ────────────────────────── --}}
+        {{-- Campos condicionales: timer --}}
         <div class="row-divider" id="dividerTimerOn"
              style="{{ $selectedDisparador === 'timer' ? '' : 'display:none' }}"></div>
 
@@ -184,7 +184,6 @@
 {{-- Bottom bar --}}
 <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; padding-top:22px;">
 
-    {{-- Split button: GUARDAR Y APLICAR (= commit + restart, que ya hace el controlador siempre) --}}
     <div style="position:relative;">
         <div style="display:inline-flex; border-radius:14px; overflow:hidden;">
             <button form="led-form" type="submit" class="btn btn-main" style="border-radius:0;">
@@ -207,13 +206,11 @@
         </div>
     </div>
 
-    {{-- GUARDAR: misma acción (el controlador siempre hace commit) --}}
     <button form="led-form" type="submit" class="btn btn-sm"
             style="background:rgba(255,255,255,.08); color:var(--text-main); border:1px solid var(--border-soft); border-radius:10px; padding:8px 18px; font-weight:600;">
         GUARDAR
     </button>
 
-    {{-- DESCARTAR: volver sin guardar --}}
     <a href="{{ route('leds.index') }}" class="btn btn-sm"
        style="background:#dc3545; color:white; border:none; border-radius:10px; padding:8px 18px; font-weight:600; cursor:pointer; text-decoration:none;">
         DESCARTAR
@@ -271,7 +268,6 @@
 
 @push('scripts')
 <script>
-/* ── Dropdown helpers ──────────────────────────────────────── */
 function toggleDd(ddId, btnId) {
     const dd     = document.getElementById(ddId);
     const isOpen = dd.style.display !== 'none';
@@ -297,9 +293,8 @@ document.addEventListener('click', e => {
         closeAllDd();
 });
 
-/* ── Picker genérico para led_name ─────────────────────────── */
 function pickOption(inputId, labelId, ddId, val) {
-    document.getElementById(inputId).value      = val;
+    document.getElementById(inputId).value       = val;
     document.getElementById(labelId).textContent = val;
     document.querySelectorAll('#' + ddId + ' .cs-opt').forEach(el => {
         el.classList.toggle('cs-opt-active', el.textContent.trim() === val);
@@ -307,10 +302,9 @@ function pickOption(inputId, labelId, ddId, val) {
     closeAllDd();
 }
 
-/* ── Picker disparador (también actualiza campos condicionales) */
 function pickDisparador(val) {
-    document.getElementById('disparador_val').value         = val;
-    document.getElementById('disparadorLabel').textContent  = val;
+    document.getElementById('disparador_val').value        = val;
+    document.getElementById('disparadorLabel').textContent = val;
     document.querySelectorAll('#ddDisparador .cs-opt').forEach(el => {
         el.classList.toggle('cs-opt-active', el.textContent.trim() === val);
     });
@@ -318,21 +312,19 @@ function pickDisparador(val) {
     onDisparador(val);
 }
 
-/* ── Mostrar / ocultar campos condicionales ────────────────── */
 function onDisparador(val) {
     const show = (id, v) => {
         const el = document.getElementById(id);
         if (el) el.style.display = v ? '' : 'none';
     };
-    show('dividerModo',    val === 'netdev');
-    show('fieldModo',      val === 'netdev');
-    show('dividerTimerOn', val === 'timer');
-    show('fieldTimerOn',   val === 'timer');
-    show('dividerTimerOff',val === 'timer');
-    show('fieldTimerOff',  val === 'timer');
+    show('dividerModo',     val === 'netdev');
+    show('fieldModo',       val === 'netdev');
+    show('dividerTimerOn',  val === 'timer');
+    show('fieldTimerOn',    val === 'timer');
+    show('dividerTimerOff', val === 'timer');
+    show('fieldTimerOff',   val === 'timer');
 }
 
-/* ── Tags multiselect modo ─────────────────────────────────── */
 function updateTags() {
     document.getElementById('tagLink').style.display = document.getElementById('chkLink').checked ? '' : 'none';
     document.getElementById('tagTx').style.display   = document.getElementById('chkTx').checked   ? '' : 'none';
