@@ -135,7 +135,8 @@
 
                 <div class="grabado-row" style="margin-bottom:20px;">
                     <label class="grabado-label">Mostrar lista de archivos a resguardar</label>
-                    <button type="button" class="btn btn-main btn-sm" id="btnToggleLista" onclick="toggleLista(this)">
+                    <button type="button" class="btn btn-main btn-sm" id="btnToggleLista"
+                            onclick="var l=document.getElementById('listaArchivos'); if(l.style.display==='none'){l.style.display='block';this.textContent='CERRAR LISTA';}else{l.style.display='none';this.textContent='ABRIR LISTA...';}">
                         ABRIR LISTA...
                     </button>
                 </div>
@@ -143,18 +144,19 @@
                 <div id="listaArchivos" style="display:none;">
                     <form action="{{ route('grabado.guardarLista') }}" method="POST">
                         @csrf
-                        <textarea name="lista_contenido" id="listaTexto" class="dark-select"
-                                  style="width:100%; height:400px; font-family:monospace; font-size:13px; resize:vertical; padding:12px; border-radius:6px; border:1px solid rgba(255,255,255,.1);">{{ $listaArchivos ?? '' }}</textarea>
+                        <textarea name="lista_contenido" class="dark-select"
+                                  style="width:100%; height:380px; font-family:monospace; font-size:13px; resize:vertical; padding:14px; border-radius:8px; border:1px solid rgba(255,255,255,.1); display:block;">{{ $listaArchivos }}</textarea>
                         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
                             <button type="button" class="btn btn-sm"
-                                    style="background:rgba(255,255,255,.08); color:var(--text-main); border:1px solid var(--border-soft); border-radius:10px; padding:8px 18px; font-weight:600;"
-                                    onclick="toggleLista(document.getElementById('btnToggleLista'))">
+                                    style="background:rgba(255,255,255,.08);color:var(--text-main);border:1px solid var(--border-soft);border-radius:10px;padding:8px 18px;font-weight:600;"
+                                    onclick="document.getElementById('listaArchivos').style.display='none'; document.getElementById('btnToggleLista').textContent='ABRIR LISTA...';">
                                 DESCARTAR
                             </button>
                             <button type="submit" class="btn btn-main btn-sm">GUARDAR</button>
                         </div>
                     </form>
                 </div>
+
             </div>
         </div>
     </div>
@@ -167,24 +169,8 @@
 .grabado-divider  { border-color:var(--border-soft); margin:0; }
 .grabado-row      { display:grid; grid-template-columns:280px 1fr; align-items:center; gap:16px; }
 .grabado-label    { font-size:13.5px; font-weight:600; color:var(--text-soft); text-align:right; }
-.dark-select { background: #1a2744 !important; color: var(--text-main) !important; border-color: rgba(255,255,255,.1) !important; }
+.dark-select      { background: #1a2744 !important; color: var(--text-main) !important; border-color: rgba(255,255,255,.1) !important; }
 .dark-select option { background: #1a2744; color: var(--text-main); }
 </style>
-
-@push('scripts')
-<script>
-function toggleLista(btn) {
-    const lista = document.getElementById('listaArchivos');
-    const boton = btn || document.getElementById('btnToggleLista');
-    if (lista.style.display === 'none') {
-        lista.style.display = 'block';
-        boton.textContent   = 'CERRAR LISTA';
-    } else {
-        lista.style.display = 'none';
-        boton.textContent   = 'ABRIR LISTA...';
-    }
-}
-</script>
-@endpush
 
 @endsection
