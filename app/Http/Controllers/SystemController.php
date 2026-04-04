@@ -204,142 +204,60 @@ class SystemController extends Controller
         }
     }
 
-    //GRABADO DE IMAGEN
-
-    public function grabado()
-    {
-        $mtdblocks = [];
-        try {
-            $result = $this->router->execute(["cat /proc/mtd"]);
-            foreach (explode("\n", $result['output']) as $line) {
-                if (preg_match('/^(mtd\d+):.+"(.+)"/', trim($line), $m)) {
-                    $mtdblocks[] = ['device' => $m[1], 'name' => $m[2]];
-                }
+public function grabado()
+{
+    $mtdblocks = [];
+    try {
+        $result = $this->router->execute(["cat /proc/mtd"]);
+        foreach (explode("\n", $result['output']) as $line) {
+            if (preg_match('/^(mtd\d+):.+"(.+)"/', trim($line), $m)) {
+                $mtdblocks[] = ['device' => $m[1], 'name' => $m[2]];
             }
-        } catch (\Throwable $e) {
-            Log::error('Grabado mtd: ' . $e->getMessage());
         }
-
-        if (empty($mtdblocks)) {
-            $mtdblocks = [
-                ['device' => 'mtd0', 'name' => 'boot'],
-                ['device' => 'mtd1', 'name' => 'kernel'],
-                ['device' => 'mtd2', 'name' => 'rootfs'],
-                ['device' => 'mtd3', 'name' => 'rootfs_data'],
-            ];
-        }
-
-       return view('system.grabado.grabado', compact('mtdblocks'));
+    } catch (\Throwable $e) {
+        Log::error('Grabado mtd: ' . $e->getMessage());
+    }
+ 
+    if (empty($mtdblocks)) {
+        $mtdblocks = [
+            ['device' => 'mtd0', 'name' => 'boot'],
+            ['device' => 'mtd1', 'name' => 'kernel'],
+            ['device' => 'mtd2', 'name' => 'rootfs'],
+            ['device' => 'mtd3', 'name' => 'rootfs_data'],
+        ];
+    }
+ 
+    // Lista de archivos a resguardar
+    $listaArchivos = '';
+    try {
+        $r = $this->router->execute(["cat /etc/sysupgrade.conf"]);
+        if ($r['success']) $listaArchivos = $r['output'];
+    } catch (\Throwable $e) {
+        Log::error('Lista archivos: ' . $e->getMessage());
+    }
+ 
+    return view('system.grabado.grabado', compact('mtdblocks', 'listaArchivos'));
+}
+ 
+public function guardarLista(Request $request)
+{
+    $request->validate(['lista_contenido' => ['required', 'string']]);
+ 
+    try {
+        $contenido = addslashes($request->lista_contenido);
+        $result    = $this->router->execute([
+            "echo \"{$contenido}\" > /etc/sysupgrade.conf"
+        ]);
+        return back()->with([
+            'result_success' => $result['success'],
+            'result_title'   => $result['success'] ? 'Lista guardada correctamente' : 'Error al guardar la lista',
+        ]);
+    } catch (\Throwable $e) {
+        Log::error('Guardar lista: ' . $e->getMessage());
+        return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
     }
 
-    public function descargarBackup()
-    {
-        try {
-            $result = $this->router->execute(["sysupgrade --create-backup /tmp/backup.tar.gz && cat /tmp/backup.tar.gz | base64"]);
-            if ($result['success']) {
-                $content = base64_decode($result['output']);
-                return response($content, 200, [
-                    'Content-Type'        => 'application/x-tar',
-                    'Content-Disposition' => 'attachment; filename="backup.tar.gz"',
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Backup: ' . $e->getMessage());
-        }
-        return back()->with(['result_success' => false, 'result_title' => 'Error al generar backup']);
-    }
-
-    public function restaurarBackup(Request $request)
-    {
-        $request->validate(['backup' => ['required', 'file']]);
-
-        try {
-            $file       = $request->file('backup');
-            $localPath  = $file->getPathname();
-            $remotePath = '/tmp/backup.tar.gz';
-
-            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
-            if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
-                throw new \Exception('Error de autenticación SFTP.');
-            }
-            $sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE);
-
-            $result = $this->router->execute([
-                "sysupgrade -r {$remotePath}",
-                "rm -f {$remotePath}",
-            ]);
-
-            return back()->with([
-                'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'Backup restaurado correctamente' : 'Error al restaurar backup',
-            ]);
-
-        } catch (\Throwable $e) {
-            Log::error('Restaurar backup: ' . $e->getMessage());
-            return back()->with(['result_success' => false, 'result_title' => 'Error al restaurar backup']);
-        }
-    }
-
-    public function restablecerFabrica()
-    {
-        try {
-            $result = $this->router->execute(["firstboot -y && reboot now"]);
-            return back()->with([
-                'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'Restablecimiento iniciado' : 'Error al restablecer',
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Restablecer fábrica: ' . $e->getMessage());
-            return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
-        }
-    }
-
-    public function descargarMtdblock(Request $request)
-    {
-        $request->validate(['mtdblock' => ['required', 'string']]);
-        try {
-            $device = $request->mtdblock;
-            $result = $this->router->execute(["dd if=/dev/{$device} | base64"]);
-            if ($result['success']) {
-                $content = base64_decode($result['output']);
-                return response($content, 200, [
-                    'Content-Type'        => 'application/octet-stream',
-                    'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Descargar mtdblock: ' . $e->getMessage());
-        }
-        return back()->with(['result_success' => false, 'result_title' => 'Error al descargar mtdblock']);
-    }
-
-    public function grabarImagen(Request $request)
-    {
-        $request->validate(['imagen' => ['required', 'file']]);
-
-        try {
-            $file       = $request->file('imagen');
-            $localPath  = $file->getPathname();
-            $remotePath = '/tmp/firmware.bin';
-
-            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
-            if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
-                throw new \Exception('Error de autenticación SFTP.');
-            }
-            $sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE);
-
-            $this->router->execute(["sysupgrade -v {$remotePath}"]);
-
-            return back()->with([
-                'result_success' => true,
-                'result_title'   => 'Imagen enviada. El router se reiniciará en unos momentos.',
-            ]);
-
-        } catch (\Throwable $e) {
-            Log::error('Grabar imagen: ' . $e->getMessage());
-            return back()->with(['result_success' => false, 'result_title' => 'Error al grabar imagen']);
-        }
-    }
+}
 // GET /reiniciar
 public function reiniciar()
 {

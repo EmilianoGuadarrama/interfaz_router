@@ -130,10 +130,31 @@
 
     {{-- ══ TAB CONFIGURACIÓN ══ --}}
     <div class="tab-pane fade" id="tabConfiguracion">
-        <div class="panel-card" style="padding:28px;">
-            <p style="color:var(--text-muted);font-size:13.5px;">
-                No hay opciones de configuración disponibles para esta sección.
-            </p>
+        <div class="panel-card">
+
+            <div class="grabado-section">
+                <p class="grabado-desc">
+                    Lista de patrones shell con los archivos y directorios que se deben incluir en un sysupgrade.
+                    Los archivos modificados en /etc/config/ y ciertas otras configuraciones se guardarán automáticamente.
+                </p>
+
+                <div class="grabado-row" style="margin-bottom:20px;">
+                    <label class="grabado-label">Mostrar lista de archivos a resguardar</label>
+                    <button type="button" class="btn btn-main btn-sm" onclick="toggleLista()">ABRIR LISTA...</button>
+                </div>
+
+                <div id="listaArchivos" style="display:none;">
+                    <form action="{{ route('grabado.guardarLista') }}" method="POST">
+                        @csrf
+                        <textarea name="lista_contenido" class="dark-select"
+                                  style="width:100%; height:400px; font-family:monospace; font-size:13px; resize:vertical; padding:12px; border-radius:6px; border:1px solid rgba(255,255,255,.1);">{{ $listaArchivos ?? '' }}</textarea>
+                        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                            <button type="submit" class="btn btn-main btn-sm">GUARDAR</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -156,5 +177,28 @@
     color: var(--text-main);
 }
 </style>
+
+@push('scripts')
+<script>
+function toggleLista() {
+    const lista = document.getElementById('listaArchivos');
+    const btn   = event.target;
+    if (lista.style.display === 'none') {
+        lista.style.display = 'block';
+        btn.textContent = 'CERRAR LISTA';
+    } else {
+        lista.style.display = 'none';
+        btn.textContent = 'ABRIR LISTA...';
+    }
+}
+
+const dd1 = document.getElementById('dd1');
+if (dd1) {
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#ddWrap')) dd1.style.display = 'none';
+    });
+}
+</script>
+@endpush
 
 @endsection

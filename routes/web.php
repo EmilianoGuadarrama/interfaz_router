@@ -78,6 +78,7 @@ Route::post('/grabado/restaurar',  [SystemController::class, 'restaurarBackup'])
 Route::post('/grabado/fabrica',    [SystemController::class, 'restablecerFabrica'])->name('grabado.fabrica');
 Route::post('/grabado/mtdblock',   [SystemController::class, 'descargarMtdblock'])->name('grabado.mtdblock');
 Route::post('/grabado/imagen',     [SystemController::class, 'grabarImagen'])->name('grabado.imagen');
+Route::post('/grabado/guardar-lista', [SystemController::class, 'guardarLista'])->name('grabado.guardarLista');
 
 // Reinicio
 Route::get('/reiniciar',     [SystemController::class, 'reiniciar'])   ->name('reiniciar.index');
