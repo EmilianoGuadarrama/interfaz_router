@@ -203,8 +203,9 @@ class SystemController extends Controller
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
- //GRABADO DE IMAGEN
- 
+
+    //GRABADO DE IMAGEN
+
     public function grabado()
     {
         $mtdblocks = [];
@@ -218,7 +219,7 @@ class SystemController extends Controller
         } catch (\Throwable $e) {
             Log::error('Grabado mtd: ' . $e->getMessage());
         }
- 
+
         if (empty($mtdblocks)) {
             $mtdblocks = [
                 ['device' => 'mtd0', 'name' => 'boot'],
@@ -227,7 +228,7 @@ class SystemController extends Controller
                 ['device' => 'mtd3', 'name' => 'rootfs_data'],
             ];
         }
- 
+
         $listaArchivos = '';
         try {
             $r = $this->router->execute(["cat /etc/sysupgrade.conf"]);
@@ -235,10 +236,14 @@ class SystemController extends Controller
         } catch (\Throwable $e) {
             Log::error('Lista archivos: ' . $e->getMessage());
         }
- 
+
+        if (empty($listaArchivos)) {
+            $listaArchivos = "## This file contains files and directories that should\n## be preserved during an upgrade.\n\n# /etc/example.conf\n# /etc/openvpn/";
+        }
+
         return view('system.grabado.grabado', compact('mtdblocks', 'listaArchivos'));
     }
- 
+
     public function descargarBackup()
     {
         try {
@@ -255,38 +260,38 @@ class SystemController extends Controller
         }
         return back()->with(['result_success' => false, 'result_title' => 'Error al generar backup']);
     }
- 
+
     public function restaurarBackup(Request $request)
     {
         $request->validate(['backup' => ['required', 'file']]);
- 
+
         try {
             $file       = $request->file('backup');
             $localPath  = $file->getPathname();
             $remotePath = '/tmp/backup.tar.gz';
- 
+
             $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
             if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
                 throw new \Exception('Error de autenticación SFTP.');
             }
             $sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE);
- 
+
             $result = $this->router->execute([
                 "sysupgrade -r {$remotePath}",
                 "rm -f {$remotePath}",
             ]);
- 
+
             return back()->with([
                 'result_success' => $result['success'],
                 'result_title'   => $result['success'] ? 'Backup restaurado correctamente' : 'Error al restaurar backup',
             ]);
- 
+
         } catch (\Throwable $e) {
             Log::error('Restaurar backup: ' . $e->getMessage());
             return back()->with(['result_success' => false, 'result_title' => 'Error al restaurar backup']);
         }
     }
- 
+
     public function restablecerFabrica()
     {
         try {
@@ -300,7 +305,7 @@ class SystemController extends Controller
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
- 
+
     public function descargarMtdblock(Request $request)
     {
         $request->validate(['mtdblock' => ['required', 'string']]);
@@ -319,35 +324,35 @@ class SystemController extends Controller
         }
         return back()->with(['result_success' => false, 'result_title' => 'Error al descargar mtdblock']);
     }
- 
+
     public function grabarImagen(Request $request)
     {
         $request->validate(['imagen' => ['required', 'file']]);
- 
+
         try {
             $file       = $request->file('imagen');
             $localPath  = $file->getPathname();
             $remotePath = '/tmp/firmware.bin';
- 
+
             $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
             if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
                 throw new \Exception('Error de autenticación SFTP.');
             }
             $sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE);
- 
+
             $this->router->execute(["sysupgrade -v {$remotePath}"]);
- 
+
             return back()->with([
                 'result_success' => true,
                 'result_title'   => 'Imagen enviada. El router se reiniciará en unos momentos.',
             ]);
- 
+
         } catch (\Throwable $e) {
             Log::error('Grabar imagen: ' . $e->getMessage());
             return back()->with(['result_success' => false, 'result_title' => 'Error al grabar imagen']);
         }
     }
- 
+
     public function guardarLista(Request $request)
     {
         $request->validate(['lista_contenido' => ['required', 'string']]);
@@ -365,24 +370,4 @@ class SystemController extends Controller
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
-// GET /reiniciar
-public function reiniciar()
-{
-   return view('system.reiniciar.reiniciar');
-}
-
-// POST /reiniciar/run
-public function reiniciarRun()
-{
-    try {
-        $result = $this->router->execute(['reboot now']);
-        return redirect()->route('reiniciar.index')
-            ->with('success', 'El dispositivo se está reiniciando...');
-    } catch (\Throwable $e) {
-        Log::error('Reiniciar: ' . $e->getMessage());
-        return redirect()->route('reiniciar.index')
-            ->with('error', 'No se pudo enviar la orden de reinicio.');
-    }
-}
-   
 }
