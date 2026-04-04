@@ -340,4 +340,24 @@ class SystemController extends Controller
             return back()->with(['result_success' => false, 'result_title' => 'Error al grabar imagen']);
         }
     }
+// GET /reiniciar
+public function reiniciar()
+{
+   return view('system.reiniciar.reiniciar');
+}
+
+// POST /reiniciar/run
+public function reiniciarRun()
+{
+    try {
+        $result = $this->router->execute(['reboot now']);
+        return redirect()->route('reiniciar.index')
+            ->with('success', 'El dispositivo se está reiniciando...');
+    } catch (\Throwable $e) {
+        Log::error('Reiniciar: ' . $e->getMessage());
+        return redirect()->route('reiniciar.index')
+            ->with('error', 'No se pudo enviar la orden de reinicio.');
+    }
+}
+   
 }
