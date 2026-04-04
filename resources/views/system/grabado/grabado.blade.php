@@ -25,7 +25,6 @@
     <div class="tab-pane fade show active" id="tabAcciones">
         <div class="panel-card">
 
-            {{-- Descargar copia de seguridad --}}
             <div class="grabado-section">
                 <p class="grabado-desc">
                     Pulse "Generar archivo" para descargar un archivo con extensión .tar con los archivos de configuración actuales.
@@ -41,7 +40,6 @@
 
             <hr class="grabado-divider">
 
-            {{-- Restablecer --}}
             <div class="grabado-section">
                 <p class="grabado-desc">
                     Para restaurar los archivos de configuración, debe subir primero una copia de seguridad.
@@ -82,7 +80,6 @@
 
             <hr class="grabado-divider">
 
-            {{-- Mtdblock --}}
             <div class="grabado-section">
                 <p class="grabado-desc">
                     Haga clic en "Guardar mtdblock" para descargar el archivo mtdblock especificado.
@@ -107,7 +104,6 @@
 
             <hr class="grabado-divider">
 
-            {{-- Grabar imagen --}}
             <div class="grabado-section">
                 <p class="grabado-desc">
                     Cargue aquí una imagen compatible con sysupgrade para reemplazar el firmware en ejecución.
@@ -131,7 +127,6 @@
     {{-- ══ TAB CONFIGURACIÓN ══ --}}
     <div class="tab-pane fade" id="tabConfiguracion">
         <div class="panel-card">
-
             <div class="grabado-section">
                 <p class="grabado-desc">
                     Lista de patrones shell con los archivos y directorios que se deben incluir en un sysupgrade.
@@ -140,21 +135,27 @@
 
                 <div class="grabado-row" style="margin-bottom:20px;">
                     <label class="grabado-label">Mostrar lista de archivos a resguardar</label>
-                    <button type="button" class="btn btn-main btn-sm" onclick="toggleLista()">ABRIR LISTA...</button>
+                    <button type="button" class="btn btn-main btn-sm" id="btnToggleLista" onclick="toggleLista(this)">
+                        ABRIR LISTA...
+                    </button>
                 </div>
 
                 <div id="listaArchivos" style="display:none;">
                     <form action="{{ route('grabado.guardarLista') }}" method="POST">
                         @csrf
-                        <textarea name="lista_contenido" class="dark-select"
+                        <textarea name="lista_contenido" id="listaTexto" class="dark-select"
                                   style="width:100%; height:400px; font-family:monospace; font-size:13px; resize:vertical; padding:12px; border-radius:6px; border:1px solid rgba(255,255,255,.1);">{{ $listaArchivos ?? '' }}</textarea>
-                        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                            <button type="button" class="btn btn-sm"
+                                    style="background:rgba(255,255,255,.08); color:var(--text-main); border:1px solid var(--border-soft); border-radius:10px; padding:8px 18px; font-weight:600;"
+                                    onclick="toggleLista(document.getElementById('btnToggleLista'))">
+                                DESCARTAR
+                            </button>
                             <button type="submit" class="btn btn-main btn-sm">GUARDAR</button>
                         </div>
                     </form>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -166,37 +167,22 @@
 .grabado-divider  { border-color:var(--border-soft); margin:0; }
 .grabado-row      { display:grid; grid-template-columns:280px 1fr; align-items:center; gap:16px; }
 .grabado-label    { font-size:13.5px; font-weight:600; color:var(--text-soft); text-align:right; }
-
-.dark-select {
-    background: #1a2744 !important;
-    color: var(--text-main) !important;
-    border-color: rgba(255,255,255,.1) !important;
-}
-.dark-select option {
-    background: #1a2744;
-    color: var(--text-main);
-}
+.dark-select { background: #1a2744 !important; color: var(--text-main) !important; border-color: rgba(255,255,255,.1) !important; }
+.dark-select option { background: #1a2744; color: var(--text-main); }
 </style>
 
 @push('scripts')
 <script>
-function toggleLista() {
+function toggleLista(btn) {
     const lista = document.getElementById('listaArchivos');
-    const btn   = event.target;
+    const boton = btn || document.getElementById('btnToggleLista');
     if (lista.style.display === 'none') {
         lista.style.display = 'block';
-        btn.textContent = 'CERRAR LISTA';
+        boton.textContent   = 'CERRAR LISTA';
     } else {
         lista.style.display = 'none';
-        btn.textContent = 'ABRIR LISTA...';
+        boton.textContent   = 'ABRIR LISTA...';
     }
-}
-
-const dd1 = document.getElementById('dd1');
-if (dd1) {
-    document.addEventListener('click', e => {
-        if (!e.target.closest('#ddWrap')) dd1.style.display = 'none';
-    });
 }
 </script>
 @endpush
