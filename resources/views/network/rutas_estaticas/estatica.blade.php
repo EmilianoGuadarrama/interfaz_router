@@ -1,20 +1,19 @@
 @extends('layouts.dashboard')
 
 @section('title', 'Rutas - IPv4 estáticas')
-
-{{-- Modificamos esta sección para que incluya el badge de estado --}}
-@section('page-title')
-    Rutas 
-    <span id="router-status" style="font-size: 0.85rem; font-weight: 500; margin-left: 10px; vertical-align: middle;">
-        {{-- Aquí se inyectará el estado vía JS --}}
-    </span>
-@endsection
+@section('page-title', 'Rutas')
 
 @section('content')
-    <p class="mb-4" style="color: var(--text-soft);">Las rutas especifican sobre qué interfaz y puerta de enlace se puede llegar a un cierto dispositivo o red.</p>
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <p class="mb-0" style="color: var(--text-soft); max-width: 70%;">Las rutas especifican sobre qué interfaz y puerta de enlace se puede llegar a un cierto dispositivo o red.</p>
+        
+        <div id="router-status" class="d-flex align-items-center gap-2 px-3 py-2 rounded-pill" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-soft); font-size: 0.85rem; transition: all 0.3s ease;">
+            <div class="spinner-grow spinner-grow-sm text-secondary" role="status" style="width: 12px; height: 12px;"></div>
+            <span class="text-secondary fw-bold">Verificando conexión...</span>
+        </div>
+    </div>
 
     <div class="panel-card">
-        <!-- Pestañas -->
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
                 <a class="nav-link active" href="{{ route('network.routes.static.ipv4') }}">Rutas IPv4 estáticas</a>
@@ -24,9 +23,15 @@
             </li>
         </ul>
 
-        <h4 class="mb-4 fs-5 fw-bold" style="color: #fff;">Rutas IPv4 estáticas</h4>
+        @include('network.partials.result')
 
-        <!-- Tabla dinámica para mostrar rutas leídas del router -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0 fs-5 fw-bold" style="color: #fff;">Rutas IPv4 estáticas</h4>
+            <button type="button" class="btn text-white fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addRouteModal" style="background: #36b9cc; border-radius: 10px; padding: 8px 16px;">
+                <i class="bi bi-plus-lg"></i> Añadir
+            </button>
+        </div>
+
         <div class="table-responsive mb-4">
             <table class="table-dark-custom">
                 <thead>
@@ -49,9 +54,7 @@
                 <tbody>
                     @forelse($routes as $route)
                         <tr>
-                            <td>
-                                <span class="soft-badge">{{ strtoupper($route['interface'] ?? '-') }}</span>
-                            </td>
+                            <td><span class="soft-badge">{{ strtoupper($route['interface'] ?? '-') }}</span></td>
                             <td>{{ $route['target'] ?? '-' }}</td>
                             <td>{{ $route['netmask'] ?? '-' }}</td>
                             <td>{{ $route['gateway'] ?? '-' }}</td>
@@ -78,87 +81,118 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
-        <!-- Formulario para agregar una nueva ruta -->
-        <div class="mt-5 pt-4" style="border-top: 1px solid var(--border-soft);">
-            <h5 class="mb-4 fw-bold" style="color: #fff;"><i class="bi bi-plus-circle me-2"></i>Añadir nueva ruta</h5>
-            <form action="{{ route('network.routes.static.ipv4.store') }}" method="POST">
-                @csrf
+    <div class="modal fade" id="addRouteModal" tabindex="-1" aria-labelledby="addRouteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: 16px;">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-soft); padding: 20px 24px;">
+                    <h5 class="modal-title fw-bold text-white" id="addRouteModalLabel">
+                        <i class="bi bi-signpost-split text-primary me-2"></i>Añadir nueva ruta IPv4
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 
-                <div class="row g-3 mb-4">
-                    <div class="col-md-2">
-                        <label style="color: var(--text-soft);" class="form-label">Interfaz</label>
-                        <input type="text" class="form-control" name="interface" required placeholder="ej. lan">
-                    </div>
-                    <div class="col-md-3">
-                        <label style="color: var(--text-soft);" class="form-label">Objetivo</label>
-                        <input type="text" class="form-control" name="target" required placeholder="ej. 192.168.2.0">
-                    </div>
-                    <div class="col-md-2">
-                        <label style="color: var(--text-soft);" class="form-label">Máscara IPv4</label>
-                        <input type="text" class="form-control" name="netmask" placeholder="ej. 255.255.255.0">
-                    </div>
-                    <div class="col-md-3">
-                        <label style="color: var(--text-soft);" class="form-label">Puerta de enlace</label>
-                        <input type="text" class="form-control" name="gateway" placeholder="ej. 192.168.1.1">
-                    </div>
-                    <div class="col-md-1">
-                        <label style="color: var(--text-soft);" class="form-label">Métrica</label>
-                        <input type="number" class="form-control" name="metric" placeholder="0">
-                    </div>
-                    <div class="col-md-1">
-                        <label style="color: var(--text-soft);" class="form-label">MTU</label>
-                        <input type="number" class="form-control" name="mtu" placeholder="1500">
-                    </div>
-                </div>
+                <form action="{{ route('network.routes.static.ipv4.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        
+                        <h6 class="fw-bold mb-3" style="color: #36b9cc;">Configuración General</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label" style="color: var(--text-soft);">Interfaz</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" name="interface" required placeholder="ej. lan">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="color: var(--text-soft);">Objetivo</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" name="target" required placeholder="Dirección IP o red (ej. 192.168.2.0)">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="color: var(--text-soft);">Máscara de red IPv4</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" name="netmask" placeholder="ej. 255.255.255.0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="color: var(--text-soft);">Puerta de enlace IPv4</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" name="gateway" placeholder="ej. 192.168.1.1">
+                            </div>
+                        </div>
 
-                <div class="d-flex gap-3">
-                    <button class="btn text-white" type="submit" style="background: #36b9cc; border:none; border-radius: 14px; padding: 10px 18px; font-weight: 700; font-size: .92rem;">
-                        GUARDAR Y APLICAR <i class="bi bi-caret-down-fill ms-1"></i>
-                    </button>
-                    <button class="btn text-white" type="reset" style="background: #e74a3b; border:none; border-radius: 14px; padding: 10px 18px; font-weight: 700; font-size: .92rem;">
-                        LIMPIAR FORMULARIO
-                    </button>
-                </div>
-            </form>
+                        <h6 class="fw-bold mb-3 mt-2" style="color: #36b9cc;">Configuración Avanzada</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label" style="color: var(--text-soft);">Métrica</label>
+                                <input type="number" class="form-control bg-dark text-white border-secondary" name="metric" placeholder="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" style="color: var(--text-soft);">MTU</label>
+                                <input type="number" class="form-control bg-dark text-white border-secondary" name="mtu" placeholder="1500">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" style="color: var(--text-soft);">Tipo de ruta</label>
+                                <select class="form-select bg-dark text-white border-secondary" name="type">
+                                    <option value="unicast" selected>unicast</option>
+                                    <option value="local">local</option>
+                                    <option value="broadcast">broadcast</option>
+                                    <option value="multicast">multicast</option>
+                                    <option value="unreachable">unreachable</option>
+                                    <option value="prohibit">prohibit</option>
+                                    <option value="blackhole">blackhole</option>
+                                    <option value="anycast">anycast</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="color: var(--text-soft);">Tabla de ruta</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" name="table" placeholder="ej. main">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" style="color: var(--text-soft);">Dirección de origen</label>
+                                <input type="text" class="form-control bg-dark text-white border-secondary" name="source" placeholder="Automático">
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mt-3">
+                            <input class="form-check-input bg-dark border-secondary" type="checkbox" value="1" id="onlink" name="onlink">
+                            <label class="form-check-label" for="onlink" style="color: var(--text-soft);">
+                                Ruta en enlace
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer" style="border-top: 1px solid var(--border-soft); padding: 16px 24px;">
+                        <button type="button" class="btn text-white fw-bold" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 20px;">
+                            DESCARTAR
+                        </button>
+                        <button type="submit" class="btn text-white fw-bold" style="background: #36b9cc; border-radius: 10px; padding: 8px 20px;">
+                            GUARDAR Y APLICAR
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    @include('network.partials.result')
-
-    {{-- SCRIPTS DE FUNCIONAMIENTO --}}
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Lógica del Botón Refrescar del Topbar
-            const refreshBtn = document.querySelector('.btn-main'); // Detecta tu botón azul del topbar
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', () => window.location.reload());
-            }
+        document.addEventListener("DOMContentLoaded", function() {
+            const statusContainer = document.getElementById('router-status');
 
-            // 2. Lógica del Estado de Conexión
-            const statusTarget = document.getElementById('router-status');
-            if (statusTarget) {
-                statusTarget.innerHTML = '<span style="color: var(--text-muted);"><i class="bi bi-arrow-repeat spin"></i> Comprobando...</span>';
-
-                fetch("{{ route('network.estado.conexion') }}")
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.connected) {
-                            statusTarget.innerHTML = '<span style="color: #2ecc71;"><i class="bi bi-check-circle-fill"></i> CONECTADO</span>';
-                        } else {
-                            statusTarget.innerHTML = '<span style="color: #e74a3b;"><i class="bi bi-x-circle-fill"></i> DESCONECTADO</span>';
-                        }
-                    })
-                    .catch(() => {
-                        statusTarget.innerHTML = '<span style="color: #f1c40f;"><i class="bi bi-exclamation-triangle-fill"></i> ERROR DE COMUNICACIÓN</span>';
-                    });
-            }
+            fetch("{{ route('network.estado.conexion') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if(data.connected) {
+                        statusContainer.style.background = 'rgba(40, 167, 69, 0.15)';
+                        statusContainer.style.borderColor = 'rgba(40, 167, 69, 0.3)';
+                        statusContainer.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> <span class="text-success fw-bold">Router Conectado</span>';
+                    } else {
+                        statusContainer.style.background = 'rgba(220, 53, 69, 0.15)';
+                        statusContainer.style.borderColor = 'rgba(220, 53, 69, 0.3)';
+                        statusContainer.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i> <span class="text-danger fw-bold">Desconectado</span>';
+                    }
+                })
+                .catch(error => {
+                    statusContainer.style.background = 'rgba(220, 53, 69, 0.15)';
+                    statusContainer.style.borderColor = 'rgba(220, 53, 69, 0.3)';
+                    statusContainer.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> <span class="text-danger fw-bold">Sin conexión</span>';
+                });
         });
     </script>
-
-    {{-- Animación para el icono de carga --}}
-    <style>
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .spin { display: inline-block; animation: spin 1s linear infinite; }
-    </style>
 @endsection
