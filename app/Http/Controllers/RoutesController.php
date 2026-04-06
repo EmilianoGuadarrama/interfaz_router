@@ -66,9 +66,9 @@ class RoutesController extends Controller
 
         return view('network.rutas_estaticas.estatica', compact('routes'));
     }
-
-    public function storeStaticIpv4(Request $request)
+public function storeStaticIpv4(Request $request)
     {
+        // Añadimos los nuevos campos a la validación
         $validated = $request->validate([
             'interface' => 'required|string',
             'target' => 'required|string',
@@ -76,26 +76,45 @@ class RoutesController extends Controller
             'gateway' => 'nullable|string',
             'metric' => 'nullable|integer',
             'mtu' => 'nullable|integer',
+            'type' => 'nullable|string',
+            'table' => 'nullable|string',
+            'source' => 'nullable|string',
+            'onlink' => 'nullable|boolean', // El checkbox
         ]);
 
         try {
             $this->router->execute(["uci add network route 2>&1"]);
             $setCommands = [];
+            
             foreach ($validated as $key => $value) {
-                if (!empty($value)) {
+                // Manejo especial para el checkbox 'onlink' (OpenWrt espera '1' o '0')
+                if ($key === 'onlink') {
+                    $value = $value ? '1' : '0';
+                }
+
+                // Si el campo no está vacío, lo agregamos al comando
+                if ($value !== null && $value !== '') {
                     $setCommands[] = "uci set network.@route[-1].{$key}='{$value}' 2>&1";
                 }
             }
+            
             $setCommands[] = "uci commit network 2>&1";
             $setCommands[] = "/etc/init.d/network restart 2>&1";
 
             $result = $this->router->execute($setCommands);
-            return back()->with(['result_success' => $result['success'], 'result_output' => $result['output'], 'result_title' => $result['success'] ? 'Ruta IPv4 agregada' : 'Error al guardar ruta']);
+            return back()->with([
+                'result_success' => $result['success'], 
+                'result_output' => $result['output'], 
+                'result_title' => $result['success'] ? 'Ruta IPv4 agregada' : 'Error al guardar ruta'
+            ]);
         } catch (\Throwable $e) {
-            return back()->with(['result_success' => false, 'result_output' => $e->getMessage(), 'result_title' => 'Error de ejecución']);
+            return back()->with([
+                'result_success' => false, 
+                'result_output' => $e->getMessage(), 
+                'result_title' => 'Error de ejecución'
+            ]);
         }
     }
-
     public function destroyStaticIpv4(Request $request)
     {
         $validated = $request->validate(['route_key' => 'required|string']);
