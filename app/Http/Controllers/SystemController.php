@@ -32,7 +32,7 @@ class SystemController extends Controller
         $leds = [];
         try {
             $result = $this->router->execute(["uci show system | grep -E 'led'"]);
-            $temp   = [];
+            $temp = [];
             foreach (explode("\n", $result['output']) as $line) {
                 if (preg_match("/system\.led_(\w+)\.(name|sysfs|default|trigger|mode|delayon|delayoff)='(.+)'/", trim($line), $m)) {
                     $temp[$m[1]][$m[2]] = $m[3];
@@ -40,14 +40,14 @@ class SystemController extends Controller
             }
             foreach ($temp as $key => $e) {
                 $leds[] = [
-                    'key'        => $key,
-                    'nombre'     => $e['name']     ?? $key,
-                    'led_name'   => $e['sysfs']    ?? '-',
-                    'estado'     => ($e['default'] ?? '0') === '1' ? 'Encendido' : 'Apagado',
-                    'disparador' => $e['trigger']  ?? 'defaulton',
-                    'modo'       => isset($e['mode']) ? explode(' ', $e['mode']) : [],
-                    'timer_on'   => $e['delayon']  ?? null,
-                    'timer_off'  => $e['delayoff'] ?? null,
+                    'key' => $key,
+                    'nombre' => $e['name'] ?? $key,
+                    'led_name' => $e['sysfs'] ?? '-',
+                    'estado' => ($e['default'] ?? '0') === '1' ? 'Encendido' : 'Apagado',
+                    'disparador' => $e['trigger'] ?? 'defaulton',
+                    'modo' => isset($e['mode']) ? explode(' ', $e['mode']) : [],
+                    'timer_on' => $e['delayon'] ?? null,
+                    'timer_off' => $e['delayoff'] ?? null,
                 ];
             }
         } catch (\Throwable $e) {
@@ -56,9 +56,9 @@ class SystemController extends Controller
 
         if (empty($leds)) {
             $leds = [
-                ['key' => 'wlan', 'nombre' => 'wlan', 'led_name' => 'green:wlan', 'estado' => 'Apagado', 'disparador' => 'netdev',  'modo' => [], 'timer_on' => null, 'timer_off' => null],
-                ['key' => 'wan',  'nombre' => 'wan',  'led_name' => 'orange:wan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
-                ['key' => 'lan',  'nombre' => 'lan',  'led_name' => 'green:lan',  'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'wlan', 'nombre' => 'wlan', 'led_name' => 'green:wlan', 'estado' => 'Apagado', 'disparador' => 'netdev', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'wan', 'nombre' => 'wan', 'led_name' => 'orange:wan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'lan', 'nombre' => 'lan', 'led_name' => 'green:lan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
             ];
         }
 
@@ -68,8 +68,8 @@ class SystemController extends Controller
     public function createLed()
     {
         return view('system.leds.leds_form', [
-            'led'          => null,
-            'ledNames'     => $this->ledNames,
+            'led' => null,
+            'ledNames' => $this->ledNames,
             'disparadores' => $this->disparadores,
         ]);
     }
@@ -77,13 +77,13 @@ class SystemController extends Controller
     public function storeLed(Request $request)
     {
         $request->validate([
-            'nombre'     => ['required', 'string', 'max:50'],
-            'led_name'   => ['required', 'string'],
+            'nombre' => ['required', 'string', 'max:50'],
+            'led_name' => ['required', 'string'],
             'disparador' => ['required', 'string'],
         ]);
 
         try {
-            $key     = strtolower(preg_replace('/\s+/', '_', $request->nombre));
+            $key = strtolower(preg_replace('/\s+/', '_', $request->nombre));
             $default = $request->boolean('estado_predeterminado') ? '1' : '0';
 
             $cmds = [
@@ -94,7 +94,7 @@ class SystemController extends Controller
                 "uci set system.led_{$key}.trigger='{$request->disparador}'",
             ];
             if ($request->disparador === 'netdev') {
-                $modo   = implode(' ', $request->input('modo_disparador', []));
+                $modo = implode(' ', $request->input('modo_disparador', []));
                 $cmds[] = "uci set system.led_{$key}.mode='{$modo}'";
             }
             if ($request->disparador === 'timer') {
@@ -107,7 +107,7 @@ class SystemController extends Controller
             $result = $this->router->execute($cmds);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'LED creado' : 'Error al crear LED',
+                'result_title' => $result['success'] ? 'LED creado' : 'Error al crear LED',
             ]);
         } catch (\Throwable $e) {
             Log::error('storeLed: ' . $e->getMessage());
@@ -128,22 +128,22 @@ class SystemController extends Controller
             }
             if ($e) {
                 $led = [
-                    'key'        => $key,
-                    'nombre'     => $e['name']     ?? $key,
-                    'led_name'   => $e['sysfs']    ?? '',
-                    'estado'     => ($e['default'] ?? '0') === '1',
-                    'disparador' => $e['trigger']  ?? 'defaulton',
-                    'modo'       => isset($e['mode']) ? explode(' ', $e['mode']) : [],
-                    'timer_on'   => $e['delayon']  ?? 500,
-                    'timer_off'  => $e['delayoff'] ?? 500,
+                    'key' => $key,
+                    'nombre' => $e['name'] ?? $key,
+                    'led_name' => $e['sysfs'] ?? '',
+                    'estado' => ($e['default'] ?? '0') === '1',
+                    'disparador' => $e['trigger'] ?? 'defaulton',
+                    'modo' => isset($e['mode']) ? explode(' ', $e['mode']) : [],
+                    'timer_on' => $e['delayon'] ?? 500,
+                    'timer_off' => $e['delayoff'] ?? 500,
                 ];
             }
         } catch (\Throwable $e) {
             Log::error('editLed: ' . $e->getMessage());
         }
         return view('system.leds.leds_form', [
-            'led'          => $led,
-            'ledNames'     => $this->ledNames,
+            'led' => $led,
+            'ledNames' => $this->ledNames,
             'disparadores' => $this->disparadores,
         ]);
     }
@@ -151,8 +151,8 @@ class SystemController extends Controller
     public function updateLed(Request $request, $key)
     {
         $request->validate([
-            'nombre'     => ['required', 'string', 'max:50'],
-            'led_name'   => ['required', 'string'],
+            'nombre' => ['required', 'string', 'max:50'],
+            'led_name' => ['required', 'string'],
             'disparador' => ['required', 'string'],
         ]);
 
@@ -165,7 +165,7 @@ class SystemController extends Controller
                 "uci set system.led_{$key}.trigger='{$request->disparador}'",
             ];
             if ($request->disparador === 'netdev') {
-                $modo   = implode(' ', $request->input('modo_disparador', []));
+                $modo = implode(' ', $request->input('modo_disparador', []));
                 $cmds[] = "uci set system.led_{$key}.mode='{$modo}'";
             }
             if ($request->disparador === 'timer') {
@@ -178,7 +178,7 @@ class SystemController extends Controller
             $result = $this->router->execute($cmds);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'LED actualizado' : 'Error al actualizar',
+                'result_title' => $result['success'] ? 'LED actualizado' : 'Error al actualizar',
             ]);
         } catch (\Throwable $e) {
             Log::error('updateLed: ' . $e->getMessage());
@@ -196,7 +196,7 @@ class SystemController extends Controller
             ]);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'LED eliminado' : 'Error al eliminar',
+                'result_title' => $result['success'] ? 'LED eliminado' : 'Error al eliminar',
             ]);
         } catch (\Throwable $e) {
             Log::error('destroyLed: ' . $e->getMessage());
@@ -251,7 +251,7 @@ class SystemController extends Controller
             if ($result['success']) {
                 $content = base64_decode($result['output']);
                 return response($content, 200, [
-                    'Content-Type'        => 'application/x-tar',
+                    'Content-Type' => 'application/x-tar',
                     'Content-Disposition' => 'attachment; filename="backup.tar.gz"',
                 ]);
             }
@@ -266,11 +266,11 @@ class SystemController extends Controller
         $request->validate(['backup' => ['required', 'file']]);
 
         try {
-            $file       = $request->file('backup');
-            $localPath  = $file->getPathname();
+            $file = $request->file('backup');
+            $localPath = $file->getPathname();
             $remotePath = '/tmp/backup.tar.gz';
 
-            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
+            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int)env('ROUTER_PORT', 22));
             if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
                 throw new \Exception('Error de autenticación SFTP.');
             }
@@ -283,7 +283,7 @@ class SystemController extends Controller
 
             return back()->with([
                 'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'Backup restaurado correctamente' : 'Error al restaurar backup',
+                'result_title' => $result['success'] ? 'Backup restaurado correctamente' : 'Error al restaurar backup',
             ]);
 
         } catch (\Throwable $e) {
@@ -298,7 +298,7 @@ class SystemController extends Controller
             $result = $this->router->execute(["firstboot -y && reboot now"]);
             return back()->with([
                 'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'Restablecimiento iniciado' : 'Error al restablecer',
+                'result_title' => $result['success'] ? 'Restablecimiento iniciado' : 'Error al restablecer',
             ]);
         } catch (\Throwable $e) {
             Log::error('Restablecer fábrica: ' . $e->getMessage());
@@ -315,7 +315,7 @@ class SystemController extends Controller
             if ($result['success']) {
                 $content = base64_decode($result['output']);
                 return response($content, 200, [
-                    'Content-Type'        => 'application/octet-stream',
+                    'Content-Type' => 'application/octet-stream',
                     'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
                 ]);
             }
@@ -330,11 +330,11 @@ class SystemController extends Controller
         $request->validate(['imagen' => ['required', 'file']]);
 
         try {
-            $file       = $request->file('imagen');
-            $localPath  = $file->getPathname();
+            $file = $request->file('imagen');
+            $localPath = $file->getPathname();
             $remotePath = '/tmp/firmware.bin';
 
-            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
+            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int)env('ROUTER_PORT', 22));
             if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
                 throw new \Exception('Error de autenticación SFTP.');
             }
@@ -344,7 +344,7 @@ class SystemController extends Controller
 
             return back()->with([
                 'result_success' => true,
-                'result_title'   => 'Imagen enviada. El router se reiniciará en unos momentos.',
+                'result_title' => 'Imagen enviada. El router se reiniciará en unos momentos.',
             ]);
 
         } catch (\Throwable $e) {
@@ -358,12 +358,12 @@ class SystemController extends Controller
         $request->validate(['lista_contenido' => ['required', 'string']]);
         try {
             $contenido = $request->lista_contenido;
-            $result    = $this->router->execute([
+            $result = $this->router->execute([
                 "cat > /etc/sysupgrade.conf << 'EOF'\n{$contenido}\nEOF"
             ]);
             return back()->with([
                 'result_success' => $result['success'],
-                'result_title'   => $result['success'] ? 'Lista guardada correctamente' : 'Error al guardar la lista',
+                'result_title' => $result['success'] ? 'Lista guardada correctamente' : 'Error al guardar la lista',
             ]);
         } catch (\Throwable $e) {
             Log::error('Guardar lista: ' . $e->getMessage());
@@ -372,22 +372,247 @@ class SystemController extends Controller
     }
 
 // GET /reiniciar
-public function reiniciar()
-{
-    return view('system.reiniciar.reiniciar');
-}
+    public function reiniciar()
+    {
+        return view('system.reiniciar.reiniciar');
+    }
 
 // POST /reiniciar/run
-public function reiniciarRun()
-{
-    try {
-        $result = $this->router->execute(['reboot now']);
-        return redirect()->route('reiniciar.index')
-            ->with('success', 'El dispositivo se está reiniciando...');
-    } catch (\Throwable $e) {
-        Log::error('Reiniciar: ' . $e->getMessage());
-        return redirect()->route('reiniciar.index')
-            ->with('error', 'No se pudo enviar la orden de reinicio.');
+    public function reiniciarRun()
+    {
+        try {
+            $result = $this->router->execute(['reboot now']);
+            return redirect()->route('reiniciar.index')
+                ->with('success', 'El dispositivo se está reiniciando...');
+        } catch (\Throwable $e) {
+            Log::error('Reiniciar: ' . $e->getMessage());
+            return redirect()->route('reiniciar.index')
+                ->with('error', 'No se pudo enviar la orden de reinicio.');
+        }
     }
-}
+
+    // ARRANQUE Y TAREAS PROGRAMADAS
+
+    private function limpiarSalidaExecute(string $output, array $commands = []): string
+    {
+        $clean = $output;
+
+        $clean = preg_replace('/>>> Comando \d+:\s*/', '', $clean);
+
+        foreach ($commands as $command) {
+            $pattern = '/^' . preg_quote($command, '/') . '\s*$/m';
+            $clean = preg_replace($pattern, '', $clean);
+        }
+
+        $clean = preg_replace('/^\[sin salida\]\s*$/m', '', $clean);
+        $clean = preg_replace('/^__START__\s*$/m', '', $clean);
+        $clean = preg_replace('/^__END__\s*$/m', '', $clean);
+        $clean = preg_replace("/\n{3,}/", "\n\n", $clean);
+
+        return trim($clean);
+    }
+
+
+
+    public function testConnection()
+    {
+        try {
+            $commands = ['echo conectado'];
+            $result = $this->router->execute($commands);
+            $output = $this->limpiarSalidaExecute($result['output'], $commands);
+
+            return response('<pre>' . e($output) . '</pre>');
+        } catch (\Throwable $e) {
+            Log::error('Test router: ' . $e->getMessage());
+            return response('Error de conexión con el router: ' . $e->getMessage(), 500);
+        }
+    }
+
+    public function startup(Request $request)
+    {
+        try {
+            $scriptsCommands = [
+                "for s in /etc/init.d/*; do [ -f \"\$s\" ] || continue; name=\$(basename \"\$s\"); enabled=0; prio='--'; for link in /etc/rc.d/S??\$name; do [ -e \"\$link\" ] || continue; enabled=1; base=\$(basename \"\$link\"); prio=\$(echo \"\$base\" | sed 's/^S\\([0-9][0-9]\\).*/\\1/'); break; done; echo \"\$prio|\$name|\$enabled\"; done | sort"
+            ];
+
+            $scriptsResult = $this->router->execute($scriptsCommands);
+            $scriptsOutput = $this->limpiarSalidaExecute($scriptsResult['output'], $scriptsCommands);
+
+            $scripts = [];
+
+            foreach (preg_split('/\r\n|\r|\n/', $scriptsOutput) as $line) {
+                $line = trim($line);
+
+                if ($line === '') {
+                    continue;
+                }
+
+                $parts = explode('|', $line);
+
+                if (count($parts) !== 3) {
+                    continue;
+                }
+
+                $scripts[] = [
+                    'priority' => $parts[0],
+                    'name' => $parts[1],
+                    'enabled' => $parts[2] === '1',
+                ];
+            }
+
+            $localCommands = [
+                "[ -f /etc/rc.local ] && cat /etc/rc.local || printf 'exit 0\n'"
+            ];
+
+            $localResult = $this->router->execute($localCommands);
+            $content = $this->limpiarSalidaExecute($localResult['output'], $localCommands);
+
+            return view('system.arranque.arranque', [
+                'scripts' => $scripts,
+                'content' => $content,
+                'activeTab' => $request->get('tab', 'scripts'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Startup: ' . $e->getMessage());
+
+            return redirect()->route('startup', ['tab' => 'scripts'])->with([
+                'result_success' => false,
+                'result_title' => 'No se pudo cargar el módulo de arranque.',
+            ]);
+        }
+    }
+
+    public function startupScriptAction($script, $action)
+    {
+        $allowedActions = ['enable', 'disable', 'start', 'restart', 'stop'];
+
+        if (!in_array($action, $allowedActions, true)) {
+            return redirect()->route('startup', ['tab' => 'scripts'])->with([
+                'result_success' => false,
+                'result_title' => 'Acción no válida.',
+            ]);
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9._-]+$/', $script)) {
+            return redirect()->route('startup', ['tab' => 'scripts'])->with([
+                'result_success' => false,
+                'result_title' => 'Script no válido.',
+            ]);
+        }
+
+        try {
+            $commands = [
+                "/etc/init.d/{$script} {$action}"
+            ];
+
+            $result = $this->router->execute($commands);
+
+            return redirect()->route('startup', ['tab' => 'scripts'])->with([
+                'result_success' => $result['success'],
+                'result_title' => $result['success']
+                    ? "Acción '{$action}' ejecutada sobre {$script}"
+                    : "No se pudo ejecutar '{$action}' sobre {$script}",
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Startup script action: ' . $e->getMessage());
+
+            return redirect()->route('startup', ['tab' => 'scripts'])->with([
+                'result_success' => false,
+                'result_title' => 'Error de conexión',
+            ]);
+        }
+    }
+
+    public function updateStartup(Request $request)
+    {
+        $request->validate([
+            'content' => ['required', 'string'],
+        ]);
+
+        try {
+            $content = $request->input('content');
+
+            $commands = [
+                "cat > /etc/rc.local << 'EOF'\n{$content}\nEOF",
+                "chmod +x /etc/rc.local"
+            ];
+
+            $result = $this->router->execute($commands);
+
+            return redirect()->route('startup', ['tab' => 'local'])->with([
+                'result_success' => $result['success'],
+                'result_title' => $result['success']
+                    ? 'Arranque local actualizado correctamente'
+                    : 'Error al actualizar arranque local',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Update startup: ' . $e->getMessage());
+
+            return redirect()->route('startup', ['tab' => 'local'])->with([
+                'result_success' => false,
+                'result_title' => 'Error de conexión',
+            ]);
+        }
+    }
+
+    public function scheduledTasks()
+    {
+        try {
+            $prepareCommands = [
+                'mkdir -p /etc/crontabs',
+                'touch /etc/crontabs/root'
+            ];
+
+            $this->router->execute($prepareCommands);
+
+            $readCommands = [
+                'cat /etc/crontabs/root'
+            ];
+
+            $result = $this->router->execute($readCommands);
+            $content = $this->limpiarSalidaExecute($result['output'], $readCommands);
+
+            return view('system.tareas_programadas.tareas_programadas', compact('content'));
+        } catch (\Throwable $e) {
+            Log::error('Scheduled tasks: ' . $e->getMessage());
+
+            return redirect()->route('tasks')->with([
+                'result_success' => false,
+                'result_title' => 'No se pudo leer el archivo de tareas programadas.',
+            ]);
+        }
+    }
+
+    public function updateScheduledTasks(Request $request)
+    {
+        $request->validate([
+            'content' => ['nullable', 'string'],
+        ]);
+
+        try {
+            $content = $request->input('content', '');
+
+            $commands = [
+                'mkdir -p /etc/crontabs',
+                "cat > /etc/crontabs/root << 'EOF'\n{$content}\nEOF",
+                '/etc/init.d/cron restart'
+            ];
+
+            $result = $this->router->execute($commands);
+
+            return redirect()->route('tasks')->with([
+                'result_success' => $result['success'],
+                'result_title' => $result['success']
+                    ? 'Tareas programadas actualizadas correctamente'
+                    : 'Error al actualizar tareas programadas',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Update scheduled tasks: ' . $e->getMessage());
+
+            return redirect()->route('tasks')->with([
+                'result_success' => false,
+                'result_title' => 'Error de conexión',
+            ]);
+        }
+    }
 }

@@ -84,3 +84,11 @@ Route::post('/grabado/guardar-lista', [SystemController::class, 'guardarLista'])
 // Reinicio
 Route::get('/reiniciar', [SystemController::class, 'reiniciar'])->name('reiniciar.index');
 Route::post('/reiniciar/run', [SystemController::class, 'reiniciarRun'])->name('reiniciar.run');
+
+// arranque y tareas programadas
+Route::get('/arranque', [SystemController::class, 'startup'])->name('startup');
+Route::post('/arranque', [SystemController::class, 'updateStartup'])->name('startup.update');
+Route::post('/arranque/scripts/{script}/{action}', [SystemController::class, 'startupScriptAction'])->name('startup.scripts.action');
+
+Route::get('/tareas-programadas', [SystemController::class, 'scheduledTasks'])->name('tasks');
+Route::post('/tareas-programadas', [SystemController::class, 'updateScheduledTasks'])->name('tasks.update');
