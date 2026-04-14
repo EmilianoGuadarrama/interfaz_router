@@ -395,7 +395,7 @@
             <h1 class="brand-title">NuupNet</h1>
         </div>
             <li>
-    <a href="{{ route('network.hostentries') }}" 
+    <a href="{{ route('network.hostentries') }}"
        class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
         <i class="bi bi-globe2"></i> Nombres de host
     </a>
@@ -431,11 +431,23 @@
                     <ul class="submenu">
                         <li><a href="#" class="nav-link"><i class="bi bi-pc-display"></i> Sistema</a></li>
                         <li><a href="#" class="nav-link"><i class="bi bi-person-gear"></i> Administración</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-power"></i> Arranque</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-clock-history"></i> Tareas programadas</a></li>
+
+                        <li>
+                            <a href="{{ route('startup') }}"
+                               class="nav-link {{ request()->routeIs('startup') || request()->routeIs('startup.*') ? 'active' : '' }}">
+                                <i class="bi bi-power"></i> Arranque
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{{ route('tasks') }}"
+                               class="nav-link {{ request()->routeIs('tasks') || request()->routeIs('tasks.*') ? 'active' : '' }}">
+                                <i class="bi bi-clock-history"></i> Tareas programadas
+                            </a>
+                        </li>
                        <li><a href="{{ route('leds.index') }}" class="nav-link"><i class="bi bi-lightbulb"></i> Configuración de LEDs</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
+                        <li><a href="{{ route('grabado.index') }}" class="nav-link {{ request()->routeIs('grabado.*') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
+                        <li><a href="{{ route('reiniciar.index') }}" class="nav-link"><i class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
                     </ul>
                 </div>
             </div>

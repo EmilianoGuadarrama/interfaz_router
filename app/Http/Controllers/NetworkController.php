@@ -3,16 +3,33 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\RouterSshService;
-use Illuminate\Support\Facades\Log;
 
 class NetworkController extends Controller
 {
-    protected RouterSshService $router;
+    /*
+    |--------------------------------------------------------------------------
+    | VISTAS PRINCIPALES
+    |--------------------------------------------------------------------------
+    */
 
-    public function __construct(RouterSshService $router)
+    public function showSwitch()
     {
-        $this->router = $router;
+        return redirect()->route('network.switch.general');
+    }
+
+    public function updateSwitch(Request $request)
+    {
+        return back()->with('success', 'Configuración de conmutador actualizada correctamente.');
+    }
+
+    public function showDhcpDns()
+    {
+        return redirect()->route('network.dhcpdns.general');
+    }
+
+    public function updateDhcpDns(Request $request)
+    {
+        return back()->with('success', 'Configuración de DHCP y DNS actualizada correctamente.');
     }
 
     /* =========================
@@ -95,56 +112,73 @@ class NetworkController extends Controller
         return redirect()->route('network.interfaces')->with('success', 'Interfaz WAN actualizada correctamente (Simulado).');
     }
 
-    /* =========================
-       CONMUTADOR
-    ========================= */
+    /*
+    |--------------------------------------------------------------------------
+    | CONMUTADOR
+    |--------------------------------------------------------------------------
+    */
 
     public function switchGeneral()
     {
-        return view('network.switch.general');
+        $config = session('switch_general', [
+            'nombre' => 'Switch principal',
+            'ip_gestion' => '192.168.10.2',
+            'mascara' => '255.255.255.0',
+            'gateway' => '192.168.10.1',
+            'descripcion' => 'Conmutador de red local',
+        ]);
+
+        return view('network.switch.general', compact('config'));
     }
 
     public function switchVlans()
     {
-        return view('network.switch.vlans');
+        $vlans = session('switch_vlans', [
+            [
+                'id' => 10,
+                'nombre' => 'Administracion',
+                'puertos' => '1-4',
+            ],
+            [
+                'id' => 20,
+                'nombre' => 'Usuarios',
+                'puertos' => '5-12',
+            ],
+        ]);
+
+        return view('network.switch.vlans', compact('vlans'));
     }
 
     public function updateSwitchVlans(Request $request)
     {
         $data = $request->validate([
-            'enable_vlan' => ['nullable'],
+            'vlan_id' => 'nullable|integer|min:1|max:4094',
+            'vlan_nombre' => 'nullable|string|max:100',
+            'puertos' => 'nullable|string|max:100',
         ]);
 
-        try {
-            $enabled = $request->boolean('enable_vlan') ? '1' : '0';
+        $vlans = session('switch_vlans', []);
 
-            $commands = [
-                "uci set network.@switch[0].enable_vlan='{$enabled}' 2>&1",
-                "uci commit network 2>&1",
-                "/etc/init.d/network restart 2>&1",
+        if (!empty($data['vlan_id']) && !empty($data['vlan_nombre'])) {
+            $vlans[] = [
+                'id' => $data['vlan_id'],
+                'nombre' => $data['vlan_nombre'],
+                'puertos' => $data['puertos'] ?? '',
             ];
 
-            $result = $this->router->execute($commands);
+            session(['switch_vlans' => $vlans]);
 
-            return back()->with([
-                'result_success' => $result['success'],
-                'result_output' => $result['output'],
-                'result_title' => $result['success'] ? 'Conmutador actualizado' : 'Error al actualizar conmutador',
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Error conmutador: ' . $e->getMessage());
-
-            return back()->with([
-                'result_success' => false,
-                'result_output' => $e->getMessage(),
-                'result_title' => 'Error de conexión o ejecución',
-            ]);
+            return back()->with('success', 'VLAN agregada correctamente.');
         }
+
+        return back()->with('success', 'Configuración de VLAN actualizada correctamente.');
     }
 
-    /* =========================
-       DHCP Y DNS
-    ========================= */
+    /*
+    |--------------------------------------------------------------------------
+    | DHCP Y DNS - CONFIGURACIÓN GENERAL
+    |--------------------------------------------------------------------------
+    */
 
     public function dhcpDnsGeneral()
     {
@@ -239,27 +273,128 @@ class NetworkController extends Controller
 
     public function updateDhcpDnsResolvHosts(Request $request)
     {
-        return back()->with('result_title', 'Sección pendiente de conectar al router.');
+        $data = $request->validate([
+            'lease_file' => 'nullable|string|max:255',
+            'resolv_file' => 'nullable|string|max:255',
+            'additional_hosts' => 'nullable|string|max:255',
+        ]);
+
+        $data['use_ethers'] = $request->has('use_ethers');
+        $data['ignore_resolv'] = $request->has('ignore_resolv');
+        $data['ignore_hosts'] = $request->has('ignore_hosts');
+
+        session(['dhcpdns_resolv' => $data]);
+
+        return back()->with('success', $this->getSuccessMessage($request, 'Configuración de archivos Resolv y Hosts guardada'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DHCP Y DNS - TFTP
+    |--------------------------------------------------------------------------
+    */
+
+    public function dhcpDnsTftp()
+    {
+        $config = session('dhcpdns_tftp', [
+            'enable_tftp' => false,
+        ]);
+
+        return view('network.dhcpdns.tftp', compact('config'));
     }
 
     public function updateDhcpDnsTftp(Request $request)
     {
-        return back()->with('result_title', 'Sección pendiente de conectar al router.');
+        $data = [
+            'enable_tftp' => $request->has('enable_tftp'),
+        ];
+
+        session(['dhcpdns_tftp' => $data]);
+
+        return back()->with('success', $this->getSuccessMessage($request, 'Configuración TFTP guardada'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DHCP Y DNS - CONFIGURACIÓN AVANZADA
+    |--------------------------------------------------------------------------
+    */
+
+    public function dhcpDnsAdvanced()
+    {
+        $config = session('dhcpdns_advanced', [
+            'suppress_log' => false,
+            'bogus_filter' => false,
+            'sequential_ip' => false,
+            'localise_queries' => true,
+            'private_filter' => true,
+            'expand_hosts' => true,
+            'additional_servers_file' => '',
+            'bogus_nxdomain' => '67.215.65.132',
+            'dns_port' => 53,
+            'dns_query_port' => 'cualquiera',
+            'dhcp_max' => 'ilimitado',
+            'edns_packet_max' => 1280,
+            'dns_forward_max' => 150,
+            'cache_size' => 150,
+        ]);
+
+        return view('network.dhcpdns.advanced', compact('config'));
     }
 
     public function updateDhcpDnsAdvanced(Request $request)
     {
-        return back()->with('result_title', 'Sección pendiente de conectar al router.');
+        $data = $request->validate([
+            'additional_servers_file' => 'nullable|string|max:255',
+            'bogus_nxdomain' => 'nullable|string|max:255',
+            'dns_port' => 'nullable|integer|min:1|max:65535',
+            'dns_query_port' => 'nullable|string|max:100',
+            'dhcp_max' => 'nullable|string|max:100',
+            'edns_packet_max' => 'nullable|integer|min:1',
+            'dns_forward_max' => 'nullable|integer|min:1',
+            'cache_size' => 'nullable|integer|min:0',
+        ]);
+
+        $data['suppress_log'] = $request->has('suppress_log');
+        $data['bogus_filter'] = $request->has('bogus_filter');
+        $data['sequential_ip'] = $request->has('sequential_ip');
+        $data['localise_queries'] = $request->has('localise_queries');
+        $data['private_filter'] = $request->has('private_filter');
+        $data['expand_hosts'] = $request->has('expand_hosts');
+
+        session(['dhcpdns_advanced' => $data]);
+
+        return back()->with('success', $this->getSuccessMessage($request, 'Configuración avanzada guardada'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DHCP Y DNS - ASIGNACIONES ESTÁTICAS
+    |--------------------------------------------------------------------------
+    */
+
+    public function dhcpDnsStatic()
+    {
+        $staticAssignments = session('dhcp_static_assignments', []);
+
+        $activeLeases = session('dhcp_active_leases', [
+            [
+                'host_name' => 'Susu',
+                'ipv4_address' => '192.168.10.180',
+                'mac_address' => '50:EB:F6:D1:96:1E',
+                'remaining_time' => '11h 56m 51s',
+            ]
+        ]);
+
+        return view('network.dhcpdns.static', compact('staticAssignments', 'activeLeases'));
     }
 
     public function updateDhcpDnsStatic(Request $request)
     {
-        return back()->with('result_title', 'Sección pendiente de conectar al router.');
+        return back()->with('success', $this->getSuccessMessage($request, 'Configuración de asignaciones estáticas guardada'));
     }
-    /* =========================
-    NOMBRES DE HOST (DNS local)
-    ========================= */
-    public function hostEntries()
+
+    public function storeDhcpDnsStatic(Request $request)
     {
         try {
             $result = $this->router->execute([

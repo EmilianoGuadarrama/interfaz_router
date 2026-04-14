@@ -48,6 +48,8 @@ Route::prefix('red')->name('network.')->group(function () {
 
         Route::get('/static', [NetworkController::class, 'dhcpDnsStatic'])->name('static');
         Route::post('/static/guardar', [NetworkController::class, 'updateDhcpDnsStatic'])->name('static.update');
+        Route::post('/static/agregar', [NetworkController::class, 'storeDhcpDnsStatic'])->name('static.store');
+        Route::delete('/static/{index}', [NetworkController::class, 'destroyDhcpDnsStatic'])->name('static.destroy');
     });
 
     Route::get('/rutas/estaticas/ipv4', [RoutesController::class, 'staticIpv4'])->name('routes.static.ipv4');
@@ -56,14 +58,14 @@ Route::prefix('red')->name('network.')->group(function () {
 
     Route::get('/rutas/estaticas/ipv6', [RoutesController::class, 'staticIpv6'])->name('routes.static.ipv6');
     Route::post('/rutas/estaticas/ipv6/guardar', [RoutesController::class, 'storeStaticIpv6'])->name('routes.static.ipv6.store');
-    Route::get('/estado-conexion', [App\Http\Controllers\RoutesController::class, 'checkConnection'])->name('estado.conexion');
     Route::delete('/rutas/estaticas/ipv6/eliminar', [RoutesController::class, 'destroyStaticIpv6'])->name('routes.static.ipv6.destroy');
+
+    Route::get('/estado-conexion', [RoutesController::class, 'checkConnection'])->name('estado.conexion');
 
     // Nombres de host
     Route::get('/nombres-host', [NetworkController::class, 'hostEntries'])->name('hostentries');
     Route::post('/nombres-host/agregar', [NetworkController::class, 'storeHostEntry'])->name('hostentries.store');
     Route::delete('/nombres-host/eliminar', [NetworkController::class, 'destroyHostEntry'])->name('hostentries.destroy');
-
 });
 
 // LEDs
@@ -75,3 +77,24 @@ Route::prefix('sistema')->name('leds.')->group(function () {
     Route::post('/leds/{key}', [SystemController::class, 'updateLed'])->name('update');
     Route::post('/leds/{key}/eliminar', [SystemController::class, 'destroyLed'])->name('destroy');
 });
+
+// GRABADO DE IMAGEN
+Route::get('/grabado', [SystemController::class, 'grabado'])->name('grabado.index');
+Route::post('/grabado/backup', [SystemController::class, 'descargarBackup'])->name('grabado.backup');
+Route::post('/grabado/restaurar', [SystemController::class, 'restaurarBackup'])->name('grabado.restaurar');
+Route::post('/grabado/fabrica', [SystemController::class, 'restablecerFabrica'])->name('grabado.fabrica');
+Route::post('/grabado/mtdblock', [SystemController::class, 'descargarMtdblock'])->name('grabado.mtdblock');
+Route::post('/grabado/imagen', [SystemController::class, 'grabarImagen'])->name('grabado.imagen');
+Route::post('/grabado/guardar-lista', [SystemController::class, 'guardarLista'])->name('grabado.guardarLista');
+
+// Reinicio
+Route::get('/reiniciar', [SystemController::class, 'reiniciar'])->name('reiniciar.index');
+Route::post('/reiniciar/run', [SystemController::class, 'reiniciarRun'])->name('reiniciar.run');
+
+// arranque y tareas programadas
+Route::get('/arranque', [SystemController::class, 'startup'])->name('startup');
+Route::post('/arranque', [SystemController::class, 'updateStartup'])->name('startup.update');
+Route::post('/arranque/scripts/{script}/{action}', [SystemController::class, 'startupScriptAction'])->name('startup.scripts.action');
+
+Route::get('/tareas-programadas', [SystemController::class, 'scheduledTasks'])->name('tasks');
+Route::post('/tareas-programadas', [SystemController::class, 'updateScheduledTasks'])->name('tasks.update');
