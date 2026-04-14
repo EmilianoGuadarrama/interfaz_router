@@ -38,62 +38,71 @@
                 <div class="panel-card mb-4 p-0 overflow-hidden" style="border-radius: 4px;">
 
                     @forelse($interfaces as $iface)
-                    <!-- Interface -->
-                    <div class="d-flex flex-wrap align-items-center justify-content-between p-3"
-                        style="border-bottom: 1px solid var(--border-soft); background: rgba(255,255,255,0.02);">
-                        <div class="d-flex align-items-center gap-5" style="width: 60%;">
+                        <!-- Interface -->
+                        <div class="d-flex flex-wrap align-items-center justify-content-between p-3"
+                            style="border-bottom: 1px solid var(--border-soft); background: rgba(255,255,255,0.02);">
+                            <div class="d-flex align-items-center gap-5" style="width: 60%;">
 
-                            <div class="text-center" style="width: 100px;">
-                                <div class="mb-1"
-                                    style="background-color: {{ isset($iface['up']) && $iface['up'] ? (stripos($iface['interface'], 'wan') !== false ? '#d9534f' : '#51a351') : '#777' }}; color: white; padding: 4px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
-                                    {{ $iface['interface'] ?? 'N/A' }}</div>
-                                <div>
-                                    <i class="bi bi-{{ stripos($iface['interface'] ?? '', 'wan') !== false ? 'hdd-network' : 'diagram-3' }}" style="font-size: 1.2rem; color: {{ isset($iface['up']) && $iface['up'] ? '#5bc0de' : '#777' }};"></i>
+                                <div class="text-center" style="width: 100px;">
+                                    <div class="mb-1"
+                                        style="background-color: {{ isset($iface['up']) && $iface['up'] ? (stripos($iface['interface'], 'wan') !== false ? '#d9534f' : '#51a351') : '#777' }}; color: white; padding: 4px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
+                                        {{ $iface['interface'] ?? 'N/A' }}
+                                    </div>
+                                    <div>
+                                        <i class="bi bi-{{ stripos($iface['interface'] ?? '', 'wan') !== false ? 'hdd-network' : 'diagram-3' }}"
+                                            style="font-size: 1.2rem; color: {{ isset($iface['up']) && $iface['up'] ? '#5bc0de' : '#777' }};"></i>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-soft);">{{ $iface['device'] ?? 'N/A' }}
+                                    </div>
                                 </div>
-                                <div style="font-size: 0.75rem; color: var(--text-soft);">{{ $iface['device'] ?? 'N/A' }}</div>
+
+                                <div style="font-size: 0.8rem; color: var(--text-main); font-weight: 600; line-height: 1.3;">
+                                    @if(isset($iface['up']) && $iface['up'])
+                                        Protocolo: <span
+                                            style="font-weight: 400;">{{ ucfirst($iface['proto'] ?? 'Desconocido') }}</span><br>
+                                        @if(isset($iface['uptime']))
+                                            Tiempo de actividad: <span
+                                                style="font-weight: 400;">{{ gmdate("G\h i\m s\s", $iface['uptime']) }}</span><br>
+                                        @endif
+                                        @if(isset($iface['mac']))
+                                            MAC: <span style="font-weight: 400;">{{ strtoupper($iface['mac']) }}</span><br>
+                                        @endif
+                                        @if(isset($iface['statistics']))
+                                            @php
+                                                $rx = $iface['statistics']['rx_bytes'] ?? 0;
+                                                $tx = $iface['statistics']['tx_bytes'] ?? 0;
+                                                $rxStr = $rx > 1048576 ? round($rx / 1048576, 2) . ' MB' : round($rx / 1024, 2) . ' KB';
+                                                $txStr = $tx > 1048576 ? round($tx / 1048576, 2) . ' MB' : round($tx / 1024, 2) . ' KB';
+                                            @endphp
+                                            RX: <span style="font-weight: 400;">{{ $rxStr }}
+                                                ({{ $iface['statistics']['rx_packets'] ?? 0 }} Paq.)</span><br>
+                                            TX: <span style="font-weight: 400;">{{ $txStr }}
+                                                ({{ $iface['statistics']['tx_packets'] ?? 0 }} Paq.)</span><br>
+                                        @endif
+                                        @if(!empty($iface['ipv4-address']))
+                                            IPv4: <span
+                                                style="font-weight: 400;">{{ $iface['ipv4-address'][0]['address'] }}/{{ $iface['ipv4-address'][0]['mask'] }}</span>
+                                        @endif
+                                    @else
+                                        <span style="font-weight: 400; color: #a94442;">La interfaz está detenida</span>
+                                    @endif
+                                </div>
+
                             </div>
 
-                            <div style="font-size: 0.8rem; color: var(--text-main); font-weight: 600; line-height: 1.3;">
-                                @if(isset($iface['up']) && $iface['up'])
-                                    Protocolo: <span style="font-weight: 400;">{{ ucfirst($iface['proto'] ?? 'Desconocido') }}</span><br>
-                                    @if(isset($iface['uptime']))
-                                        Tiempo de actividad: <span style="font-weight: 400;">{{ gmdate("G\h i\m s\s", $iface['uptime']) }}</span><br>
-                                    @endif
-                                    @if(isset($iface['mac']))
-                                        MAC: <span style="font-weight: 400;">{{ strtoupper($iface['mac']) }}</span><br>
-                                    @endif
-                                    @if(isset($iface['statistics']))
-                                        @php
-                                            $rx = $iface['statistics']['rx_bytes'] ?? 0;
-                                            $tx = $iface['statistics']['tx_bytes'] ?? 0;
-                                            $rxStr = $rx > 1048576 ? round($rx/1048576, 2) . ' MB' : round($rx/1024, 2) . ' KB';
-                                            $txStr = $tx > 1048576 ? round($tx/1048576, 2) . ' MB' : round($tx/1024, 2) . ' KB';
-                                        @endphp
-                                        RX: <span style="font-weight: 400;">{{ $rxStr }} ({{ $iface['statistics']['rx_packets'] ?? 0 }} Paq.)</span><br>
-                                        TX: <span style="font-weight: 400;">{{ $txStr }} ({{ $iface['statistics']['tx_packets'] ?? 0 }} Paq.)</span><br>
-                                    @endif
-                                    @if(!empty($iface['ipv4-address']))
-                                        IPv4: <span style="font-weight: 400;">{{ $iface['ipv4-address'][0]['address'] }}/{{ $iface['ipv4-address'][0]['mask'] }}</span>
-                                    @endif
-                                @else
-                                    <span style="font-weight: 400; color: #a94442;">La interfaz está detenida</span>
-                                @endif
+                            <div class="d-flex gap-2 mt-3 mt-md-0">
+                                <button class="btn btn-sm"
+                                    style="background: #e6e6e6; color: #333; font-weight: 700; font-size: 0.75rem; border-radius: 2px;">REINICIAR</button>
+                                <button class="btn btn-sm"
+                                    style="background: #e6e6e6; color: {{ isset($iface['up']) && $iface['up'] ? '#333' : '#b3b3b3' }}; font-weight: 700; font-size: 0.75rem; border-radius: 2px;"
+                                    {{ isset($iface['up']) && $iface['up'] ? '' : 'disabled' }}>DETENER</button>
+                                <button class="btn btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#modalEditarInterfaz{{ stripos($iface['interface'], 'wan') !== false ? 'WAN' : '' }}"
+                                    style="background: #5bc0de; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">EDITAR</button>
+                                <button class="btn btn-sm"
+                                    style="background: #d9534f; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">ELIMINAR</button>
                             </div>
-
                         </div>
-
-                        <div class="d-flex gap-2 mt-3 mt-md-0">
-                            <button class="btn btn-sm"
-                                style="background: #e6e6e6; color: #333; font-weight: 700; font-size: 0.75rem; border-radius: 2px;">REINICIAR</button>
-                            <button class="btn btn-sm"
-                                style="background: #e6e6e6; color: {{ isset($iface['up']) && $iface['up'] ? '#333' : '#b3b3b3' }}; font-weight: 700; font-size: 0.75rem; border-radius: 2px;"
-                                {{ isset($iface['up']) && $iface['up'] ? '' : 'disabled' }}>DETENER</button>
-                            <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#modalEditarInterfaz{{ stripos($iface['interface'], 'wan') !== false ? 'WAN' : '' }}"
-                                style="background: #5bc0de; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">EDITAR</button>
-                            <button class="btn btn-sm"
-                                style="background: #d9534f; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">ELIMINAR</button>
-                        </div>
-                    </div>
                     @empty
                         <div class="p-4 text-center" style="color: var(--text-soft);">
                             No se encontraron interfaces configuradas o conectadas en el router.
@@ -167,7 +176,8 @@
                                     placeholder="Nuevo nombre de interfaz..." value="{{ old('name') }}">
                                 @error('name', 'createInterface')
                                     <div class="invalid-feedback text-start mt-1" style="font-size: 0.8rem; display: block;">
-                                        {{ $message }}</div>
+                                        {{ $message }}
+                                    </div>
                                 @enderror
                             </div>
                         </div>
@@ -191,7 +201,8 @@
                                 </select>
                                 @error('protocol', 'createInterface')
                                     <div class="invalid-feedback text-start mt-1" style="font-size: 0.8rem; display: block;">
-                                        {{ $message }}</div>
+                                        {{ $message }}
+                                    </div>
                                 @enderror
                             </div>
                         </div>
@@ -243,7 +254,8 @@
                                 </select>
                                 @error('interface', 'createInterface')
                                     <div class="invalid-feedback text-start mt-1" style="font-size: 0.8rem; display: block;">
-                                        {{ $message }}</div>
+                                        {{ $message }}
+                                    </div>
                                 @enderror
                             </div>
                         </div>
@@ -1559,7 +1571,7 @@
                     var modalWan = new bootstrap.Modal(document.getElementById('modalEditarInterfazWAN'));
                     modalWan.show();
                 @endif
-        });
+                            });
     </script>
 
 @endsection

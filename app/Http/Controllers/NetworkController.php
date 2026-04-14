@@ -190,16 +190,6 @@ class NetworkController extends Controller
         return view('network.dhcpdns.resolv-hosts');
     }
 
-    public function dhcpDnsTftp()
-    {
-        return view('network.dhcpdns.tftp');
-    }
-
-    public function dhcpDnsAdvanced()
-    {
-        return view('network.dhcpdns.advanced');
-    }
-
     public function dhcpDnsStatic()
     {
         $staticEntries = [];
@@ -372,22 +362,6 @@ class NetworkController extends Controller
     | DHCP Y DNS - ASIGNACIONES ESTÁTICAS
     |--------------------------------------------------------------------------
     */
-
-    public function dhcpDnsStatic()
-    {
-        $staticAssignments = session('dhcp_static_assignments', []);
-
-        $activeLeases = session('dhcp_active_leases', [
-            [
-                'host_name' => 'Susu',
-                'ipv4_address' => '192.168.10.180',
-                'mac_address' => '50:EB:F6:D1:96:1E',
-                'remaining_time' => '11h 56m 51s',
-            ]
-        ]);
-
-        return view('network.dhcpdns.static', compact('staticAssignments', 'activeLeases'));
-    }
 
     public function updateDhcpDnsStatic(Request $request)
     {
