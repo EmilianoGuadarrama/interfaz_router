@@ -49,4 +49,15 @@ class RouterSshService
             'output' => $output,
         ];
     }
+
+    public function getRaw(string $command): string
+    {
+        $ssh = new SSH2($this->host, $this->port);
+
+        if (!$ssh->login($this->user, $this->password)) {
+            throw new Exception('Error de autenticación SSH con el router.');
+        }
+
+        return (string) $ssh->exec($command);
+    }
 }

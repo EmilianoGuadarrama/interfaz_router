@@ -449,7 +449,7 @@
                 <div class="collapse show" id="menuRed">
                     <ul class="submenu">
                         <li>
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('network.interfaces') }}" class="nav-link {{ request()->routeIs('network.interfaces*') ? 'active' : '' }}">
                                 <i class="bi bi-diagram-3"></i> Interfaces
                             </a>
                         </li>

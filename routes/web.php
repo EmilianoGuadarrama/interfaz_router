@@ -11,6 +11,12 @@ Route::get('/', function () {
 
 Route::prefix('red')->name('network.')->group(function () {
 
+    // Vista principal de Interfaces
+    Route::get('/interfaces', [NetworkController::class, 'interfaces'])->name('interfaces');
+    Route::post('/interfaces/store', [NetworkController::class, 'storeInterface'])->name('interfaces.store');
+    Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
+    Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
+
     // Vista principal de Conmutador
     Route::get('/conmutador', [NetworkController::class, 'showSwitch'])->name('switch');
     Route::post('/conmutador', [NetworkController::class, 'updateSwitch'])->name('switch.update');
@@ -62,10 +68,10 @@ Route::prefix('red')->name('network.')->group(function () {
 
 // LEDs
 Route::prefix('sistema')->name('leds.')->group(function () {
-    Route::get('/leds',                 [SystemController::class, 'leds'])->name('index');
-    Route::get('/leds/crear',           [SystemController::class, 'createLed'])->name('create');
-    Route::post('/leds',                [SystemController::class, 'storeLed'])->name('store');
-    Route::get('/leds/{key}/editar',    [SystemController::class, 'editLed'])->name('edit');
-    Route::post('/leds/{key}',          [SystemController::class, 'updateLed'])->name('update');
+    Route::get('/leds', [SystemController::class, 'leds'])->name('index');
+    Route::get('/leds/crear', [SystemController::class, 'createLed'])->name('create');
+    Route::post('/leds', [SystemController::class, 'storeLed'])->name('store');
+    Route::get('/leds/{key}/editar', [SystemController::class, 'editLed'])->name('edit');
+    Route::post('/leds/{key}', [SystemController::class, 'updateLed'])->name('update');
     Route::post('/leds/{key}/eliminar', [SystemController::class, 'destroyLed'])->name('destroy');
 });
