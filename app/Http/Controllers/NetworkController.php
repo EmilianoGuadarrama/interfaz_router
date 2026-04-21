@@ -3,9 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\RouterSshService;
+use App\Services\RouterInterfaceService;
+use Illuminate\Support\Facades\Log;
 
 class NetworkController extends Controller
 {
+    protected RouterSshService $router;
+    protected RouterInterfaceService $interfaceService;
+
+    public function __construct(RouterSshService $router, RouterInterfaceService $interfaceService)
+    {
+        $this->router = $router;
+        $this->interfaceService = $interfaceService;
+    }
     /*
     |--------------------------------------------------------------------------
     | VISTAS PRINCIPALES
@@ -37,27 +48,19 @@ class NetworkController extends Controller
     ========================= */
     public function interfaces()
     {
-        $interfaces = [];
-        try {
-            $rawJson = $this->router->getRaw('ubus call network.interface dump');
-            $decoded = json_decode($rawJson, true);
-            if (is_array($decoded) && isset($decoded['interface'])) {
-                $interfaces = $decoded['interface'];
-            }
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Error fetching interfaces from router: ' . $e->getMessage());
-            session()->flash('error', 'Error al conectar con el router para obtener las interfaces reales.');
-        }
+        $interfaces = $this->interfaceService->getInterfaces();
+        $devices = $this->interfaceService->getDevices();
 
-        return view('network.interfaces', compact('interfaces'));
+        return view('network.interfaces', compact('interfaces', 'devices'));
     }
 
     public function storeInterface(Request $request)
     {
-        $request->validateWithBag('createInterface', [
+        $data = $request->validateWithBag('createInterface', [
             'name' => 'required|string|alpha_dash|max:20',
             'protocol' => 'required|in:dhcp,unmanaged,ppp,pppoe,static',
-            'interface' => 'nullable|string'
+            'interface' => 'nullable|string',
+            'bridge' => 'nullable|boolean'
         ], [
             'name.required' => 'El nombre de la interfaz es obligatorio.',
             'name.alpha_dash' => 'El nombre solo puede contener letras, números, guiones y guiones bajos (sin espacios).',
@@ -66,7 +69,41 @@ class NetworkController extends Controller
             'protocol.in' => 'El protocolo seleccionado no es válido.'
         ]);
 
-        return redirect()->route('network.interfaces')->with('success', 'Interfaz añadida correctamente (Simulado).');
+        try {
+            $name = strtolower($data['name']);
+            $protocol = $data['protocol'];
+            $device = $data['interface'] ?? '';
+            $isBridge = $request->has('bridge');
+
+            $cmds = [
+                "uci set network.{$name}=interface",
+                "uci set network.{$name}.proto='{$protocol}'"
+            ];
+
+            if ($isBridge) {
+                $cmds[] = "uci set network.{$name}.type='bridge'";
+            }
+
+            if (!empty($device)) {
+                $cmds[] = "uci set network.{$name}.device='{$device}'";
+            }
+
+            $cmds[] = "uci commit network";
+            $cmds[] = "/etc/init.d/network reload";
+
+            $result = $this->router->execute($cmds);
+
+            if ($result['success']) {
+                return redirect()->route('network.interfaces')->with('success', "Interfaz '{$name}' creada correctamente en el router.");
+            } else {
+                Log::error('Error from router executing UCI commands: ' . $result['output']);
+                return back()->withInput()->withErrors(['createInterface' => 'Error estructural al configurar el router. Verifique la conexión.'])->with('error', 'Hubo un error configurando la interfaz en el router.');
+            }
+
+        } catch (\Throwable $e) {
+            Log::error('Error storeInterface: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Error al procesar la creación de la interfaz: ' . $e->getMessage());
+        }
     }
 
     public function updateLanInterface(Request $request)
