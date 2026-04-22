@@ -66,6 +66,7 @@
     </div>
 
 </div>
+
 {{-- Modal Agregar --}}
 <div class="modal fade" id="modalAgregar" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">

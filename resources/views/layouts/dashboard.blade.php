@@ -533,9 +533,9 @@
 
                        <li>
                                          <a href="{{ route('network.hostentries') }}" class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
-                                                 <i class="bi bi-globe2"></i> Nombres de host
-                                         </a>
-                        </li>
+                                 <i class="bi bi-globe2"></i> Nombres de host
+    </a>
+</li>
 
                         <li>
                             <a href="{{ route('network.routes.static.ipv4') }}" class="nav-link {{ request()->routeIs('network.routes.static.*') ? 'active' : '' }}">
