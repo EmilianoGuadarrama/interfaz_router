@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
-use App\Http\Controllers\RoutesController;
+use App\Http\Controllers\Ruta_estatica\RoutesController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\Red\DhcpDnsController;
 use App\Http\Controllers\Red\ConmutadorController;
