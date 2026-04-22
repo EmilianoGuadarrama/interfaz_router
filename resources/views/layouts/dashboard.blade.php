@@ -394,12 +394,6 @@
             </div>
             <h1 class="brand-title">NuupNet</h1>
         </div>
-            <li>
-    <a href="{{ route('network.hostentries') }}"
-       class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
-        <i class="bi bi-globe2"></i> Nombres de host
-    </a>
-</li>
         <div class="sidebar-body">
 
             <div class="menu-section">
@@ -445,7 +439,7 @@
                                 <i class="bi bi-clock-history"></i> Tareas programadas
                             </a>
                         </li>
-                       <li><a href="{{ route('leds.index') }}" class="nav-link"><i class="bi bi-lightbulb"></i> Configuración de LEDs</a></li>
+                        <li><a href="{{ route('leds.index') }}" class="nav-link"><i class="bi bi-lightbulb"></i> Configuración de LEDs</a></li>
                         <li><a href="{{ route('grabado.index') }}" class="nav-link {{ request()->routeIs('grabado.*') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
                         <li><a href="{{ route('reiniciar.index') }}" class="nav-link"><i class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
                     </ul>
@@ -461,7 +455,7 @@
                 <div class="collapse show" id="menuRed">
                     <ul class="submenu">
                         <li>
-                            <a href="{{ route('network.interfaces') }}" class="nav-link {{ request()->routeIs('network.interfaces*') ? 'active' : '' }}">
+                            <a href="{{ route('red.interfaces') }}" class="nav-link {{ request()->routeIs('red.interfaces*') ? 'active' : '' }}">
                                 <i class="bi bi-diagram-3"></i> Interfaces
                             </a>
                         </li>
@@ -473,7 +467,7 @@
                         </li>
 
                         <li>
-                            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#submenuConmutador" role="button" aria-expanded="true">
+                            <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('red.conmutador*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#submenuConmutador" role="button" aria-expanded="true">
                                 <span><i class="bi bi-hdd-network"></i> Conmutador</span>
                                 <i class="bi bi-chevron-down small-chevron"></i>
                             </a>
@@ -481,12 +475,12 @@
                             <div class="collapse show" id="submenuConmutador">
                                 <ul class="submenu-level-2">
                                     <li>
-                                        <a href="{{ route('network.switch.general') }}" class="nav-link">
+                                        <a href="{{ route('red.conmutador.general') }}" class="nav-link {{ request()->routeIs('red.conmutador.general*') ? 'active' : '' }}">
                                             Configuración general
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('network.switch.vlans') }}" class="nav-link">
+                                        <a href="{{ route('red.conmutador.vlans') }}" class="nav-link {{ request()->routeIs('red.conmutador.vlans*') ? 'active' : '' }}">
                                             VLANs
                                         </a>
                                     </li>
@@ -495,7 +489,7 @@
                         </li>
 
                         <li>
-                            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#submenuDhcpDns" role="button" aria-expanded="true">
+                            <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('red.dhcpdns*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#submenuDhcpDns" role="button" aria-expanded="true">
                                 <span><i class="bi bi-router"></i> DHCP y DNS</span>
                                 <i class="bi bi-chevron-down small-chevron"></i>
                             </a>
@@ -503,27 +497,27 @@
                             <div class="collapse show" id="submenuDhcpDns">
                                 <ul class="submenu-level-2">
                                     <li>
-                                        <a href="{{ route('network.dhcpdns.general') }}" class="nav-link">
+                                        <a href="{{ route('red.dhcpdns.general') }}" class="nav-link {{ request()->routeIs('red.dhcpdns.general*') ? 'active' : '' }}">
                                             Configuración general
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('network.dhcpdns.resolv') }}" class="nav-link">
+                                        <a href="{{ route('red.dhcpdns.resolv') }}" class="nav-link {{ request()->routeIs('red.dhcpdns.resolv*') ? 'active' : '' }}">
                                             Archivos Resolv y Hosts
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('network.dhcpdns.tftp') }}" class="nav-link">
+                                        <a href="{{ route('red.dhcpdns.tftp') }}" class="nav-link {{ request()->routeIs('red.dhcpdns.tftp*') ? 'active' : '' }}">
                                             Configuración TFTP
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('network.dhcpdns.advanced') }}" class="nav-link">
+                                        <a href="{{ route('red.dhcpdns.advanced') }}" class="nav-link {{ request()->routeIs('red.dhcpdns.advanced*') ? 'active' : '' }}">
                                             Configuración avanzada
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('network.dhcpdns.static') }}" class="nav-link">
+                                        <a href="{{ route('red.dhcpdns.static') }}" class="nav-link {{ request()->routeIs('red.dhcpdns.static*') ? 'active' : '' }}">
                                             Asignaciones estáticas
                                         </a>
                                     </li>
@@ -531,14 +525,14 @@
                             </div>
                         </li>
 
-                       <li>
-                                         <a href="{{ route('network.hostentries') }}" class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
-                                 <i class="bi bi-globe2"></i> Nombres de host
-    </a>
-</li>
+                        <li>
+                            <a href="{{ route('red.hostentries') }}" class="nav-link {{ request()->routeIs('red.hostentries*') ? 'active' : '' }}">
+                                <i class="bi bi-globe2"></i> Nombres de host
+                            </a>
+                        </li>
 
                         <li>
-                            <a href="{{ route('network.routes.static.ipv4') }}" class="nav-link {{ request()->routeIs('network.routes.static.*') ? 'active' : '' }}">
+                            <a href="{{ route('red.routes.static.ipv4') }}" class="nav-link {{ request()->routeIs('red.routes.static.*') ? 'active' : '' }}">
                                 <i class="bi bi-sign-turn-right"></i> Rutas estáticas
                             </a>
                         </li>

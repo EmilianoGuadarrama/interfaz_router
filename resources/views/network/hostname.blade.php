@@ -42,7 +42,7 @@
                                 <span class="soft-badge">{{ $entry['ip'] }}</span>
                             </td>
                             <td>
-                                <form method="POST" action="{{ route('network.hostentries.destroy') }}"
+                                <form method="POST" action="{{ route('red.hostentries.destroy') }}"
                                       onsubmit="return confirm('¿Eliminar esta entrada?')">
                                     @csrf
                                     @method('DELETE')
@@ -77,7 +77,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ route('network.hostentries.store') }}">
+            <form method="POST" action="{{ route('red.hostentries.store') }}">
                 @csrf
                 <div class="modal-body" style="padding: 24px;">
 

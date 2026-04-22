@@ -95,13 +95,13 @@
                             </div>
 
                             <div class="d-flex gap-2 mt-3 mt-md-0">
-                                <form action="{{ route('network.interfaces.restart', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0">
+                                <form action="{{ route('red.interfaces.restart', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0">
                                     @csrf
                                     <button class="btn btn-sm" type="submit"
                                         style="background: #e6e6e6; color: #333; font-weight: 700; font-size: 0.75rem; border-radius: 2px;">REINICIAR</button>
                                 </form>
 
-                                <form action="{{ route('network.interfaces.stop', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0">
+                                <form action="{{ route('red.interfaces.stop', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0">
                                     @csrf
                                     <button class="btn btn-sm" type="submit"
                                         style="background: #e6e6e6; color: {{ $isUp ? '#333' : '#b3b3b3' }}; font-weight: 700; font-size: 0.75rem; border-radius: 2px;"
@@ -188,7 +188,7 @@
                                         $confirmScript = "var res = prompt('ATENCIÓN: Está intentando eliminar una interfaz CRÍTICA (" . ($iface['name'] ?? '') . ") lo cual dañaría la conexión principal.\\n\\nEscriba la letra X para ignorar y forzar la eliminación de todos modos (No recomendado):'); if(res !== 'X'){ return false; } return true;";
                                     }
                                 @endphp
-                                <form action="{{ route('network.interfaces.destroy', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0" onsubmit="{!! $confirmScript !!}">
+                                <form action="{{ route('red.interfaces.destroy', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0" onsubmit="{!! $confirmScript !!}">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm" type="submit"
@@ -254,7 +254,7 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ route('network.interfaces.store') }}">
+                <form method="POST" action="{{ route('red.interfaces.store') }}">
                     @csrf
                     <div class="modal-body" style="padding: 30px;">
 
@@ -458,7 +458,7 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ route('network.interfaces.wan.update') }}">
+                <form method="POST" action="{{ route('red.interfaces.wan.update') }}">
                     @csrf
 
                     <div class="modal-body p-0">

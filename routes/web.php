@@ -4,14 +4,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\Red\DhcpDnsController;
+use App\Http\Controllers\Red\ConmutadorController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::prefix('red')->name('network.')->group(function () {
+Route::prefix('red')->name('red.')->group(function () {
 
-    // Vista principal de Interfaces
+    // =====================================================================
+    // INTERFACES (se mantiene en NetworkController)
+    // =====================================================================
     Route::get('/interfaces', [NetworkController::class, 'interfaces'])->name('interfaces');
     Route::post('/interfaces/store', [NetworkController::class, 'storeInterface'])->name('interfaces.store');
     Route::post('/interfaces/{name}/restart', [NetworkController::class, 'restartInterface'])->name('interfaces.restart');
@@ -21,41 +25,47 @@ Route::prefix('red')->name('network.')->group(function () {
     Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
     Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
 
-    // Vista principal de Conmutador
-    Route::get('/conmutador', [NetworkController::class, 'showSwitch'])->name('switch');
-    Route::post('/conmutador', [NetworkController::class, 'updateSwitch'])->name('switch.update');
+    // =====================================================================
+    // CONMUTADOR — ConmutadorController
+    // =====================================================================
+    Route::get('/conmutador', [ConmutadorController::class, 'index'])->name('conmutador');
 
-    // Subapartados de Conmutador
-    Route::prefix('conmutador')->name('switch.')->group(function () {
-        Route::get('/general', [NetworkController::class, 'switchGeneral'])->name('general');
-        Route::get('/vlans', [NetworkController::class, 'switchVlans'])->name('vlans');
-        Route::post('/vlans/guardar', [NetworkController::class, 'updateSwitchVlans'])->name('vlans.update');
+    Route::prefix('conmutador')->name('conmutador.')->group(function () {
+        Route::get('/general', [ConmutadorController::class, 'general'])->name('general');
+        Route::post('/general', [ConmutadorController::class, 'updateGeneral'])->name('general.update');
+        Route::get('/vlans', [ConmutadorController::class, 'vlans'])->name('vlans');
+        Route::post('/vlans', [ConmutadorController::class, 'storeVlan'])->name('vlans.store');
+        Route::put('/vlans/{index}', [ConmutadorController::class, 'updateVlan'])->name('vlans.update');
+        Route::delete('/vlans/{index}', [ConmutadorController::class, 'destroyVlan'])->name('vlans.destroy');
+        Route::post('/puertos', [ConmutadorController::class, 'updatePorts'])->name('ports.update');
     });
 
-    // Vista principal de DHCP y DNS
-    Route::get('/dhcp-dns', [NetworkController::class, 'showDhcpDns'])->name('dhcpdns');
-    Route::post('/dhcp-dns', [NetworkController::class, 'updateDhcpDns'])->name('dhcpdns.update');
+    // =====================================================================
+    // DHCP Y DNS — DhcpDnsController
+    // =====================================================================
+    Route::get('/dhcp-dns', [DhcpDnsController::class, 'index'])->name('dhcpdns');
 
-    // Subapartados de DHCP y DNS
     Route::prefix('dhcp-dns')->name('dhcpdns.')->group(function () {
-        Route::get('/general', [NetworkController::class, 'dhcpDnsGeneral'])->name('general');
-        Route::post('/general/guardar', [NetworkController::class, 'updateDhcpDnsGeneral'])->name('general.update');
+        Route::get('/general', [DhcpDnsController::class, 'general'])->name('general');
+        Route::post('/general', [DhcpDnsController::class, 'updateGeneral'])->name('general.update');
 
-        Route::get('/resolv-hosts', [NetworkController::class, 'dhcpDnsResolvHosts'])->name('resolv');
-        Route::post('/resolv-hosts/guardar', [NetworkController::class, 'updateDhcpDnsResolvHosts'])->name('resolv.update');
+        Route::get('/resolv-hosts', [DhcpDnsController::class, 'resolvHosts'])->name('resolv');
+        Route::post('/resolv-hosts', [DhcpDnsController::class, 'updateResolvHosts'])->name('resolv.update');
 
-        Route::get('/tftp', [NetworkController::class, 'dhcpDnsTftp'])->name('tftp');
-        Route::post('/tftp/guardar', [NetworkController::class, 'updateDhcpDnsTftp'])->name('tftp.update');
+        Route::get('/tftp', [DhcpDnsController::class, 'tftp'])->name('tftp');
+        Route::post('/tftp', [DhcpDnsController::class, 'updateTftp'])->name('tftp.update');
 
-        Route::get('/advanced', [NetworkController::class, 'dhcpDnsAdvanced'])->name('advanced');
-        Route::post('/advanced/guardar', [NetworkController::class, 'updateDhcpDnsAdvanced'])->name('advanced.update');
+        Route::get('/advanced', [DhcpDnsController::class, 'advanced'])->name('advanced');
+        Route::post('/advanced', [DhcpDnsController::class, 'updateAdvanced'])->name('advanced.update');
 
-        Route::get('/static', [NetworkController::class, 'dhcpDnsStatic'])->name('static');
-        Route::post('/static/guardar', [NetworkController::class, 'updateDhcpDnsStatic'])->name('static.update');
-        Route::post('/static/agregar', [NetworkController::class, 'storeDhcpDnsStatic'])->name('static.store');
-        Route::delete('/static/{index}', [NetworkController::class, 'destroyDhcpDnsStatic'])->name('static.destroy');
+        Route::get('/static', [DhcpDnsController::class, 'staticLeases'])->name('static');
+        Route::post('/static', [DhcpDnsController::class, 'storeStaticLease'])->name('static.store');
+        Route::delete('/static/{index}', [DhcpDnsController::class, 'destroyStaticLease'])->name('static.destroy');
     });
 
+    // =====================================================================
+    // RUTAS ESTÁTICAS (se mantiene en RoutesController)
+    // =====================================================================
     Route::get('/rutas/estaticas/ipv4', [RoutesController::class, 'staticIpv4'])->name('routes.static.ipv4');
     Route::post('/rutas/estaticas/ipv4/guardar', [RoutesController::class, 'storeStaticIpv4'])->name('routes.static.ipv4.store');
     Route::delete('/rutas/estaticas/ipv4/eliminar', [RoutesController::class, 'destroyStaticIpv4'])->name('routes.static.ipv4.destroy');
@@ -66,7 +76,9 @@ Route::prefix('red')->name('network.')->group(function () {
 
     Route::get('/estado-conexion', [RoutesController::class, 'checkConnection'])->name('estado.conexion');
 
-    // Nombres de host
+    // =====================================================================
+    // NOMBRES DE HOST (se mantiene en NetworkController)
+    // =====================================================================
     Route::get('/nombres-host', [NetworkController::class, 'hostEntries'])->name('hostentries');
     Route::post('/nombres-host/agregar', [NetworkController::class, 'storeHostEntry'])->name('hostentries.store');
     Route::delete('/nombres-host/eliminar', [NetworkController::class, 'destroyHostEntry'])->name('hostentries.destroy');

@@ -1,508 +1,324 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Panel de administración')</title>
+@extends('layouts.dashboard')
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+@section('title', 'Conmutador - VLANs')
+
+@section('content')
+    @php
+        $vlans = $vlans ?? [];
+        $availablePorts = $availablePorts ?? [];
+    @endphp
+
+    <div class="container-fluid">
+        <h2 class="page-title mb-3">Conmutador</h2>
+
+        @if(session('success'))
+            <div class="alert alert-success rounded-4 mb-3">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger rounded-4 mb-3">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger rounded-4 mb-3">
+                <ul class="mb-0 ps-3">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <div class="panel-card">
+            <ul class="nav nav-tabs mb-4 border-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('red.conmutador.general') }}">Configuración general</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ route('red.conmutador.vlans') }}">VLANs</a>
+                </li>
+            </ul>
+
+            <p class="text-light mb-4">
+                Configure las VLANs del conmutador. Cada VLAN define un grupo de puertos que pueden comunicarse entre sí. Use etiquetado para trunk ports y desetiquetado para puertos de acceso.
+            </p>
+
+            {{-- Tabla de VLANs existentes --}}
+            <div class="table-responsive mb-4">
+                <table class="table-dark-custom">
+                    <thead>
+                    <tr>
+                        <th>VLAN ID</th>
+                        <th>Dispositivo</th>
+                        <th>Puertos</th>
+                        <th style="width: 180px;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($vlans as $vlan)
+                        <tr>
+                            <td>
+                                <span class="soft-badge">{{ $vlan['vid'] ?? $vlan['vlan'] ?? '-' }}</span>
+                            </td>
+                            <td>{{ $vlan['device'] ?? 'switch0' }}</td>
+                            <td>
+                                @php
+                                    $portsStr = $vlan['ports'] ?? '';
+                                    $portsList = array_filter(explode(' ', $portsStr));
+                                @endphp
+                                @foreach($portsList as $p)
+                                    @php
+                                        $isTagged = str_ends_with($p, 't');
+                                        $portNum = rtrim($p, 't');
+                                    @endphp
+                                    <span class="badge {{ $isTagged ? 'bg-warning text-dark' : 'bg-primary' }} me-1">
+                                        P{{ $portNum }}{{ $isTagged ? ' (T)' : '' }}
+                                    </span>
+                                @endforeach
+                                @if(empty($portsList))
+                                    <span class="text-muted">Sin puertos</span>
+                                @endif
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalEditVlan{{ $vlan['index'] ?? $loop->index }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form action="{{ route('red.conmutador.vlans.destroy', $vlan['index'] ?? $loop->index) }}" method="POST" onsubmit="return confirm('¿Eliminar esta VLAN?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center">No hay VLANs configuradas</td>
+                        </tr>
+                    @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Botón para agregar VLAN --}}
+            <button type="button" class="btn btn-main mb-4" data-bs-toggle="modal" data-bs-target="#modalAgregarVlan">
+                <i class="bi bi-plus-lg me-1"></i> Añadir VLAN
+            </button>
+
+            {{-- Tabla de configuración de puertos por VLAN --}}
+            @if(count($vlans) > 0 && count($availablePorts) > 0)
+                <h4 class="text-light mb-3 mt-4">Configuración de puertos por VLAN</h4>
+
+                @foreach($vlans as $vlan)
+                    @php
+                        $vlanIdx = $vlan['index'] ?? $loop->index;
+                        $portsStr = $vlan['ports'] ?? '';
+                        $portsList = array_filter(explode(' ', $portsStr));
+                        $portModes = [];
+                        foreach ($portsList as $p) {
+                            $isTagged = str_ends_with($p, 't');
+                            $portNum = (int) rtrim($p, 't');
+                            $portModes[$portNum] = $isTagged ? 'tagged' : 'untagged';
+                        }
+                    @endphp
+
+                    <div class="panel-card mb-3" style="background: rgba(255,255,255,0.03);">
+                        <h6 class="text-light fw-bold mb-3">
+                            VLAN {{ $vlan['vid'] ?? $vlan['vlan'] ?? '-' }}
+                        </h6>
+
+                        <form action="{{ route('red.conmutador.ports.update') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="vlan_index" value="{{ $vlanIdx }}">
+
+                            <div class="table-responsive">
+                                <table class="table-dark-custom">
+                                    <thead>
+                                    <tr>
+                                        @foreach($availablePorts as $port)
+                                            <th class="text-center" style="min-width: 100px;">{{ $port['label'] }}</th>
+                                        @endforeach
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        @foreach($availablePorts as $port)
+                                            @php $mode = $portModes[$port['number']] ?? 'off'; @endphp
+                                            <td class="text-center">
+                                                <select name="port_config[{{ $port['number'] }}]" class="form-select form-select-sm port-select" style="min-width: 120px;" onchange="updateSelectColor(this)">
+                                                    <option value="off" {{ $mode === 'off' ? 'selected' : '' }}>Apagado</option>
+                                                    <option value="untagged" {{ $mode === 'untagged' ? 'selected' : '' }}>Desetiquetado</option>
+                                                    <option value="tagged" {{ $mode === 'tagged' ? 'selected' : '' }}>Etiquetado</option>
+                                                </select>
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-sm btn-main">
+                                    <i class="bi bi-check-lg me-1"></i> Aplicar puertos
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                @endforeach
+            @endif
+
+            <div class="d-flex gap-2 mt-4">
+                <a href="{{ route('red.conmutador.vlans') }}" class="btn btn-outline-light">Refrescar</a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal: Agregar VLAN --}}
+    <div class="modal fade" id="modalAgregarVlan" tabindex="-1" aria-labelledby="modalAgregarVlanLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4" style="background: #243b6b; color: #fff;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" id="modalAgregarVlanLabel">
+                        <i class="bi bi-plus-circle me-2" style="color:#4a86f7;"></i>Añadir VLAN
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <form action="{{ route('red.conmutador.vlans.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="vlan_id" class="form-label text-light fw-semibold">ID de VLAN</label>
+                            <input type="number" class="form-control @error('vlan_id') is-invalid @enderror"
+                                   id="vlan_id" name="vlan_id"
+                                   min="1" max="4094"
+                                   value="{{ old('vlan_id') }}"
+                                   placeholder="Ej: 10"
+                                   required>
+                            @error('vlan_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Rango válido: 1–4094</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ports" class="form-label text-light fw-semibold">Puertos (opcional)</label>
+                            <input type="text" class="form-control @error('ports') is-invalid @enderror"
+                                   id="ports" name="ports"
+                                   value="{{ old('ports') }}"
+                                   placeholder="Ej: 0 1 2 3 5t">
+                            @error('ports')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Formato: números separados por espacio, añadir 't' para etiquetado.</small>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-main">
+                            <i class="bi bi-check-lg me-1"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modales: Editar VLAN --}}
+    @foreach($vlans as $vlan)
+        @php $vlanIdx = $vlan['index'] ?? $loop->index; @endphp
+        <div class="modal fade" id="modalEditVlan{{ $vlanIdx }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-4" style="background: #243b6b; color: #fff;">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title fw-bold">
+                            <i class="bi bi-pencil me-2" style="color:#4a86f7;"></i>Editar VLAN {{ $vlan['vid'] ?? $vlan['vlan'] ?? '' }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <form action="{{ route('red.conmutador.vlans.update', $vlanIdx) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label text-light fw-semibold">Puertos</label>
+                                <input type="text" class="form-control" name="ports"
+                                       value="{{ $vlan['ports'] ?? '' }}"
+                                       placeholder="Ej: 0 1 2 3 5t">
+                                <small class="text-muted">Formato: números separados por espacio, añadir 't' para etiquetado.</small>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0">
+                            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" name="submit_action" value="apply" class="btn btn-main">
+                                <i class="bi bi-check-lg me-1"></i> Guardar y aplicar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    @if($errors->any())
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                new bootstrap.Modal(document.getElementById('modalAgregarVlan')).show();
+            });
+        </script>
+    @endif
 
     <style>
-        :root{
-            --bg-main: linear-gradient(90deg, #020d24 0%, #071a3b 50%, #102a57 100%);
-            --sidebar-bg: rgba(15, 28, 56, 0.95);
-            --sidebar-hover: rgba(72, 128, 255, 0.14);
-            --sidebar-active: #2f80ff;
-            --topbar-bg: rgba(13, 27, 55, 0.96);
-            --card-bg: rgba(30, 49, 84, 0.96);
-            --primary: #4a86f7;
-            --primary-hover: #2f73f5;
-            --text-main: #f5f7fb;
-            --text-soft: #c4cfdf;
-            --text-muted: #95a4bf;
-            --border-soft: rgba(255,255,255,0.08);
-            --sidebar-width: 300px;
-            --topbar-height: 78px;
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --shadow-main: 0 20px 45px rgba(0,0,0,0.35);
-        }
-
-        *{
-            box-sizing: border-box;
-        }
-
-        html, body{
-            margin: 0;
-            padding: 0;
-            min-height: 100%;
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-main);
-            color: var(--text-main);
-        }
-
-        body{
-            overflow-x: hidden;
-        }
-
-        .app-wrapper{
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar{
-            width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid var(--border-soft);
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            overflow-y: auto;
-            z-index: 1040;
-            box-shadow: 6px 0 30px rgba(0,0,0,.18);
-        }
-
-        .sidebar-brand{
-            height: var(--topbar-height);
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 0 22px;
-            border-bottom: 1px solid var(--border-soft);
-        }
-
-        .brand-icon{
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
-            background: linear-gradient(180deg, #63a4ff 0%, #3f7ef3 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            color: white;
-            box-shadow: 0 10px 24px rgba(74, 134, 247, .35);
-        }
-
-        .brand-title{
-            font-size: 1.55rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin: 0;
+        .port-select {
             color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
         }
-
-        .sidebar-body{
-            padding: 18px 0 24px;
+        .port-select.mode-off {
+            background-color: rgba(220, 53, 69, 0.2); /* Red tint */
+            border-color: #dc3545;
         }
-
-        .menu-section{
-            margin-bottom: 10px;
+        .port-select.mode-untagged {
+            background-color: rgba(13, 110, 253, 0.2); /* Blue tint */
+            border-color: #0d6efd;
         }
-
-        .menu-toggle{
-            width: 100%;
-            border: none;
-            background: transparent;
-            color: var(--text-main);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 1rem;
-            font-weight: 700;
-            transition: .2s ease;
+        .port-select.mode-tagged {
+            background-color: rgba(255, 193, 7, 0.2); /* Yellow tint */
+            border-color: #ffc107;
+            color: #ffc107;
         }
-
-        .menu-toggle:hover{
-            background: rgba(255,255,255,0.03);
-        }
-
-        .submenu{
-            list-style: none;
-            margin: 0;
-            padding: 0 10px;
-        }
-
-        .submenu .nav-link{
-            color: var(--text-soft);
-            border-radius: 12px;
-            padding: 11px 14px 11px 16px;
-            margin: 4px 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            font-size: .95rem;
-            font-weight: 500;
-            transition: all .2s ease;
-        }
-
-        .submenu .nav-link:hover{
-            background: var(--sidebar-hover);
-            color: #ffffff;
-        }
-
-        .submenu .nav-link.active{
-            background: linear-gradient(90deg, #4a86f7 0%, #2f73f5 100%);
+        .port-select option {
+            background-color: #243b6b; /* Base dark theme bg */
             color: #fff;
-            font-weight: 600;
-            box-shadow: 0 8px 18px rgba(74, 134, 247, .28);
-        }
-
-        .logout-link{
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-soft);
-            text-decoration: none;
-            margin: 14px 18px 0;
-            padding: 12px 14px;
-            border-radius: 12px;
-            transition: .2s ease;
-        }
-
-        .logout-link:hover{
-            background: rgba(255,255,255,0.04);
-            color: #fff;
-        }
-
-        .main-content{
-            margin-left: var(--sidebar-width);
-            width: calc(100% - var(--sidebar-width));
-            min-height: 100vh;
-        }
-
-        .topbar{
-            height: var(--topbar-height);
-            background: var(--topbar-bg);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-soft);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            position: sticky;
-            top: 0;
-            z-index: 1030;
-        }
-
-        .topbar-title{
-            margin: 0;
-            font-size: 1.85rem;
-            font-weight: 800;
-            letter-spacing: -0.7px;
-        }
-
-        .btn-main{
-            background: linear-gradient(90deg, #4a86f7 0%, #3b7bf3 100%);
-            border: none;
-            color: white;
-            padding: 10px 18px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: .92rem;
-            box-shadow: 0 10px 24px rgba(74, 134, 247, .30);
-        }
-
-        .btn-main:hover{
-            background: linear-gradient(90deg, #3d7cf4 0%, #2f73f5 100%);
-            color: white;
-        }
-
-        .content-area{
-            padding: 26px;
-        }
-
-        .panel-card,
-        .stats-card{
-            background: var(--card-bg);
-            border: 1px solid var(--border-soft);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-main);
-        }
-
-        .panel-card{
-            padding: 24px;
-        }
-
-        .page-title{
-            font-size: 2.1rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 24px;
-            color: #fff;
-        }
-
-        .nav-tabs{
-            border-bottom: none;
-            gap: 6px;
-        }
-
-        .nav-tabs .nav-link{
-            border: none;
-            border-radius: 12px 12px 0 0;
-            color: var(--text-soft);
-            background: rgba(255,255,255,0.05);
-            font-weight: 600;
-        }
-
-        .nav-tabs .nav-link:hover{
-            color: #fff;
-            background: rgba(255,255,255,0.08);
-        }
-
-        .nav-tabs .nav-link.active{
-            background: rgba(74,134,247,.20);
-            color: #fff;
-        }
-
-        .form-control,
-        .form-select{
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
-            color: #fff;
-            border-radius: 14px;
-            min-height: 46px;
-        }
-
-        .form-control:focus,
-        .form-select:focus{
-            background: rgba(255,255,255,0.08);
-            color: #fff;
-            border-color: #4a86f7;
-            box-shadow: 0 0 0 .2rem rgba(74,134,247,.20);
-        }
-
-        .form-control::placeholder{
-            color: #9eb0ca;
-        }
-
-        .form-check-input{
-            width: 1.1rem;
-            height: 1.1rem;
-            background-color: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.15);
-        }
-
-        .form-check-input:checked{
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .table-dark-custom{
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            overflow: hidden;
-            border-radius: 18px;
-            background: rgba(255,255,255,0.02);
-        }
-
-        .table-dark-custom thead th{
-            background: rgba(255,255,255,0.05);
-            color: #eaf1ff;
-            font-size: .88rem;
-            font-weight: 700;
-            padding: 14px 12px;
-            border-bottom: 1px solid var(--border-soft);
-            white-space: nowrap;
-        }
-
-        .table-dark-custom tbody td{
-            color: var(--text-soft);
-            font-size: .9rem;
-            padding: 13px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            white-space: nowrap;
-        }
-
-        .table-dark-custom tbody tr:hover{
-            background: rgba(255,255,255,0.03);
-        }
-
-        .soft-badge{
-            display: inline-block;
-            padding: 6px 10px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.06);
-            color: #d9e6ff;
-            font-size: .82rem;
-            font-weight: 600;
-        }
-
-        .sidebar-toggler{
-            display: none;
-            border: none;
-            background: transparent;
-            color: white;
-            font-size: 1.5rem;
-        }
-
-        @media (max-width: 992px){
-            .sidebar{
-                transform: translateX(-100%);
-                transition: transform .28s ease;
-            }
-
-            .sidebar.show{
-                transform: translateX(0);
-            }
-
-            .main-content{
-                margin-left: 0;
-                width: 100%;
-            }
-
-            .sidebar-toggler{
-                display: inline-flex;
-            }
         }
     </style>
-</head>
-<body>
-<div class="app-wrapper">
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">
-                <i class="bi bi-bar-chart-fill"></i>
-            </div>
-            <h1 class="brand-title">NuupNet</h1>
-        </div>
 
-        <div class="sidebar-body">
+    <script>
+        function updateSelectColor(selectElement) {
+            // Remove previous classes
+            selectElement.classList.remove('mode-off', 'mode-untagged', 'mode-tagged');
+            // Add new class based on value
+            const val = selectElement.value;
+            if (val === 'off') selectElement.classList.add('mode-off');
+            else if (val === 'untagged') selectElement.classList.add('mode-untagged');
+            else if (val === 'tagged') selectElement.classList.add('mode-tagged');
+        }
 
-            <div class="menu-section">
-                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuEstado" type="button">
-                    <span>Estado</span>
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-
-                <div class="collapse show" id="menuEstado">
-                    <ul class="submenu">
-                        <li><a href="#" class="nav-link"><i class="bi bi-grid"></i> Visión general</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-shield-lock"></i> Cortafuegos</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-signpost-2"></i> Rutas</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-journal-text"></i> Registro del sistema</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-cpu"></i> Registro del núcleo</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-gear-wide-connected"></i> Procesos</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-graph-up-arrow"></i> Gráficos en tiempo real</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="menu-section">
-                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuSistema" type="button">
-                    <span>Sistema</span>
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-
-                <div class="collapse show" id="menuSistema">
-                    <ul class="submenu">
-                        <li><a href="#" class="nav-link"><i class="bi bi-pc-display"></i> Sistema</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-person-gear"></i> Administración</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-power"></i> Arranque</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-clock-history"></i> Tareas programadas</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-lightbulb"></i> Configuración de LEDs</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="menu-section">
-                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuRed" type="button">
-                    <span>Red</span>
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-
-                <div class="collapse show" id="menuRed">
-                    <ul class="submenu">
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-diagram-3"></i> Interfaces
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-wifi"></i> Wi-Fi
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('network.switch.general') }}" class="nav-link">
-                                <i class="bi bi-hdd-network"></i> Conmutador
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('network.dhcpdns.general') }}" class="nav-link">
-                                <i class="bi bi-router"></i> DHCP y DNS
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-globe2"></i> Nombres de host
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-sign-turn-right"></i> Rutas estáticas
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-activity"></i> Diagnósticos
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <a href="#" class="logout-link">
-                <i class="bi bi-box-arrow-left"></i>
-                Cerrar sesión
-            </a>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <header class="topbar">
-            <div class="d-flex align-items-center gap-3">
-                <button class="sidebar-toggler" id="sidebarToggle" type="button">
-                    <i class="bi bi-list"></i>
-                </button>
-                <h2 class="topbar-title">@yield('page-title', 'Panel principal')</h2>
-            </div>
-
-            <button class="btn btn-main" type="button">Refrescar</button>
-        </header>
-
-        <div class="content-area">
-            @yield('content')
-        </div>
-    </main>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('show');
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize colors
+            document.querySelectorAll('.port-select').forEach(function(select) {
+                updateSelectColor(select);
+            });
         });
-    }
-</script>
-</body>
-</html>
+    </script>
+@endsection

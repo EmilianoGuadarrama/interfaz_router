@@ -25,6 +25,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger rounded-4 mb-3">
+                {{ session('error') }}
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger rounded-4 mb-3">
                 <ul class="mb-0 ps-3">
@@ -42,23 +48,23 @@
         <div class="panel-card">
             <ul class="nav nav-tabs mb-4 border-0">
                 <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('network.dhcpdns.general') }}">Configuración general</a>
+                    <a class="nav-link active" href="{{ route('red.dhcpdns.general') }}">Configuración general</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.tftp') }}">Configuración TFTP</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.tftp') }}">Configuración TFTP</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.advanced') }}">Configuración avanzada</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.advanced') }}">Configuración avanzada</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.static') }}">Asignaciones estáticas</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.static') }}">Asignaciones estáticas</a>
                 </li>
             </ul>
 
-            <form id="generalForm" action="{{ route('network.dhcpdns.general.update') }}" method="POST" novalidate>
+            <form id="generalForm" action="{{ route('red.dhcpdns.general.update') }}" method="POST" novalidate>
                 @csrf
 
                 <div class="row g-4">
@@ -133,60 +139,68 @@
 
                 <div class="row mt-2">
                     <div class="col-md-3">
-                        <div class="form-check mb-3">
+                        <div class="form-check form-switch mb-3 d-flex align-items-center gap-2">
                             <input
-                                class="form-check-input custom-check"
+                                class="form-check-input"
                                 type="checkbox"
+                                role="switch"
                                 name="require_domain"
                                 id="require_domain"
+                                style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ old('require_domain', !empty($config['require_domain'])) ? 'checked' : '' }}
                             >
-                            <label class="form-check-label text-light" for="require_domain">
+                            <label class="form-check-label text-light fw-semibold m-0" for="require_domain" style="cursor: pointer;">
                                 Requerir dominio
                             </label>
                         </div>
                     </div>
 
                     <div class="col-md-3">
-                        <div class="form-check mb-3">
+                        <div class="form-check form-switch mb-3 d-flex align-items-center gap-2">
                             <input
-                                class="form-check-input custom-check"
+                                class="form-check-input"
                                 type="checkbox"
+                                role="switch"
                                 name="authoritative"
                                 id="authoritative"
+                                style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ old('authoritative', !empty($config['authoritative'])) ? 'checked' : '' }}
                             >
-                            <label class="form-check-label text-light" for="authoritative">
+                            <label class="form-check-label text-light fw-semibold m-0" for="authoritative" style="cursor: pointer;">
                                 Autorizar
                             </label>
                         </div>
                     </div>
 
                     <div class="col-md-3">
-                        <div class="form-check mb-3">
+                        <div class="form-check form-switch mb-3 d-flex align-items-center gap-2">
                             <input
-                                class="form-check-input custom-check"
+                                class="form-check-input"
                                 type="checkbox"
+                                role="switch"
                                 name="log_queries"
                                 id="log_queries"
+                                style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ old('log_queries', !empty($config['log_queries'])) ? 'checked' : '' }}
                             >
-                            <label class="form-check-label text-light" for="log_queries">
+                            <label class="form-check-label text-light fw-semibold m-0" for="log_queries" style="cursor: pointer;">
                                 Registrar consultas
                             </label>
                         </div>
                     </div>
 
                     <div class="col-md-3">
-                        <div class="form-check mb-3">
+                        <div class="form-check form-switch mb-3 d-flex align-items-center gap-2">
                             <input
-                                class="form-check-input custom-check"
+                                class="form-check-input"
                                 type="checkbox"
+                                role="switch"
                                 name="local_only"
                                 id="local_only"
+                                style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ old('local_only', !empty($config['local_only'])) ? 'checked' : '' }}
                             >
-                            <label class="form-check-label text-light" for="local_only">
+                            <label class="form-check-label text-light fw-semibold m-0" for="local_only" style="cursor: pointer;">
                                 Solo servicio local
                             </label>
                         </div>
@@ -228,10 +242,10 @@
             color: rgba(255,255,255,0.55);
         }
 
-        .custom-check {
-            width: 1.1rem;
-            height: 1.1rem;
-            margin-top: 0.2rem;
+        /* form-switch active state */
+        .form-switch .form-check-input:checked {
+            background-color: #5b8cff;
+            border-color: #5b8cff;
         }
 
         .form-check-label,

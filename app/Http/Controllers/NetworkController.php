@@ -17,32 +17,6 @@ class NetworkController extends Controller
         $this->router = $router;
         $this->interfaceService = $interfaceService;
     }
-    /*
-    |--------------------------------------------------------------------------
-    | VISTAS PRINCIPALES
-    |--------------------------------------------------------------------------
-    */
-
-    public function showSwitch()
-    {
-        return redirect()->route('network.switch.general');
-    }
-
-    public function updateSwitch(Request $request)
-    {
-        return back()->with('success', 'Configuración de conmutador actualizada correctamente.');
-    }
-
-    public function showDhcpDns()
-    {
-        return redirect()->route('network.dhcpdns.general');
-    }
-
-    public function updateDhcpDns(Request $request)
-    {
-        return back()->with('success', 'Configuración de DHCP y DNS actualizada correctamente.');
-    }
-
     /* =========================
        INTERFACES
     ========================= */
@@ -66,10 +40,10 @@ class NetworkController extends Controller
             'bridge' => 'nullable|boolean'
         ], [
             'name.required' => 'El nombre de la interfaz es obligatorio.',
-            'name.alpha_dash' => 'El nombre solo puede contener letras, números, guiones y guiones bajos (sin espacios).',
+            'name.alpha_dash' => 'El nombre solo puede contener letras, nÃºmeros, guiones y guiones bajos (sin espacios).',
             'name.max' => 'El nombre no debe superar los 20 caracteres.',
             'protocol.required' => 'El protocolo es obligatorio.',
-            'protocol.in' => 'El protocolo seleccionado no es válido.'
+            'protocol.in' => 'El protocolo seleccionado no es vÃ¡lido.'
         ]);
 
         try {
@@ -100,12 +74,12 @@ class NetworkController extends Controller
                 return redirect()->route('network.interfaces')->with('success', "Interfaz '{$name}' creada correctamente en el router.");
             } else {
                 Log::error('Error from router executing UCI commands: ' . $result['output']);
-                return back()->withInput()->withErrors(['createInterface' => 'Error estructural al configurar el router. Verifique la conexión.'])->with('error', 'Hubo un error configurando la interfaz en el router.');
+                return back()->withInput()->withErrors(['createInterface' => 'Error estructural al configurar el router. Verifique la conexiÃ³n.'])->with('error', 'Hubo un error configurando la interfaz en el router.');
             }
 
         } catch (\Throwable $e) {
             Log::error('Error storeInterface: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Error al procesar la creación de la interfaz: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Error al procesar la creaciÃ³n de la interfaz: ' . $e->getMessage());
         }
     }
 
@@ -118,7 +92,7 @@ class NetworkController extends Controller
     {
         $safeName = $this->sanitizeInterfaceName($name);
         if (empty($safeName)) {
-            return back()->with('error', 'Nombre de interfaz inválido.');
+            return back()->with('error', 'Nombre de interfaz invÃ¡lido.');
         }
 
         $lowerName = strtolower($safeName);
@@ -146,7 +120,7 @@ class NetworkController extends Controller
     {
         $safeName = $this->sanitizeInterfaceName($name);
         if (empty($safeName)) {
-            return back()->with('error', 'Nombre de interfaz inválido.');
+            return back()->with('error', 'Nombre de interfaz invÃ¡lido.');
         }
 
         $lowerName = strtolower($safeName);
@@ -173,14 +147,14 @@ class NetworkController extends Controller
     {
         $safeName = $this->sanitizeInterfaceName($name);
         if (empty($safeName)) {
-            return back()->with('error', 'Nombre de interfaz inválido.');
+            return back()->with('error', 'Nombre de interfaz invÃ¡lido.');
         }
 
         $lowerName = strtolower($safeName);
         $criticalInterfaces = ['lan', 'wan', 'br-lan'];
 
         if (in_array($lowerName, $criticalInterfaces)) {
-            return back()->with('error', "No se permite eliminar directamente la interfaz troncal '{$safeName}' por protección del sistema.");
+            return back()->with('error', "No se permite eliminar directamente la interfaz troncal '{$safeName}' por protecciÃ³n del sistema.");
         }
 
         try {
@@ -192,7 +166,7 @@ class NetworkController extends Controller
             $result = $this->router->execute($cmds);
 
             if ($result['success']) {
-                return back()->with('success', "Interfaz '{$safeName}' eliminada y configuración recargada correctamente.");
+                return back()->with('success', "Interfaz '{$safeName}' eliminada y configuraciÃ³n recargada correctamente.");
             } else {
                 Log::error('Error destroying interface ' . $safeName . ': ' . $result['output']);
                 return back()->with('error', "Error al eliminar la interfaz '{$safeName}'. Es posible que no exista.");
@@ -207,7 +181,7 @@ class NetworkController extends Controller
     {
         $safeName = $this->sanitizeInterfaceName($name);
         if (empty($safeName)) {
-            return back()->with('error', 'Nombre de interfaz inválido.');
+            return back()->with('error', 'Nombre de interfaz invÃ¡lido.');
         }
         $lowerName = strtolower($safeName);
 
@@ -267,7 +241,7 @@ class NetworkController extends Controller
         try {
             $cmds = [];
             
-            // Borrar campos específicos anteriores para limpiar la estructura
+            // Borrar campos especÃ­ficos anteriores para limpiar la estructura
             $clearFields = ['ipaddr', 'netmask', 'gateway', 'broadcast', 'ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'hostname', 'peerdns', 'defaultroute', 'clientid', 'vendorid', 'username', 'password', 'ac', 'service', 'device', 'metric', 'macaddr', 'mtu', 'lcp_echo_failure', 'lcp_echo_interval', 'demand'];
             foreach($clearFields as $cf) {
                 $cmds[] = "uci -q delete network.{$lowerName}.{$cf} || true";
@@ -277,7 +251,7 @@ class NetworkController extends Controller
             $proto = $request->input('proto', 'static');
             $cmds[] = "uci set network.{$lowerName}.proto='{$proto}'";
 
-            // Campos activos básicos
+            // Campos activos bÃ¡sicos
             $activeFields = ['ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'metric', 'macaddr', 'mtu'];
             if ($proto === 'static') {
                 array_push($activeFields, 'ipaddr', 'gateway', 'broadcast');
@@ -294,7 +268,7 @@ class NetworkController extends Controller
                 }
             }
             
-            // Netmask (solo estático)
+            // Netmask (solo estÃ¡tico)
             if ($proto === 'static') {
                 $val = $request->input('netmask');
                 if ($val === 'custom') {
@@ -305,7 +279,7 @@ class NetworkController extends Controller
                 }
             }
 
-            // Atributos lógicos (booleans)
+            // Atributos lÃ³gicos (booleans)
             $booleans = [
                 'auto' => '1',
                 'delegate' => '1',
@@ -339,7 +313,7 @@ class NetworkController extends Controller
                 }
             }
             
-            // Configuración física
+            // ConfiguraciÃ³n fÃ­sica
             $type = $request->input('type');
             if ($type === 'bridge') {
                  $cmds[] = "uci set network.{$lowerName}.type='bridge'";
@@ -359,7 +333,7 @@ class NetworkController extends Controller
                  $cmds[] = "uci -q delete network.{$lowerName}.type || true";
             }
             
-            // Configuración Servidor DHCP (solo guardaremos lo básico)
+            // ConfiguraciÃ³n Servidor DHCP (solo guardaremos lo bÃ¡sico)
             $cmds[] = "uci show dhcp.{$lowerName} >/dev/null 2>&1 || uci set dhcp.{$lowerName}=dhcp";
             $cmds[] = "uci set dhcp.{$lowerName}.interface='{$lowerName}'";
             $dhcpIgnore = $request->has('dhcp_ignore') ? '1' : '0';
@@ -376,7 +350,7 @@ class NetworkController extends Controller
                 $fz = $request->input('custom_firewall_zone', '');
             }
             
-            // Usaremos un pequeño script shell a ejecutar en el router para actualizar la zona del cortafuegos de forma atómica
+            // Usaremos un pequeÃ±o script shell a ejecutar en el router para actualizar la zona del cortafuegos de forma atÃ³mica
             $fwScript = "
                 IFACE='{$lowerName}'
                 FZ='{$fz}'
@@ -417,15 +391,15 @@ class NetworkController extends Controller
 
             if ($result['success']) {
                 session()->flash('reopen_modal', $lowerName);
-                return back()->with('success', "Configuración general de '{$safeName}' actualizada correctamente en el router.");
+                return back()->with('success', "ConfiguraciÃ³n general de '{$safeName}' actualizada correctamente en el router.");
             } else {
                 Log::error('Error updating interface ' . $safeName . ': ' . $result['output']);
                 session()->flash('reopen_modal', $lowerName);
-                return back()->withInput()->withErrors(['updateInterface-'.$lowerName => "Falló al aplicar configuración."])->with('error', "No se pudieron aplicar los cambios en OpenWrt.");
+                return back()->withInput()->withErrors(['updateInterface-'.$lowerName => "FallÃ³ al aplicar configuraciÃ³n."])->with('error', "No se pudieron aplicar los cambios en OpenWrt.");
             }
         } catch (\Throwable $e) {
             Log::error('Error en updateInterface: ' . $e->getMessage());
-            return back()->withInput()->with('error', "Fallo de conexión con el router.");
+            return back()->withInput()->with('error', "Fallo de conexiÃ³n con el router.");
         }
     }
 
@@ -441,261 +415,11 @@ class NetworkController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | CONMUTADOR
+    | NOMBRES DE HOST
     |--------------------------------------------------------------------------
     */
 
-    public function switchGeneral()
-    {
-        $config = session('switch_general', [
-            'nombre' => 'Switch principal',
-            'ip_gestion' => '192.168.10.2',
-            'mascara' => '255.255.255.0',
-            'gateway' => '192.168.10.1',
-            'descripcion' => 'Conmutador de red local',
-        ]);
-
-        return view('network.switch.general', compact('config'));
-    }
-
-    public function switchVlans()
-    {
-        $vlans = session('switch_vlans', [
-            [
-                'id' => 10,
-                'nombre' => 'Administracion',
-                'puertos' => '1-4',
-            ],
-            [
-                'id' => 20,
-                'nombre' => 'Usuarios',
-                'puertos' => '5-12',
-            ],
-        ]);
-
-        return view('network.switch.vlans', compact('vlans'));
-    }
-
-    public function updateSwitchVlans(Request $request)
-    {
-        $data = $request->validate([
-            'vlan_id' => 'nullable|integer|min:1|max:4094',
-            'vlan_nombre' => 'nullable|string|max:100',
-            'puertos' => 'nullable|string|max:100',
-        ]);
-
-        $vlans = session('switch_vlans', []);
-
-        if (!empty($data['vlan_id']) && !empty($data['vlan_nombre'])) {
-            $vlans[] = [
-                'id' => $data['vlan_id'],
-                'nombre' => $data['vlan_nombre'],
-                'puertos' => $data['puertos'] ?? '',
-            ];
-
-            session(['switch_vlans' => $vlans]);
-
-            return back()->with('success', 'VLAN agregada correctamente.');
-        }
-
-        return back()->with('success', 'Configuración de VLAN actualizada correctamente.');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DHCP Y DNS - CONFIGURACIÓN GENERAL
-    |--------------------------------------------------------------------------
-    */
-
-    public function dhcpDnsGeneral()
-    {
-        return view('network.dhcpdns.general');
-    }
-
-    public function dhcpDnsResolvHosts()
-    {
-        return view('network.dhcpdns.resolv-hosts');
-    }
-
-    public function dhcpDnsStatic()
-    {
-        $staticEntries = [];
-        $activeLeases = [];
-
-        try {
-            // Asignaciones estáticas UCI
-            $staticResult = $this->router->execute([
-                "uci show dhcp | grep -E 'host\['"
-            ]);
-
-            $lines = explode("\n", $staticResult['output']);
-            $temp = [];
-
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (preg_match("/dhcp\.@host\[(\d+)\]\.(name|mac|ip|leasetime|duid|hostid)='(.+)'/", $line, $m)) {
-                    $temp[$m[1]][$m[2]] = $m[3];
-                }
-            }
-
-            foreach ($temp as $i => $entry) {
-                $staticEntries[] = [
-                    'index' => $i,
-                    'name' => $entry['name'] ?? '-',
-                    'mac' => $entry['mac'] ?? '-',
-                    'ip' => $entry['ip'] ?? '-',
-                    'leasetime' => $entry['leasetime'] ?? '-',
-                    'duid' => $entry['duid'] ?? '-',
-                    'hostid' => $entry['hostid'] ?? '-',
-                ];
-            }
-
-            // Arrendamientos activos
-            $leasesResult = $this->router->execute([
-                "cat /tmp/dhcp.leases"
-            ]);
-
-            foreach (explode("\n", $leasesResult['output']) as $line) {
-                $line = trim($line);
-                if (empty($line) || str_starts_with($line, '>>>'))
-                    continue;
-
-                $parts = preg_split('/\s+/', $line);
-                if (count($parts) >= 4) {
-                    $seconds = (int) $parts[0] - time();
-                    $remaining = $seconds > 0
-                        ? sprintf('%dh %dm %ds', $seconds / 3600, ($seconds % 3600) / 60, $seconds % 60)
-                        : 'Expirado';
-
-                    $activeLeases[] = [
-                        'name' => $parts[3] ?? '-',
-                        'ip' => $parts[2] ?? '-',
-                        'mac' => $parts[1] ?? '-',
-                        'time' => $remaining,
-                    ];
-                }
-            }
-
-        } catch (\Throwable $e) {
-            Log::error('Error DHCP static: ' . $e->getMessage());
-        }
-
-        return view('network.dhcpdns.static', compact('staticEntries', 'activeLeases'));
-    }
-
-    public function updateDhcpDnsGeneral(Request $request)
-    {
-        return back()->with('result_title', 'Sección pendiente de conectar al router.');
-    }
-
-    public function updateDhcpDnsResolvHosts(Request $request)
-    {
-        $data = $request->validate([
-            'lease_file' => 'nullable|string|max:255',
-            'resolv_file' => 'nullable|string|max:255',
-            'additional_hosts' => 'nullable|string|max:255',
-        ]);
-
-        $data['use_ethers'] = $request->has('use_ethers');
-        $data['ignore_resolv'] = $request->has('ignore_resolv');
-        $data['ignore_hosts'] = $request->has('ignore_hosts');
-
-        session(['dhcpdns_resolv' => $data]);
-
-        return back()->with('success', $this->getSuccessMessage($request, 'Configuración de archivos Resolv y Hosts guardada'));
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DHCP Y DNS - TFTP
-    |--------------------------------------------------------------------------
-    */
-
-    public function dhcpDnsTftp()
-    {
-        $config = session('dhcpdns_tftp', [
-            'enable_tftp' => false,
-        ]);
-
-        return view('network.dhcpdns.tftp', compact('config'));
-    }
-
-    public function updateDhcpDnsTftp(Request $request)
-    {
-        $data = [
-            'enable_tftp' => $request->has('enable_tftp'),
-        ];
-
-        session(['dhcpdns_tftp' => $data]);
-
-        return back()->with('success', $this->getSuccessMessage($request, 'Configuración TFTP guardada'));
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DHCP Y DNS - CONFIGURACIÓN AVANZADA
-    |--------------------------------------------------------------------------
-    */
-
-    public function dhcpDnsAdvanced()
-    {
-        $config = session('dhcpdns_advanced', [
-            'suppress_log' => false,
-            'bogus_filter' => false,
-            'sequential_ip' => false,
-            'localise_queries' => true,
-            'private_filter' => true,
-            'expand_hosts' => true,
-            'additional_servers_file' => '',
-            'bogus_nxdomain' => '67.215.65.132',
-            'dns_port' => 53,
-            'dns_query_port' => 'cualquiera',
-            'dhcp_max' => 'ilimitado',
-            'edns_packet_max' => 1280,
-            'dns_forward_max' => 150,
-            'cache_size' => 150,
-        ]);
-
-        return view('network.dhcpdns.advanced', compact('config'));
-    }
-
-    public function updateDhcpDnsAdvanced(Request $request)
-    {
-        $data = $request->validate([
-            'additional_servers_file' => 'nullable|string|max:255',
-            'bogus_nxdomain' => 'nullable|string|max:255',
-            'dns_port' => 'nullable|integer|min:1|max:65535',
-            'dns_query_port' => 'nullable|string|max:100',
-            'dhcp_max' => 'nullable|string|max:100',
-            'edns_packet_max' => 'nullable|integer|min:1',
-            'dns_forward_max' => 'nullable|integer|min:1',
-            'cache_size' => 'nullable|integer|min:0',
-        ]);
-
-        $data['suppress_log'] = $request->has('suppress_log');
-        $data['bogus_filter'] = $request->has('bogus_filter');
-        $data['sequential_ip'] = $request->has('sequential_ip');
-        $data['localise_queries'] = $request->has('localise_queries');
-        $data['private_filter'] = $request->has('private_filter');
-        $data['expand_hosts'] = $request->has('expand_hosts');
-
-        session(['dhcpdns_advanced' => $data]);
-
-        return back()->with('success', $this->getSuccessMessage($request, 'Configuración avanzada guardada'));
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DHCP Y DNS - ASIGNACIONES ESTÁTICAS
-    |--------------------------------------------------------------------------
-    */
-
-    public function updateDhcpDnsStatic(Request $request)
-    {
-        return back()->with('success', $this->getSuccessMessage($request, 'Configuración de asignaciones estáticas guardada'));
-    }
-
-    public function storeDhcpDnsStatic(Request $request)
+    public function hostEntries()
     {
         try {
             $result = $this->router->execute([
@@ -742,9 +466,9 @@ class NetworkController extends Controller
             'ip' => ['required', 'ip'],
         ], [
             'name.required' => 'El nombre es obligatorio.',
-            'name.regex' => 'Solo letras, números y guiones. No debe haber espacios.',
-            'ip.required' => 'La dirección IP es obligatoria.',
-            'ip.ip' => 'Ingresa una dirección IP válida.',
+            'name.regex' => 'Solo letras, nÃºmeros y guiones. No debe haber espacios.',
+            'ip.required' => 'La direcciÃ³n IP es obligatoria.',
+            'ip.ip' => 'Ingresa una direcciÃ³n IP vÃ¡lida.',
         ]);
 
         try {
@@ -767,7 +491,7 @@ class NetworkController extends Controller
             Log::error('Error agregando host entry: ' . $e->getMessage());
             return back()->with([
                 'result_success' => false,
-                'result_title' => 'Error de conexión o ejecución',
+                'result_title' => 'Error de conexiÃ³n o ejecuciÃ³n',
             ]);
         }
     }
@@ -798,7 +522,7 @@ class NetworkController extends Controller
             Log::error('Error eliminando host entry: ' . $e->getMessage());
             return back()->with([
                 'result_success' => false,
-                'result_title' => 'Error de conexión o ejecución',
+                'result_title' => 'Error de conexiÃ³n o ejecuciÃ³n',
             ]);
         }
     }

@@ -23,6 +23,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger rounded-4 mb-3">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <div id="changeAlert" class="alert alert-warning rounded-4 mb-3 d-none">
             Se detectaron cambios sin guardar.
         </div>
@@ -30,43 +36,43 @@
         <div class="panel-card">
             <ul class="nav nav-tabs mb-4 border-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.general') }}">Configuración general</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.general') }}">Configuración general</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('network.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
+                    <a class="nav-link active" href="{{ route('red.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.tftp') }}">Configuración TFTP</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.tftp') }}">Configuración TFTP</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.advanced') }}">Configuración avanzada</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.advanced') }}">Configuración avanzada</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.static') }}">Asignaciones estáticas</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.static') }}">Asignaciones estáticas</a>
                 </li>
             </ul>
 
-            <form id="resolvForm" action="{{ route('network.dhcpdns.resolv.update') }}" method="POST">
+            <form id="resolvForm" action="{{ route('red.dhcpdns.resolv.update') }}" method="POST">
                 @csrf
 
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="use_ethers" id="use_ethers"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="use_ethers" id="use_ethers" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['use_ethers']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="use_ethers">Usar /etc/ethers</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="use_ethers" style="cursor: pointer;">Usar /etc/ethers</label>
                         </div>
 
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="ignore_resolv" id="ignore_resolv"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="ignore_resolv" id="ignore_resolv" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['ignore_resolv']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="ignore_resolv">Ignorar archivo resolve</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="ignore_resolv" style="cursor: pointer;">Ignorar archivo resolve</label>
                         </div>
 
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="ignore_hosts" id="ignore_hosts"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="ignore_hosts" id="ignore_hosts" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['ignore_hosts']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="ignore_hosts">Ignorar /etc/hosts</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="ignore_hosts" style="cursor: pointer;">Ignorar /etc/hosts</label>
                         </div>
                     </div>
 
@@ -122,10 +128,10 @@
             color: rgba(255,255,255,0.55);
         }
 
-        .custom-check {
-            width: 1.1rem;
-            height: 1.1rem;
-            margin-top: 0.2rem;
+        /* form-switch active state */
+        .form-switch .form-check-input:checked {
+            background-color: #5b8cff;
+            border-color: #5b8cff;
         }
 
         .form-check-label,

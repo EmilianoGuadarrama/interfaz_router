@@ -27,10 +27,10 @@
     <div class="panel-card">
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
-                <a class="nav-link active" href="{{ route('network.routes.static.ipv4') }}">Rutas IPv4 estáticas</a>
+                <a class="nav-link active" href="{{ route('red.routes.static.ipv4') }}">Rutas IPv4 estáticas</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('network.routes.static.ipv6') }}">Rutas IPv6 estáticas</a>
+                <a class="nav-link" href="{{ route('red.routes.static.ipv6') }}">Rutas IPv6 estáticas</a>
             </li>
         </ul>
 
@@ -121,7 +121,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 
-                <form action="{{ route('network.routes.static.ipv4.store') }}" method="POST">
+                <form action="{{ route('red.routes.static.ipv4.store') }}" method="POST">
                     @csrf
 
                     <div class="modal-body p-4">
@@ -178,7 +178,7 @@
                 btn.addEventListener('click', function() {
                     if(confirm('¿Seguro que deseas eliminar esta ruta?')) {
                         input.value = this.dataset.key;
-                        form.action = "{{ route('network.routes.static.ipv4.destroy') }}";
+                        form.action = "{{ route('red.routes.static.ipv4.destroy') }}";
                         form.submit();
                     }
                 });
@@ -186,7 +186,7 @@
 
             // 🔥 FETCH DIFERIDO (mejor percepción)
             setTimeout(() => {
-                fetch("{{ route('network.estado.conexion') }}")
+                fetch("{{ route('red.estado.conexion') }}")
                     .then(r => r.json())
                     .then(data => {
                         const status = document.getElementById('router-status');
