@@ -165,6 +165,99 @@ class RouterInterfaceService
         return $devices;
     }
 
+    public function getUciConfig(): array
+    {
+        $config = [];
+        try {
+            $output = (string)$this->sshService->getRaw('uci show network');
+            $lines = explode("\n", $output);
+            foreach ($lines as $line) {
+                if (preg_match('/^network\.([a-zA-Z0-9_\-]+)\.(.+?)=[\'"]?(.*?)[\'"]?$/', trim($line), $matches)) {
+                    $iface = strtolower($matches[1]);
+                    $key = strtolower($matches[2]);
+                    $val = $matches[3];
+                    if (!isset($config[$iface][$key])) {
+                        $config[$iface][$key] = $val;
+                    } else {
+                        if (!is_array($config[$iface][$key])) {
+                            $config[$iface][$key] = [$config[$iface][$key]];
+                        }
+                        $config[$iface][$key][] = $val;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting UCI network config: ' . $e->getMessage());
+        }
+        return $config;
+    }
+
+    public function getUciFirewallZones(): array
+    {
+        $zones = [];
+        try {
+            $output = (string)$this->sshService->getRaw('uci show firewall');
+            $lines = explode("\n", $output);
+            $tempZones = [];
+            foreach ($lines as $line) {
+                if (preg_match('/^firewall\.(@?zone\[\d+\])\.(name|network)=[\'"]?(.*?)[\'"]?$/', trim($line), $matches)) {
+                    $zoneId = $matches[1];
+                    $key = $matches[2];
+                    $val = $matches[3];
+                    $tempZones[$zoneId][$key] = $val;
+                }
+            }
+            
+            // Format into a friendlier array
+            foreach ($tempZones as $zData) {
+                if (!empty($zData['name'])) {
+                    $zName = $zData['name'];
+                    $networks = !empty($zData['network']) ? explode(' ', $zData['network']) : [];
+                    $zones[$zName] = [
+                        'name' => $zName,
+                        'networks' => $networks
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting UCI firewall zones: ' . $e->getMessage());
+        }
+        return $zones;
+    }
+
+    public function getUciDhcpConfig(): array
+    {
+        $config = [];
+        try {
+            $output = (string)$this->sshService->getRaw('uci show dhcp');
+            $lines = explode("\n", $output);
+            
+            foreach ($lines as $line) {
+                // e.g. dhcp.lan.start='100' or dhcp.@dhcp[0].interface='lan'
+                if (preg_match('/^dhcp\.([a-zA-Z0-9_\-]+)\.(.+?)=[\'"]?(.*?)[\'"]?$/', trim($line), $matches)) {
+                    $iface = strtolower($matches[1]);
+                    // Ignore internal generic dhcp blocks unless they map to an interface by name
+                    if (str_starts_with($iface, '@')) continue; 
+
+                    $key = strtolower($matches[2]);
+                    $val = $matches[3];
+                    
+                    if (!isset($config[$iface][$key])) {
+                        $config[$iface][$key] = $val;
+                    } else {
+                        if (!is_array($config[$iface][$key])) {
+                            $config[$iface][$key] = [$config[$iface][$key]];
+                        }
+                        $config[$iface][$key][] = $val;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error getting UCI dhcp config: ' . $e->getMessage());
+        }
+        return $config;
+    }
+
     private function getIpAddrOutput(): string 
     {
         try {

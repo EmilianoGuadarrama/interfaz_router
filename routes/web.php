@@ -14,6 +14,10 @@ Route::prefix('red')->name('network.')->group(function () {
     // Vista principal de Interfaces
     Route::get('/interfaces', [NetworkController::class, 'interfaces'])->name('interfaces');
     Route::post('/interfaces/store', [NetworkController::class, 'storeInterface'])->name('interfaces.store');
+    Route::post('/interfaces/{name}/restart', [NetworkController::class, 'restartInterface'])->name('interfaces.restart');
+    Route::post('/interfaces/{name}/stop', [NetworkController::class, 'stopInterface'])->name('interfaces.stop');
+    Route::delete('/interfaces/{name}/eliminar', [NetworkController::class, 'destroyInterface'])->name('interfaces.destroy');
+    Route::post('/interfaces/{name}/update', [NetworkController::class, 'updateInterface'])->name('interfaces.update');
     Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
     Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
 
