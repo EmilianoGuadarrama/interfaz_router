@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\RouterSshService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class RoutesController extends Controller
 {
@@ -16,59 +17,88 @@ class RoutesController extends Controller
     }
 
     /* =========================================================
+       NÚCLEO SÚPER RÁPIDO DE LECTURA (1 SOLA LLAMADA SSH)
+    ========================================================= */
+    private function getAllRoutesFast()
+    {
+        $routes = ['ipv4' => [], 'ipv6' => []];
+
+        try {
+            // TRUCO 1: Este script de bash se ejecuta EN el router.
+            // Busca las rutas, obtiene sus nombres exactos y las imprime todas juntas en milisegundos.
+            $cmd = "keys=\$(uci show network | grep -E '=(route|route6)$' | cut -d'=' -f1); [ -n \"\$keys\" ] && uci show \$keys";
+            
+            $result = $this->router->execute([$cmd]);
+
+            if ($result['success'] && !empty($result['output'])) {
+                $lines = explode("\n", trim($result['output']));
+                
+                $ipv4_keys = [];
+                $ipv6_keys = [];
+                $data = [];
+
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+
+                    $parts = explode('=', $line, 2);
+                    if (count($parts) < 2) continue;
+
+                    // Limpiamos la salida para procesar rápido
+                    $left = str_replace('network.', '', $parts[0]);
+                    $val = trim($parts[1], "'\"");
+
+                    if (strpos($left, '.') === false) {
+                        // Es la declaración base (ej: @route[0]=route)
+                        if ($val === 'route') $ipv4_keys[$left] = true;
+                        elseif ($val === 'route6') $ipv6_keys[$left] = true;
+                    } else {
+                        // Es una propiedad (ej: @route[0].target)
+                        $propParts = explode('.', $left, 2);
+                        if (count($propParts) === 2) {
+                            $data[$propParts[0]][$propParts[1]] = $val;
+                        }
+                    }
+                }
+
+                // Armamos array final IPv4
+                foreach ($ipv4_keys as $key => $true) {
+                    $route = $data[$key] ?? [];
+                    $route['key'] = $key;
+                    $routes['ipv4'][] = $route;
+                }
+
+                // Armamos array final IPv6
+                foreach ($ipv6_keys as $key => $true) {
+                    $route = $data[$key] ?? [];
+                    $route['key'] = $key;
+                    $routes['ipv6'][] = $route;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error en lectura rápida de rutas: ' . $e->getMessage());
+        }
+
+        return $routes;
+    }
+
+    /* =========================================================
        RUTAS IPv4
     ========================================================= */
 
     public function staticIpv4()
     {
-        $routes = [];
+        // Guardamos todo en caché por 30s. Si das F5 rápido, ni siquiera toca el router.
+        $allRoutes = Cache::remember('all_network_routes', 30, function () {
+            return $this->getAllRoutesFast();
+        });
 
-        try {
-            // OPTIMIZACIÓN: 1 sola llamada SSH para traer todo y procesarlo en memoria (super rápido)
-            $result = $this->router->execute(["uci show network"]);
-            
-            if ($result['success'] && !empty($result['output'])) {
-                $blocks = [];
-                
-                // 1. Agrupar todo el texto recibido por bloques (ej. @route[0] o cfg123)
-                foreach (explode("\n", trim($result['output'])) as $line) {
-                    if (strpos($line, '=') !== false) {
-                        [$fullKey, $value] = explode('=', $line, 2);
-                        $fullKey = trim($fullKey);
-                        $value = trim($value, "'\" \r\n");
-
-                        if (preg_match('/^network\.([^.]+)(?:\.(.+))?$/', $fullKey, $matches)) {
-                            $blockName = $matches[1];
-                            $propName = $matches[2] ?? 'TYPE'; // Si no tiene propiedad, es la definición (ej. =route)
-                            $blocks[$blockName][$propName] = $value;
-                        }
-                    }
-                }
-
-                // 2. Filtrar solo los bloques que sean tipo 'route' (IPv4)
-                foreach ($blocks as $key => $props) {
-                    if (isset($props['TYPE']) && $props['TYPE'] === 'route') {
-                        $routes[] = [
-                            'key' => $key,
-                            'interface' => $props['interface'] ?? '',
-                            'target' => $props['target'] ?? '',
-                            'netmask' => $props['netmask'] ?? '',
-                            'gateway' => $props['gateway'] ?? '',
-                            'metric' => $props['metric'] ?? '',
-                            'mtu' => $props['mtu'] ?? '',
-                        ];
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error leyendo rutas IPv4: ' . $e->getMessage());
-        }
-
+        $routes = $allRoutes['ipv4'] ?? [];
         return view('network.rutas_estaticas.estatica', compact('routes'));
     }
-public function storeStaticIpv4(Request $request)
+
+    public function storeStaticIpv4(Request $request)
     {
-        // Añadimos los nuevos campos a la validación
         $validated = $request->validate([
             'interface' => 'required|string',
             'target' => 'required|string',
@@ -79,51 +109,74 @@ public function storeStaticIpv4(Request $request)
             'type' => 'nullable|string',
             'table' => 'nullable|string',
             'source' => 'nullable|string',
-            'onlink' => 'nullable|boolean', // El checkbox
+            'onlink' => 'nullable|boolean',
         ]);
 
         try {
-            $this->router->execute(["uci add network route 2>&1"]);
-            $setCommands = [];
-            
-            foreach ($validated as $key => $value) {
-                // Manejo especial para el checkbox 'onlink' (OpenWrt espera '1' o '0')
-                if ($key === 'onlink') {
-                    $value = $value ? '1' : '0';
-                }
+            $commands = ["uci add network route"];
 
-                // Si el campo no está vacío, lo agregamos al comando
+            foreach ($validated as $key => $value) {
+                if ($key === 'onlink') $value = $value ? '1' : '0';
+                
                 if ($value !== null && $value !== '') {
-                    $setCommands[] = "uci set network.@route[-1].{$key}='{$value}' 2>&1";
+                    $commands[] = "uci set network.@route[-1].{$key}='{$value}'";
                 }
             }
-            
-            $setCommands[] = "uci commit network 2>&1";
-            $setCommands[] = "/etc/init.d/network restart 2>&1";
 
-            $result = $this->router->execute($setCommands);
+            $commands[] = "uci commit network";
+            $commands[] = "ubus call network reload";
+
+            // TRUCO 2: Unimos todo con " ; " para que sea UNA sola conexión SSH instantánea.
+            $singleCommand = implode(' ; ', $commands);
+            $result = $this->router->execute([$singleCommand]);
+
+            Cache::forget('all_network_routes'); // Limpiar caché
+
             return back()->with([
-                'result_success' => $result['success'], 
-                'result_output' => $result['output'], 
+                'result_success' => $result['success'],
+                'result_output' => $result['output'],
                 'result_title' => $result['success'] ? 'Ruta IPv4 agregada' : 'Error al guardar ruta'
             ]);
+
         } catch (\Throwable $e) {
             return back()->with([
-                'result_success' => false, 
-                'result_output' => $e->getMessage(), 
+                'result_success' => false,
+                'result_output' => $e->getMessage(),
                 'result_title' => 'Error de ejecución'
             ]);
         }
     }
+
     public function destroyStaticIpv4(Request $request)
     {
         $validated = $request->validate(['route_key' => 'required|string']);
+
         try {
             $key = escapeshellarg($validated['route_key']);
-            $result = $this->router->execute(["uci delete network.{$key} 2>&1", "uci commit network 2>&1", "/etc/init.d/network restart 2>&1"]);
-            return back()->with(['result_success' => $result['success'], 'result_output' => $result['output'], 'result_title' => $result['success'] ? 'Ruta IPv4 eliminada' : 'Error al eliminar']);
+            $commands = [
+                "uci delete network.{$key}",
+                "uci commit network",
+                "ubus call network reload"
+            ];
+
+            // Ejecución instantánea
+            $singleCommand = implode(' ; ', $commands);
+            $result = $this->router->execute([$singleCommand]);
+
+            Cache::forget('all_network_routes');
+
+            return back()->with([
+                'result_success' => $result['success'],
+                'result_output' => $result['output'],
+                'result_title' => $result['success'] ? 'Ruta IPv4 eliminada' : 'Error al eliminar'
+            ]);
+
         } catch (\Throwable $e) {
-            return back()->with(['result_success' => false, 'result_output' => $e->getMessage(), 'result_title' => 'Error de ejecución']);
+            return back()->with([
+                'result_success' => false,
+                'result_output' => $e->getMessage(),
+                'result_title' => 'Error de ejecución'
+            ]);
         }
     }
 
@@ -133,47 +186,11 @@ public function storeStaticIpv4(Request $request)
 
     public function staticIpv6()
     {
-        $routes = [];
+        $allRoutes = Cache::remember('all_network_routes', 30, function () {
+            return $this->getAllRoutesFast();
+        });
 
-        try {
-            // OPTIMIZACIÓN: 1 sola llamada SSH
-            $result = $this->router->execute(["uci show network"]);
-            
-            if ($result['success'] && !empty($result['output'])) {
-                $blocks = [];
-
-                foreach (explode("\n", trim($result['output'])) as $line) {
-                    if (strpos($line, '=') !== false) {
-                        [$fullKey, $value] = explode('=', $line, 2);
-                        $fullKey = trim($fullKey);
-                        $value = trim($value, "'\" \r\n");
-
-                        if (preg_match('/^network\.([^.]+)(?:\.(.+))?$/', $fullKey, $matches)) {
-                            $blockName = $matches[1];
-                            $propName = $matches[2] ?? 'TYPE';
-                            $blocks[$blockName][$propName] = $value;
-                        }
-                    }
-                }
-
-                // Filtrar solo los bloques que sean tipo 'route6' (IPv6)
-                foreach ($blocks as $key => $props) {
-                    if (isset($props['TYPE']) && $props['TYPE'] === 'route6') {
-                        $routes[] = [
-                            'key' => $key,
-                            'interface' => $props['interface'] ?? '',
-                            'target' => $props['target'] ?? '',
-                            'gateway' => $props['gateway'] ?? '',
-                            'metric' => $props['metric'] ?? '',
-                            'mtu' => $props['mtu'] ?? '',
-                        ];
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error leyendo rutas IPv6: ' . $e->getMessage());
-        }
-
+        $routes = $allRoutes['ipv6'] ?? [];
         return view('network.rutas_estaticas.estatica_ipv6', compact('routes'));
     }
 
@@ -181,39 +198,79 @@ public function storeStaticIpv4(Request $request)
     {
         $validated = $request->validate([
             'interface' => 'required|string',
-            'target' => 'required|string', 
+            'target' => 'required|string',
             'gateway' => 'nullable|string',
             'metric' => 'nullable|integer',
             'mtu' => 'nullable|integer',
+            'type' => 'nullable|string',
+            'table' => 'nullable|string',
+            'source' => 'nullable|string',
+            'onlink' => 'nullable|boolean',
         ]);
 
         try {
-            $this->router->execute(["uci add network route6 2>&1"]);
-            $setCommands = [];
+            $commands = ["uci add network route6"];
+
             foreach ($validated as $key => $value) {
-                if (!empty($value)) {
-                    $setCommands[] = "uci set network.@route6[-1].{$key}='{$value}' 2>&1";
+                if ($key === 'onlink') $value = $value ? '1' : '0';
+                
+                if ($value !== null && $value !== '') {
+                    $commands[] = "uci set network.@route6[-1].{$key}='{$value}'";
                 }
             }
-            $setCommands[] = "uci commit network 2>&1";
-            $setCommands[] = "/etc/init.d/network restart 2>&1";
 
-            $result = $this->router->execute($setCommands);
-            return back()->with(['result_success' => $result['success'], 'result_output' => $result['output'], 'result_title' => $result['success'] ? 'Ruta IPv6 agregada' : 'Error al guardar ruta']);
+            $commands[] = "uci commit network";
+            $commands[] = "ubus call network reload";
+
+            $singleCommand = implode(' ; ', $commands);
+            $result = $this->router->execute([$singleCommand]);
+
+            Cache::forget('all_network_routes');
+
+            return back()->with([
+                'result_success' => $result['success'],
+                'result_output' => $result['output'],
+                'result_title' => $result['success'] ? 'Ruta IPv6 agregada' : 'Error al guardar ruta'
+            ]);
+
         } catch (\Throwable $e) {
-            return back()->with(['result_success' => false, 'result_output' => $e->getMessage(), 'result_title' => 'Error de ejecución']);
+            return back()->with([
+                'result_success' => false,
+                'result_output' => $e->getMessage(),
+                'result_title' => 'Error de ejecución'
+            ]);
         }
     }
 
     public function destroyStaticIpv6(Request $request)
     {
         $validated = $request->validate(['route_key' => 'required|string']);
+
         try {
             $key = escapeshellarg($validated['route_key']);
-            $result = $this->router->execute(["uci delete network.{$key} 2>&1", "uci commit network 2>&1", "/etc/init.d/network restart 2>&1"]);
-            return back()->with(['result_success' => $result['success'], 'result_output' => $result['output'], 'result_title' => $result['success'] ? 'Ruta IPv6 eliminada' : 'Error al eliminar']);
+            $commands = [
+                "uci delete network.{$key}",
+                "uci commit network",
+                "ubus call network reload"
+            ];
+
+            $singleCommand = implode(' ; ', $commands);
+            $result = $this->router->execute([$singleCommand]);
+
+            Cache::forget('all_network_routes');
+
+            return back()->with([
+                'result_success' => $result['success'],
+                'result_output' => $result['output'],
+                'result_title' => $result['success'] ? 'Ruta IPv6 eliminada' : 'Error al eliminar'
+            ]);
+
         } catch (\Throwable $e) {
-            return back()->with(['result_success' => false, 'result_output' => $e->getMessage(), 'result_title' => 'Error de ejecución']);
+            return back()->with([
+                'result_success' => false,
+                'result_output' => $e->getMessage(),
+                'result_title' => 'Error de ejecución'
+            ]);
         }
     }
 
@@ -223,12 +280,10 @@ public function storeStaticIpv4(Request $request)
 
     public function checkConnection()
     {
-        try {
-            // Un comando muy rápido que solo devuelve 'ok' si el router responde por SSH
-            $result = $this->router->execute(["echo 'ok'"]);
-            return response()->json(['connected' => $result['success']]);
-        } catch (\Throwable $e) {
-            return response()->json(['connected' => false]);
-        }
+        return response()->json([
+            'connected' => Cache::remember('router_status', 10, function () {
+                return $this->router->isConnected();
+            })
+        ]);
     }
 }
