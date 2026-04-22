@@ -615,4 +615,171 @@ class SystemController extends Controller
             ]);
         }
     }
+
+    ////////////
+    ///
+    ///
+
+    // --- SISTEMA GENERAL (Todas las pestañas) ---
+
+    public function general()
+    {
+        // Valores por defecto
+        $data = [
+            'hostname' => 'NuupNet', 'timezone' => 'UTC', 'description' => '', 'notes' => '',
+            'log_size' => '64', 'log_ip' => '', 'log_port' => '514', 'log_proto' => 'udp',
+            'log_file' => '/tmp/system.log', 'conloglevel' => '8', 'cronloglevel' => '8',
+            'ntp_client' => true, 'ntp_server' => false, 'ntp_dhcp' => true,
+            'ntp_servers' => ['0.openwrt.pool.ntp.org', '1.openwrt.pool.ntp.org', '2.openwrt.pool.ntp.org', '3.openwrt.pool.ntp.org'],
+            'lang' => 'auto', 'theme' => 'material'
+        ];
+
+        try {
+            // Leemos la configuración de sistema y luci en una sola llamada
+            $result = $this->router->execute(["uci show system", "uci show luci 2>/dev/null"]);
+            $output = $result['output'];
+
+            // Expresiones regulares para extraer cada valor
+            if (preg_match("/system\.@system\[0\]\.hostname='(.+)'/", $output, $m)) $data['hostname'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.timezone='(.+)'/", $output, $m)) $data['timezone'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.description='(.+)'/", $output, $m)) $data['description'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.notes='(.+)'/", $output, $m)) $data['notes'] = $m[1];
+
+            // Logs
+            if (preg_match("/system\.@system\[0\]\.log_size='(\d+)'/", $output, $m)) $data['log_size'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.log_ip='(.+)'/", $output, $m)) $data['log_ip'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.log_port='(\d+)'/", $output, $m)) $data['log_port'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.log_proto='(.+)'/", $output, $m)) $data['log_proto'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.log_file='(.+)'/", $output, $m)) $data['log_file'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.conloglevel='(\d+)'/", $output, $m)) $data['conloglevel'] = $m[1];
+            if (preg_match("/system\.@system\[0\]\.cronloglevel='(\d+)'/", $output, $m)) $data['cronloglevel'] = $m[1];
+
+            // NTP
+            if (preg_match("/system\.ntp\.enable_server='(1)'/", $output)) $data['ntp_server'] = true;
+            if (preg_match("/system\.ntp\.use_dhcp='(0)'/", $output)) $data['ntp_dhcp'] = false;
+
+            // Extraer lista de servidores NTP
+            if (preg_match_all("/system\.ntp\.server='(.+)'/", $output, $matches)) {
+                $data['ntp_servers'] = $matches[1];
+            }
+
+            // LuCI (Idioma y Tema)
+            if (preg_match("/luci\.main\.lang='(.+)'/", $output, $m)) $data['lang'] = $m[1];
+            if (preg_match("/luci\.main\.mediaurlbase='.*(material|bootstrap|openwrt).*'/", $output, $m)) $data['theme'] = $m[1];
+
+        } catch (\Throwable $e) {
+            Log::error('System General View: ' . $e->getMessage());
+        }
+
+        return view('system.general.index', $data);
+    }
+
+    public function updateGeneral(Request $request)
+    {
+        // Validamos la avalancha de datos para asegurar el router
+        $request->validate([
+            'hostname' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9\-]+$/'],
+            'timezone' => ['required', 'string'],
+            'log_size' => ['nullable', 'integer'],
+            'log_ip' => ['nullable', 'ip'],
+            'log_port' => ['nullable', 'integer'],
+            'log_proto' => ['nullable', 'in:udp,tcp'],
+            'log_file' => ['nullable', 'string'],
+            'ntp_servers' => ['array'],
+            'ntp_servers.*' => ['nullable', 'string'],
+        ]);
+
+        try {
+            $cmds = [
+                // 1. Configuración General
+                "uci set system.@system[0].hostname='{$request->hostname}'",
+                "uci set system.@system[0].timezone='{$request->timezone}'",
+                "uci set system.@system[0].description='{$request->description}'",
+                "uci set system.@system[0].notes='{$request->notes}'",
+
+                // 2. Logs ("Inicio de sesión")
+                "uci set system.@system[0].log_size='{$request->log_size}'",
+                "uci set system.@system[0].log_port='{$request->log_port}'",
+                "uci set system.@system[0].log_proto='{$request->log_proto}'",
+                "uci set system.@system[0].log_file='{$request->log_file}'",
+                "uci set system.@system[0].conloglevel='{$request->conloglevel}'",
+                "uci set system.@system[0].cronloglevel='{$request->cronloglevel}'",
+            ];
+
+            if ($request->filled('log_ip')) {
+                $cmds[] = "uci set system.@system[0].log_ip='{$request->log_ip}'";
+            } else {
+                // AGREGAMOS -q AQUI
+                $cmds[] = "uci -q delete system.@system[0].log_ip";
+            }
+
+            // 3. NTP (Sincronización horaria)
+// ... (código anterior de logs)
+
+            // 3. NTP (Sincronización horaria)
+            $ntp_server_val = $request->boolean('ntp_server') ? '1' : '0';
+            $ntp_dhcp_val = $request->boolean('ntp_dhcp') ? '1' : '0';
+            $cmds[] = "uci set system.ntp.enable_server='{$ntp_server_val}'";
+            $cmds[] = "uci set system.ntp.use_dhcp='{$ntp_dhcp_val}'";
+
+            $cmds[] = "uci -q delete system.ntp.server";
+
+            // CORRECCIÓN 1: Forzamos la separación por espacios por si vienen agrupados
+            if ($request->has('ntp_servers')) {
+                foreach ($request->ntp_servers as $srvInput) {
+                    // Limpiamos comillas basura y separamos por espacios
+                    $servers = explode(' ', str_replace(['\'', '"'], '', $srvInput));
+                    foreach($servers as $srv) {
+                        if (!empty(trim($srv))) {
+                            $cmds[] = "uci add_list system.ntp.server='" . trim($srv) . "'";
+                        }
+                    }
+                }
+            }
+
+            // 4. Idioma y Estilo
+            $cmds[] = "uci -q set luci.main.lang='{$request->lang}'";
+            $cmds[] = "uci -q set luci.main.mediaurlbase='/luci-static/{$request->theme}'";
+
+            // Confirmar todos los cambios
+            $cmds[] = "uci commit";
+
+            // Si el botón presionado fue "GUARDAR Y APLICAR", reiniciamos los servicios
+            if ($request->input('action') === 'save_apply') {
+                $cmds[] = "/etc/init.d/system reload";
+
+                // CORRECCIÓN 2: Eliminamos /etc/init.d/log restart porque no existe en tu router.
+                // El system reload ya se encarga de aplicar los cambios del log.
+
+                $cmds[] = "/etc/init.d/sysntpd restart";
+                $cmds[] = "echo '{$request->hostname}' > /proc/sys/kernel/hostname";
+
+                if ($request->boolean('ntp_client')) {
+                    $cmds[] = "/etc/init.d/sysntpd enable";
+                    $cmds[] = "/etc/init.d/sysntpd start";
+                } else {
+                    $cmds[] = "/etc/init.d/sysntpd disable";
+                    $cmds[] = "/etc/init.d/sysntpd stop";
+                }
+            }
+
+            $result = $this->router->execute($cmds);
+
+            // LOG DE DEPURACIÓN
+            if (!$result['success']) {
+                Log::error('Fallo en comandos SSH: ' . $result['output']);
+            }
+
+            return back()->with([
+                'result_success' => $result['success'],
+                'result_title' => $result['success'] ? 'Configuración de sistema actualizada' : 'Error al guardar la configuración',
+            ]);
+
+        } catch (\Throwable $e) {
+// ...
+            Log::error('Update System General exception: ' . $e->getMessage());
+            return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
+        }
+    }
+
 }

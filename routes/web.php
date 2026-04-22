@@ -92,3 +92,16 @@ Route::post('/arranque/scripts/{script}/{action}', [SystemController::class, 'st
 
 Route::get('/tareas-programadas', [SystemController::class, 'scheduledTasks'])->name('tasks');
 Route::post('/tareas-programadas', [SystemController::class, 'updateScheduledTasks'])->name('tasks.update');
+
+//////////SISTEMA
+
+Route::prefix('system')->group(function () {
+
+    // 1. Ruta GET para MOSTRAR la vista del formulario
+    Route::get('/general', [SystemController::class, 'general'])->name('system.general');
+
+    // 2. Ruta POST para PROCESAR los datos cuando le das a "Guardar" o "Guardar y Aplicar"
+    Route::post('/general/update', [SystemController::class, 'updateGeneral'])->name('system.general.update');
+
+    // ... (Aquí seguramente ya tienes o pondrás tus otras rutas de leds, grabado, tareas, etc.)
+});

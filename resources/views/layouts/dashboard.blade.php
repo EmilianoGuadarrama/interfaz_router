@@ -429,7 +429,13 @@
 
                 <div class="collapse show" id="menuSistema">
                     <ul class="submenu">
-                        <li><a href="#" class="nav-link"><i class="bi bi-pc-display"></i> Sistema</a></li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('system.general') }}">
+                                <i class="bi bi-gear-fill me-2"></i> Sistema
+                            </a>
+                        </li>
+
                         <li><a href="#" class="nav-link"><i class="bi bi-person-gear"></i> Administración</a></li>
 
                         <li>
