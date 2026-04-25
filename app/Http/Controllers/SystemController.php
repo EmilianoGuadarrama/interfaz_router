@@ -250,12 +250,11 @@ class SystemController extends Controller
             // Paso 1: crear el backup
             $this->router->execute(["sysupgrade --create-backup /tmp/backup.tar.gz"]);
 
-            // Paso 2: leerlo en base64
-            $result = $this->router->execute(["base64 /tmp/backup.tar.gz"]);
+            // Paso 2: leerlo con cat
+            $result = $this->router->execute(["cat /tmp/backup.tar.gz"]);
 
             if ($result['success'] && !empty($result['output'])) {
-                $content = base64_decode(trim($result['output']));
-                return response($content, 200, [
+                return response($result['output'], 200, [
                     'Content-Type'        => 'application/x-tar',
                     'Content-Disposition' => 'attachment; filename="backup.tar.gz"',
                 ]);
@@ -317,19 +316,11 @@ class SystemController extends Controller
         try {
             $device = $request->mtdblock;
 
-            // Paso 1: vuelca el mtdblock a archivo temporal
-            $this->router->execute(["dd if=/dev/{$device} of=/tmp/{$device}.bin"]);
-
-            // Paso 2: lo lee en base64
-            $result = $this->router->execute(["base64 /tmp/{$device}.bin"]);
+            // Lee el mtdblock directamente con cat
+            $result = $this->router->execute(["cat /dev/{$device}"]);
 
             if ($result['success'] && !empty($result['output'])) {
-                $content = base64_decode(trim($result['output']));
-
-                // Paso 3: limpia el temporal
-                $this->router->execute(["rm -f /tmp/{$device}.bin"]);
-
-                return response($content, 200, [
+                return response($result['output'], 200, [
                     'Content-Type'        => 'application/octet-stream',
                     'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
                 ]);
