@@ -235,7 +235,15 @@ class NetworkController extends Controller
             'dhcp_start' => 'nullable|integer',
             'dhcp_limit' => 'nullable|integer',
             'dhcp_leasetime' => 'nullable|string',
-            'dhcp_dynamic' => 'nullable|boolean'
+            'dhcp_dynamic' => 'nullable|boolean',
+            'dhcp_force' => 'nullable|boolean',
+            'dhcp_netmask' => 'nullable|string',
+            'dhcp_options' => 'nullable|string',
+            'dhcp_ra' => 'nullable|string',
+            'dhcp_dhcpv6' => 'nullable|string',
+            'dhcp_ndp' => 'nullable|string',
+            'dhcp_dns' => 'nullable|string',
+            'dhcp_domain' => 'nullable|string'
         ]);
 
         try {
@@ -333,16 +341,52 @@ class NetworkController extends Controller
                  $cmds[] = "uci -q delete network.{$lowerName}.type || true";
             }
             
-            // ConfiguraciÃ³n Servidor DHCP (solo guardaremos lo bÃ¡sico)
+            // ConfiguraciÃ³n Servidor DHCP (solo guardaremos lo bÃ¡sico y avanzado IPv6)
             $cmds[] = "uci show dhcp.{$lowerName} >/dev/null 2>&1 || uci set dhcp.{$lowerName}=dhcp";
             $cmds[] = "uci set dhcp.{$lowerName}.interface='{$lowerName}'";
             $dhcpIgnore = $request->has('dhcp_ignore') ? '1' : '0';
             $dhcpDynamic = $request->has('dhcp_dynamic') ? '1' : '0';
+            $dhcpForce = $request->has('dhcp_force') ? '1' : '0';
             $cmds[] = "uci set dhcp.{$lowerName}.ignore='{$dhcpIgnore}'";
             $cmds[] = "uci set dhcp.{$lowerName}.dynamic='{$dhcpDynamic}'";
+            $cmds[] = "uci set dhcp.{$lowerName}.force='{$dhcpForce}'";
+            
             if($val = $request->input('dhcp_start')) $cmds[] = "uci set dhcp.{$lowerName}.start='{$val}'";
             if($val = $request->input('dhcp_limit')) $cmds[] = "uci set dhcp.{$lowerName}.limit='{$val}'";
             if($val = $request->input('dhcp_leasetime')) $cmds[] = "uci set dhcp.{$lowerName}.leasetime='{$val}'";
+            
+            $dhcpNetmask = $request->input('dhcp_netmask');
+            if(!empty($dhcpNetmask)) {
+                 $cmds[] = "uci set dhcp.{$lowerName}.dhcp_netmask='{$dhcpNetmask}'";
+            } else {
+                 $cmds[] = "uci -q delete dhcp.{$lowerName}.dhcp_netmask || true";
+            }
+
+            // IPv6 Settings
+            foreach(['ra' => 'dhcp_ra', 'dhcpv6' => 'dhcp_dhcpv6', 'ndp' => 'dhcp_ndp'] as $uciKey => $reqKey) {
+                if($val = $request->input($reqKey)) {
+                    $cmds[] = "uci set dhcp.{$lowerName}.{$uciKey}='{$val}'";
+                } else {
+                    $cmds[] = "uci -q delete dhcp.{$lowerName}.{$uciKey} || true";
+                }
+            }
+
+            // DHCP List fields
+            $listMappings = [
+                'dhcp_option' => 'dhcp_options',
+                'dns' => 'dhcp_dns',
+                'domain' => 'dhcp_domain'
+            ];
+            foreach($listMappings as $uciKey => $reqKey) {
+                $cmds[] = "uci -q delete dhcp.{$lowerName}.{$uciKey} || true";
+                $listVal = $request->input($reqKey);
+                if (!empty($listVal)) {
+                    $items = array_filter(explode(' ', $listVal));
+                    foreach ($items as $item) {
+                        $cmds[] = "uci add_list dhcp.{$lowerName}.{$uciKey}='{$item}'";
+                    }
+                }
+            }
             
             // Zona del cortafuegos
             $fz = $request->input('firewall_zone');

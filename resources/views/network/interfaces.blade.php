@@ -918,6 +918,9 @@
     </div>
 
     <script>
+        const dhcpConfigs = @json($uciDhcpConfig);
+        const uciConfigs = @json($uciConfig);
+        
         document.addEventListener('DOMContentLoaded', function () {
             @if($errors->hasBag('createInterface'))
                 var modalCrear = new bootstrap.Modal(document.getElementById('modalAgregarInterfaz'));
@@ -941,7 +944,9 @@
         const protoDhcpFields = document.getElementById('protoDhcpFields');
         const protoPppFields = document.getElementById('protoPppFields');
         const pppExtra = document.getElementById('pppExtra');
+        const protoPppExtra = document.getElementById('pppExtra');
         const pppoeExtra = document.getElementById('pppoeExtra');
+        const protoGenericAdvancedFields = document.getElementById('protoGenericAdvancedFields');
         const protoDhcpAdvancedFields = document.getElementById('protoDhcpAdvancedFields');
         const protoPppAdvancedFields = document.getElementById('protoPppAdvancedFields');
         
@@ -964,11 +969,12 @@
             if (protoPppFields) protoPppFields.classList.add('d-none');
             if (pppExtra) pppExtra.classList.add('d-none');
             if (pppoeExtra) pppoeExtra.classList.add('d-none');
+            if (protoGenericAdvancedFields) protoGenericAdvancedFields.classList.add('d-none');
             if (protoDhcpAdvancedFields) protoDhcpAdvancedFields.classList.add('d-none');
             if (protoPppAdvancedFields) protoPppAdvancedFields.classList.add('d-none');
 
             // Deshabilitar todos los inputs de los bloques condicionales
-            [protoStaticFields, protoDhcpFields, protoPppFields, protoDhcpAdvancedFields, protoPppAdvancedFields].forEach(container => {
+            [protoStaticFields, protoDhcpFields, protoPppFields, protoGenericAdvancedFields, protoDhcpAdvancedFields, protoPppAdvancedFields].forEach(container => {
                 if(container) {
                     container.querySelectorAll('input, select').forEach(el => el.disabled = true);
                 }
@@ -1011,6 +1017,10 @@
                     protoStaticFields.classList.remove('d-none');
                     protoStaticFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
                 }
+                if (protoGenericAdvancedFields) {
+                    protoGenericAdvancedFields.classList.remove('d-none');
+                    protoGenericAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
             } else if (proto === 'dhcp') {
                 if (protoDhcpFields) {
                     protoDhcpFields.classList.remove('d-none');
@@ -1020,17 +1030,31 @@
                     protoDhcpAdvancedFields.classList.remove('d-none');
                     protoDhcpAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
                 }
-            } else if (proto === 'ppp' || proto === 'pppoe') {
+            } else if (proto === 'ppp') {
                 if (protoPppFields) {
                     protoPppFields.classList.remove('d-none');
                     protoPppFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
-                    if (proto === 'ppp' && pppExtra) {
+                    if (pppExtra) {
                         pppExtra.classList.remove('d-none');
                         pppExtra.querySelectorAll('input, select').forEach(el => el.disabled = false);
-                    } else if (proto === 'pppoe' && pppoeExtra) {
+                    }
+                }
+                if (protoPppAdvancedFields) {
+                    protoPppAdvancedFields.classList.remove('d-none');
+                    protoPppAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else if (proto === 'pppoe') {
+                if (protoPppFields) {
+                    protoPppFields.classList.remove('d-none');
+                    protoPppFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                    if (pppoeExtra) {
                         pppoeExtra.classList.remove('d-none');
                         pppoeExtra.querySelectorAll('input, select').forEach(el => el.disabled = false);
                     }
+                }
+                if (protoGenericAdvancedFields) {
+                    protoGenericAdvancedFields.classList.remove('d-none');
+                    protoGenericAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
                 }
                 if (protoPppAdvancedFields) {
                     protoPppAdvancedFields.classList.remove('d-none');
@@ -1074,16 +1098,28 @@
             // DHCP Advanced
             setCheckboxValue('editIfaceBroadcastAdvanced', btn.getAttribute('data-broadcast'));
             setCheckboxValue('editIfaceDefaultroute', btn.getAttribute('data-defaultroute'));
-            setCheckboxValue('editIfacePeerdns', btn.getAttribute('data-peerdns'));
+            setCheckboxValue('editIfacePeerdnsAdvanced', btn.getAttribute('data-peerdns'));
             setInputValue('editIfaceClientid', btn.getAttribute('data-clientid'));
             setInputValue('editIfaceVendorid', btn.getAttribute('data-vendorid'));
             
+            // DHCP specific overlapping fields
+            setInputValue('editIfaceMetricDhcp', btn.getAttribute('data-metric'));
+            setCheckboxValue('editIfaceDelegateDhcp', btn.getAttribute('data-delegate'), '1');
+            setCheckboxValue('editIfaceForceLinkDhcp', btn.getAttribute('data-force_link'), '1');
+            setInputValue('editIfaceMacaddrDhcp', btn.getAttribute('data-macaddr'));
+            setInputValue('editIfaceMtuDhcp', btn.getAttribute('data-mtu'));
+            
             // PPP Advanced
-            setCheckboxValue('editIfaceDefaultroutePpp', btn.getAttribute('data-defaultroute'));
-            setCheckboxValue('editIfacePeerdnsPpp', btn.getAttribute('data-peerdns'));
-            setInputValue('editIfaceLcpEchoFailure', btn.getAttribute('data-lcp-failure'));
-            setInputValue('editIfaceLcpEchoInterval', btn.getAttribute('data-lcp-interval'));
-            setInputValue('editIfaceDemand', btn.getAttribute('data-demand'));
+            var uConf = uciConfigs[lowerName] || {};
+            setCheckboxValue('editIfaceDelegatePpp', uConf['delegate'], '1');
+            setCheckboxValue('editIfaceForceLinkPpp', uConf['force_link'], '1');
+            setCheckboxValue('editIfaceDefaultroutePpp', uConf['defaultroute'], '1');
+            setCheckboxValue('editIfacePeerdnsPpp', uConf['peerdns'], '1');
+            setInputValue('editIfaceMetricPpp', uConf['metric']);
+            setInputValue('editIfaceLcpEchoFailure', uConf['lcp_echo_failure']);
+            setInputValue('editIfaceLcpEchoInterval', uConf['lcp_echo_interval']);
+            setInputValue('editIfaceDemand', uConf['demand']);
+            setInputValue('editIfaceMtuPpp', uConf['mtu']);
             
             var netmask = btn.getAttribute('data-netmask') || '';
             var netSelect = document.getElementById('editIfaceNetmask');
@@ -1121,26 +1157,45 @@
                 };
             }
             
-            // DHCP/Advanced properties defaults mapping... you can populate similarly.
+            // DHCP/Advanced properties defaults mapping...
             setCheckboxValue('editIfaceDhcpIgnore', btn.getAttribute('data-dhcp-ignore'));
             setInputValue('editIfaceDhcpStart', btn.getAttribute('data-dhcp-start'));
             setInputValue('editIfaceDhcpLimit', btn.getAttribute('data-dhcp-limit'));
             setInputValue('editIfaceDhcpLeasetime', btn.getAttribute('data-dhcp-leasetime'));
             setCheckboxValue('editIfaceDhcpDynamic', btn.getAttribute('data-dhcp-dynamic'), '1'); // Default to 1 usually
 
+            // Extended DHCP Server settings (Advanced & IPv6)
+            var lowerName = btn.getAttribute('data-name');
+            var uciDhcp = dhcpConfigs[lowerName] || {};
+            setCheckboxValue('editIfaceDhcpForce', uciDhcp['force'], '1');
+            setInputValue('editIfaceDhcpNetmask', uciDhcp['dhcp_netmask'] || uciDhcp['netmask']);
+            
+            var dhcpOpt = uciDhcp['dhcp_option'] || '';
+            setInputValue('editIfaceDhcpOptions', Array.isArray(dhcpOpt) ? dhcpOpt.join(' ') : dhcpOpt);
+            
+            setInputValue('editIfaceDhcpRa', uciDhcp['ra']);
+            setInputValue('editIfaceDhcpDhcpv6', uciDhcp['dhcpv6']);
+            setInputValue('editIfaceDhcpNdp', uciDhcp['ndp']);
+            
+            var dnsList = uciDhcp['dns'] || '';
+            setInputValue('editIfaceDhcpDns', Array.isArray(dnsList) ? dnsList.join(' ') : dnsList);
+            
+            var domainList = uciDhcp['domain'] || '';
+            setInputValue('editIfaceDhcpDomain', Array.isArray(domainList) ? domainList.join(' ') : domainList);
+
             // PPP inputs
-            setInputValue('editIfaceUsername', btn.getAttribute('data-username'));
-            setInputValue('editIfacePassword', btn.getAttribute('data-password'));
-            setInputValue('editIfaceAc', btn.getAttribute('data-ac'));
-            setInputValue('editIfaceService', btn.getAttribute('data-service'));
-            setInputValue('editIfaceModemDev', btn.getAttribute('data-device'));
+            setInputValue('editIfaceUsername', uConf['username']);
+            setInputValue('editIfacePassword', uConf['password']);
+            setInputValue('editIfaceAc', uConf['ac']);
+            setInputValue('editIfaceService', uConf['service']);
+            setInputValue('editIfaceModemDev', uConf['device']);
 
             // Adv/Physical
-            setInputValue('editIfaceMetric', btn.getAttribute('data-metric'));
-            setInputValue('editIfaceMacaddr', btn.getAttribute('data-macaddr'));
-            setInputValue('editIfaceMtu', btn.getAttribute('data-mtu'));
-            setCheckboxValue('editIfaceDelegate', btn.getAttribute('data-delegate'), '1');
-            setCheckboxValue('editIfaceForceLink', btn.getAttribute('data-force_link'), '1');
+            setInputValue('editIfaceMetric', uConf['metric']);
+            setInputValue('editIfaceMacaddr', uConf['macaddr']);
+            setInputValue('editIfaceMtu', uConf['mtu']);
+            setCheckboxValue('editIfaceDelegate', uConf['delegate'], '1');
+            setCheckboxValue('editIfaceForceLink', uConf['force_link'], '1');
         }
 
         function setInputValue(id, val) {

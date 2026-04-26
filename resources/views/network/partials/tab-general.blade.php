@@ -172,18 +172,6 @@
             <input type="text" name="hostname" id="editIfaceHostname" class="form-control w-50" placeholder="OpenWrt">
         </div>
     </div>
-    <div class="row mb-4">
-        <div class="col-md-3 text-md-end pt-1">
-            <label class="form-label mb-0"
-                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Usar servidores DNS del par</label>
-        </div>
-        <div class="col-md-9">
-            <div class="form-check m-0">
-                <input class="form-check-input" type="checkbox" name="peerdns" id="editIfacePeerdns" value="1" checked>
-            </div>
-            <small style="color: var(--text-muted); font-size: 0.75rem;">Ignora o usa servidores DNS dados por el servidor DHCP remoto.</small>
-        </div>
-    </div>
 </div>
 
 <!-- ============================ -->
@@ -223,7 +211,7 @@
     <div class="row align-items-center mb-4">
         <div class="col-md-3 text-md-end">
             <label class="form-label mb-0"
-                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Usuario PAP/CHAP</label>
+                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Nombre de usuario PAP/CHAP</label>
         </div>
         <div class="col-md-9">
             <input type="text" name="username" id="editIfaceUsername" class="form-control w-50">
