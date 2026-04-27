@@ -37,7 +37,7 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::post('/wifi/edit', [WifiController::class, 'editNetwork'])->name('wifi.edit');
     Route::post('/wifi/add', [WifiController::class, 'addNetwork'])->name('wifi.add');
 
-    
+
     // Vista principal de Conmutador
     Route::get('/conmutador', [NetworkController::class, 'showSwitch'])->name('switch');
     Route::post('/conmutador', [NetworkController::class, 'updateSwitch'])->name('switch.update');
