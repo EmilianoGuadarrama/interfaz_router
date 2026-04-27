@@ -31,6 +31,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger rounded-4 mb-3">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <div id="changeAlert" class="alert alert-warning rounded-4 mb-3 d-none">
             Se detectaron cambios sin guardar.
         </div>
@@ -38,37 +44,37 @@
         <div class="panel-card">
             <ul class="nav nav-tabs mb-4 border-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.general') }}">Configuración general</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.general') }}">Configuración general</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.tftp') }}">Configuración TFTP</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.tftp') }}">Configuración TFTP</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('network.dhcpdns.advanced') }}">Configuración avanzada</a>
+                    <a class="nav-link active" href="{{ route('red.dhcpdns.advanced') }}">Configuración avanzada</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.static') }}">Asignaciones estáticas</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.static') }}">Asignaciones estáticas</a>
                 </li>
             </ul>
 
-            <form id="advancedForm" action="{{ route('network.dhcpdns.advanced.update') }}" method="POST">
+            <form id="advancedForm" action="{{ route('red.dhcpdns.advanced.update') }}" method="POST">
                 @csrf
 
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="suppress_log" id="suppress_log"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="suppress_log" id="suppress_log" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['suppress_log']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="suppress_log">Suprimir el registro</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="suppress_log" style="cursor: pointer;">Suprimir el registro</label>
                         </div>
 
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="bogus_filter" id="bogus_filter"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="bogus_filter" id="bogus_filter" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['bogus_filter']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="bogus_filter">Filtro inútil</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="bogus_filter" style="cursor: pointer;">Filtro inútil</label>
                         </div>
 
                         <div class="mb-4">
@@ -91,16 +97,16 @@
                     </div>
 
                     <div class="col-md-4">
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="sequential_ip" id="sequential_ip"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="sequential_ip" id="sequential_ip" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['sequential_ip']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="sequential_ip">Asignar IPs secuencialmente</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="sequential_ip" style="cursor: pointer;">Asignar IPs secuencialmente</label>
                         </div>
 
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="localise_queries" id="localise_queries"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="localise_queries" id="localise_queries" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['localise_queries']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="localise_queries">Localizar consultas</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="localise_queries" style="cursor: pointer;">Localizar consultas</label>
                         </div>
 
                         <div class="mb-4">
@@ -123,16 +129,16 @@
                     </div>
 
                     <div class="col-md-4">
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="private_filter" id="private_filter"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="private_filter" id="private_filter" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['private_filter']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="private_filter">Filtro privado</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="private_filter" style="cursor: pointer;">Filtro privado</label>
                         </div>
 
-                        <div class="form-check mb-4">
-                            <input class="form-check-input custom-check" type="checkbox" name="expand_hosts" id="expand_hosts"
+                        <div class="form-check form-switch mb-4 d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" role="switch" name="expand_hosts" id="expand_hosts" style="width: 2.5em; height: 1.25em; cursor: pointer;"
                                 {{ !empty($config['expand_hosts']) ? 'checked' : '' }}>
-                            <label class="form-check-label text-light" for="expand_hosts">Expandir hosts</label>
+                            <label class="form-check-label text-light fw-semibold m-0" for="expand_hosts" style="cursor: pointer;">Expandir hosts</label>
                         </div>
 
                         <div class="mb-4">
@@ -180,10 +186,10 @@
             color: rgba(255,255,255,0.55);
         }
 
-        .custom-check {
-            width: 1.1rem;
-            height: 1.1rem;
-            margin-top: 0.2rem;
+        /* form-switch active state */
+        .form-switch .form-check-input:checked {
+            background-color: #5b8cff;
+            border-color: #5b8cff;
         }
 
         .form-check-label {

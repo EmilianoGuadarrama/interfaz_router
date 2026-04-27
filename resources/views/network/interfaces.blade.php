@@ -39,49 +39,53 @@
 
                     @forelse($interfaces as $iface)
                         <!-- Interface -->
+                        @php
+                            $bgColor = match($iface['variant'] ?? 'custom') {
+                                'lan' => '#51a351',
+                                'wan' => '#d9534f',
+                                'error' => '#777',
+                                default => '#337ab7',
+                            };
+                            $isUp = ($iface['status'] ?? 'down') === 'up';
+                            $iconColor = $isUp ? '#5bc0de' : '#777';
+                            $icon = ($iface['variant'] ?? 'custom') === 'wan' ? 'hdd-network' : 'diagram-3';
+                        @endphp
                         <div class="d-flex flex-wrap align-items-center justify-content-between p-3"
                             style="border-bottom: 1px solid var(--border-soft); background: rgba(255,255,255,0.02);">
                             <div class="d-flex align-items-center gap-5" style="width: 60%;">
 
                                 <div class="text-center" style="width: 100px;">
                                     <div class="mb-1"
-                                        style="background-color: {{ isset($iface['up']) && $iface['up'] ? (stripos($iface['interface'], 'wan') !== false ? '#d9534f' : '#51a351') : '#777' }}; color: white; padding: 4px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
-                                        {{ $iface['interface'] ?? 'N/A' }}
+                                        style="background-color: {{ $bgColor }}; color: white; padding: 4px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase;">
+                                        {{ $iface['name'] ?? 'N/A' }}
                                     </div>
                                     <div>
-                                        <i class="bi bi-{{ stripos($iface['interface'] ?? '', 'wan') !== false ? 'hdd-network' : 'diagram-3' }}"
-                                            style="font-size: 1.2rem; color: {{ isset($iface['up']) && $iface['up'] ? '#5bc0de' : '#777' }};"></i>
+                                        <i class="bi bi-{{ $icon }}" style="font-size: 1.2rem; color: {{ $iconColor }};"></i>
                                     </div>
                                     <div style="font-size: 0.75rem; color: var(--text-soft);">{{ $iface['device'] ?? 'N/A' }}
                                     </div>
                                 </div>
 
                                 <div style="font-size: 0.8rem; color: var(--text-main); font-weight: 600; line-height: 1.3;">
-                                    @if(isset($iface['up']) && $iface['up'])
-                                        Protocolo: <span
-                                            style="font-weight: 400;">{{ ucfirst($iface['proto'] ?? 'Desconocido') }}</span><br>
-                                        @if(isset($iface['uptime']))
-                                            Tiempo de actividad: <span
-                                                style="font-weight: 400;">{{ gmdate("G\h i\m s\s", $iface['uptime']) }}</span><br>
+                                    @if(isset($iface['error']) && $iface['error'])
+                                        <span style="font-weight: 400; color: #a94442;"><i class="bi bi-exclamation-triangle-fill"></i> {{ $iface['error'] }}</span>
+                                    @elseif($isUp)
+                                        Protocolo: <span style="font-weight: 400;">{{ $iface['protocol'] }}</span><br>
+                                        Tiempo de actividad: <span style="font-weight: 400;">{{ $iface['uptime'] }}</span><br>
+                                        MAC: <span style="font-weight: 400;">{{ $iface['mac'] }}</span><br>
+                                        @php
+                                            $rx = $iface['rx_bytes'] ?? 0;
+                                            $tx = $iface['tx_bytes'] ?? 0;
+                                            $rxStr = $rx > 1048576 ? round($rx / 1048576, 2) . ' MB' : round($rx / 1024, 2) . ' KB';
+                                            $txStr = $tx > 1048576 ? round($tx / 1048576, 2) . ' MB' : round($tx / 1024, 2) . ' KB';
+                                        @endphp
+                                        RX: <span style="font-weight: 400;">{{ $rxStr }} ({{ $iface['rx_packets'] ?? 0 }} Paq.)</span><br>
+                                        TX: <span style="font-weight: 400;">{{ $txStr }} ({{ $iface['tx_packets'] ?? 0 }} Paq.)</span><br>
+                                        @if(!empty($iface['ipv4']))
+                                            IPv4: <span style="font-weight: 400;">{{ $iface['ipv4'] }}</span>
                                         @endif
-                                        @if(isset($iface['mac']))
-                                            MAC: <span style="font-weight: 400;">{{ strtoupper($iface['mac']) }}</span><br>
-                                        @endif
-                                        @if(isset($iface['statistics']))
-                                            @php
-                                                $rx = $iface['statistics']['rx_bytes'] ?? 0;
-                                                $tx = $iface['statistics']['tx_bytes'] ?? 0;
-                                                $rxStr = $rx > 1048576 ? round($rx / 1048576, 2) . ' MB' : round($rx / 1024, 2) . ' KB';
-                                                $txStr = $tx > 1048576 ? round($tx / 1048576, 2) . ' MB' : round($tx / 1024, 2) . ' KB';
-                                            @endphp
-                                            RX: <span style="font-weight: 400;">{{ $rxStr }}
-                                                ({{ $iface['statistics']['rx_packets'] ?? 0 }} Paq.)</span><br>
-                                            TX: <span style="font-weight: 400;">{{ $txStr }}
-                                                ({{ $iface['statistics']['tx_packets'] ?? 0 }} Paq.)</span><br>
-                                        @endif
-                                        @if(!empty($iface['ipv4-address']))
-                                            IPv4: <span
-                                                style="font-weight: 400;">{{ $iface['ipv4-address'][0]['address'] }}/{{ $iface['ipv4-address'][0]['mask'] }}</span>
+                                        @if(!empty($iface['ipv6']))
+                                            <br>IPv6: <span style="font-weight: 400;">{{ $iface['ipv6'] }}</span>
                                         @endif
                                     @else
                                         <span style="font-weight: 400; color: #a94442;">La interfaz está detenida</span>
@@ -91,16 +95,105 @@
                             </div>
 
                             <div class="d-flex gap-2 mt-3 mt-md-0">
-                                <button class="btn btn-sm"
-                                    style="background: #e6e6e6; color: #333; font-weight: 700; font-size: 0.75rem; border-radius: 2px;">REINICIAR</button>
-                                <button class="btn btn-sm"
-                                    style="background: #e6e6e6; color: {{ isset($iface['up']) && $iface['up'] ? '#333' : '#b3b3b3' }}; font-weight: 700; font-size: 0.75rem; border-radius: 2px;"
-                                    {{ isset($iface['up']) && $iface['up'] ? '' : 'disabled' }}>DETENER</button>
-                                <button class="btn btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#modalEditarInterfaz{{ stripos($iface['interface'], 'wan') !== false ? 'WAN' : '' }}"
+                                <form action="{{ route('red.interfaces.restart', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <button class="btn btn-sm" type="submit"
+                                        style="background: #e6e6e6; color: #333; font-weight: 700; font-size: 0.75rem; border-radius: 2px;">REINICIAR</button>
+                                </form>
+
+                                <form action="{{ route('red.interfaces.stop', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    <button class="btn btn-sm" type="submit"
+                                        style="background: #e6e6e6; color: {{ $isUp ? '#333' : '#b3b3b3' }}; font-weight: 700; font-size: 0.75rem; border-radius: 2px;"
+                                        {{ $isUp ? '' : 'disabled' }}>DETENER</button>
+                                </form>
+
+                                @php
+                                    $lowerName = strtolower($iface['name'] ?? '');
+                                    $uConf = $uciConfig[$lowerName] ?? [];
+                                    
+                                    $dnsRaw = $uConf['dns'] ?? '';
+                                    $dnsList = is_array($dnsRaw) ? implode(' ', $dnsRaw) : (string)$dnsRaw;
+                                    
+                                    $ipv4Raw = $iface['ipv4'] ?? '';
+                                    $formattedIpv4 = !empty($ipv4Raw) ? (is_array($ipv4Raw) ? implode(', ', $ipv4Raw) : (string)$ipv4Raw) : '--';
+
+                                    // Match DHCP
+                                    $dhcpConf = $uciDhcpConfig[$lowerName] ?? [];
+                                    
+                                    // Match Firewall
+                                    $fzMatched = '';
+                                    if(isset($uciFirewallZones) && is_array($uciFirewallZones)) {
+                                        foreach($uciFirewallZones as $zone) {
+                                            $netRaw = $zone['network'] ?? [];
+                                            $networks = is_array($netRaw) ? $netRaw : (empty($netRaw) ? [] : explode(' ', (string)$netRaw));
+                                            
+                                            if(in_array($lowerName, $networks)) {
+                                                $fzMatched = $zone['name'] ?? '';
+                                                break;
+                                            }
+                                        }
+                                    }
+                                @endphp
+                                <button class="btn btn-sm btn-editar-interfaz" data-bs-toggle="modal"
+                                    data-bs-target="#modalEditarInterfaz"
+                                    onclick="cargarModalEdicion(this)"
+                                    data-raw="{{ $iface['name'] ?? '' }}"
+                                    data-name="{{ $lowerName }}"
+                                    data-mac="{{ $iface['mac'] ?? '--' }}"
+                                    data-rx="{{ $iface['rx_bytes'] ?? '0' }}"
+                                    data-tx="{{ $iface['tx_bytes'] ?? '0' }}"
+                                    data-ipv4="{{ $formattedIpv4 }}"
+                                    data-dev="{{ $iface['device'] ?? '--' }}"
+                                    data-proto="{{ $uConf['proto'] ?? 'static' }}"
+                                    data-auto="{{ isset($uConf['auto']) ? $uConf['auto'] : '1' }}"
+                                    data-ipaddr="{{ $uConf['ipaddr'] ?? '' }}"
+                                    data-netmask="{{ $uConf['netmask'] ?? '' }}"
+                                    data-gateway="{{ $uConf['gateway'] ?? '' }}"
+                                    data-broadcast="{{ $uConf['broadcast'] ?? '' }}"
+                                    data-dns="{{ $dnsList }}"
+                                    data-ip6assign="{{ $uConf['ip6assign'] ?? '' }}"
+                                    data-ip6addr="{{ $uConf['ip6addr'] ?? '' }}"
+                                    data-ip6gw="{{ $uConf['ip6gw'] ?? '' }}"
+                                    data-ip6prefix="{{ $uConf['ip6prefix'] ?? '' }}"
+                                    data-ip6ifaceid="{{ $uConf['ip6ifaceid'] ?? '' }}"
+                                    data-metric="{{ $uConf['metric'] ?? '' }}"
+                                    data-macaddr="{{ $uConf['macaddr'] ?? '' }}"
+                                    data-mtu="{{ $uConf['mtu'] ?? '' }}"
+                                    data-delegate="{{ $uConf['delegate'] ?? '1' }}"
+                                    data-force_link="{{ $uConf['force_link'] ?? '1' }}"
+                                    data-username="{{ $uConf['username'] ?? '' }}"
+                                    data-password="{{ $uConf['password'] ?? '' }}"
+                                    data-ac="{{ $uConf['ac'] ?? '' }}"
+                                    data-service="{{ $uConf['service'] ?? '' }}"
+                                    data-defaultroute="{{ $uConf['defaultroute'] ?? '1' }}"
+                                    data-peerdns="{{ $uConf['peerdns'] ?? '1' }}"
+                                    data-clientid="{{ $uConf['clientid'] ?? '' }}"
+                                    data-vendorid="{{ $uConf['vendorid'] ?? '' }}"
+                                    data-lcp-failure="{{ $uConf['lcp_echo_failure'] ?? '' }}"
+                                    data-lcp-interval="{{ $uConf['lcp_echo_interval'] ?? '' }}"
+                                    data-demand="{{ $uConf['demand'] ?? '' }}"
+                                    data-firewall-zone="{{ $fzMatched }}"
+                                    data-dhcp-ignore="{{ $dhcpConf['ignore'] ?? '0' }}"
+                                    data-dhcp-start="{{ $dhcpConf['start'] ?? '' }}"
+                                    data-dhcp-limit="{{ $dhcpConf['limit'] ?? '' }}"
+                                    data-dhcp-leasetime="{{ $dhcpConf['leasetime'] ?? '' }}"
+                                    data-dhcp-dynamic="{{ $dhcpConf['dynamic'] ?? '1' }}"
                                     style="background: #5bc0de; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">EDITAR</button>
-                                <button class="btn btn-sm"
-                                    style="background: #d9534f; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">ELIMINAR</button>
+
+                                @php
+                                    $isCritical = in_array(strtolower($iface['name'] ?? ''), ['lan', 'wan', 'br-lan']);
+                                    $confirmScript = "return confirm('¿Está seguro que desea eliminar la interfaz " . ($iface['name'] ?? 'desconocida') . "? Esta acción borrará su configuración en el router real y no se puede deshacer.');";
+                                    if ($isCritical) {
+                                        $confirmScript = "var res = prompt('ATENCIÓN: Está intentando eliminar una interfaz CRÍTICA (" . ($iface['name'] ?? '') . ") lo cual dañaría la conexión principal.\\n\\nEscriba la letra X para ignorar y forzar la eliminación de todos modos (No recomendado):'); if(res !== 'X'){ return false; } return true;";
+                                    }
+                                @endphp
+                                <form action="{{ route('red.interfaces.destroy', ['name' => $iface['name'] ?? 'error']) }}" method="POST" class="m-0 p-0" onsubmit="{!! $confirmScript !!}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-sm" type="submit"
+                                        style="background: #d9534f; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">ELIMINAR</button>
+                                </form>
                             </div>
                         </div>
                     @empty
@@ -161,7 +254,7 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ route('network.interfaces.store') }}">
+                <form method="POST" action="{{ route('red.interfaces.store') }}">
                     @csrf
                     <div class="modal-body" style="padding: 30px;">
 
@@ -235,22 +328,12 @@
                                     class="form-select @error('interface', 'createInterface') is-invalid @enderror"
                                     style="font-style: italic;">
                                     <option value="" {{ old('interface') == '' ? 'selected' : '' }}>Sin especificar</option>
-                                    <option value="br-lan" {{ old('interface') == 'br-lan' ? 'selected' : '' }}>Puente:
-                                        "br-lan" (lan)</option>
-                                    <option value="eth0" {{ old('interface') == 'eth0' ? 'selected' : '' }}>Conmutador
-                                        ethernet: "eth0"</option>
-                                    <option value="eth0.1" {{ old('interface') == 'eth0.1' ? 'selected' : '' }}>Switch VLAN:
-                                        "eth0.1" (lan)</option>
-                                    <option value="eth0.2" {{ old('interface') == 'eth0.2' ? 'selected' : '' }}>Switch VLAN:
-                                        "eth0.2" (wan)</option>
-                                    <option value="wifi" {{ old('interface') == 'wifi' ? 'selected' : '' }}>Red Wi-Fi: Master
-                                        "usuario_remoto" (lan)</option>
-                                    <option value="@lan" {{ old('interface')=='@lan' ? 'selected' : '' }}>Apodo de interfaz:
-                                        "@lan"</option>
-                                    <option value="@wan" {{ old('interface')=='@wan' ? 'selected' : '' }}>Apodo de interfaz:
-                                        "@wan"</option>
-                                    <option value="custom" {{ old('interface') == 'custom' ? 'selected' : '' }}>Personalizado
-                                    </option>
+                                    @if(isset($devices))
+                                        @foreach($devices as $dev)
+                                            <option value="{{ $dev }}" {{ old('interface') == $dev ? 'selected' : '' }}>Dispositivo: "{{ $dev }}"</option>
+                                        @endforeach
+                                    @endif
+                                    <option value="custom" {{ old('interface') == 'custom' ? 'selected' : '' }}>Personalizado</option>
                                 </select>
                                 @error('interface', 'createInterface')
                                     <div class="invalid-feedback text-start mt-1" style="font-size: 0.8rem; display: block;">
@@ -277,18 +360,18 @@
         </div>
     </div>
 
-    {{-- Modal Editar Interfaz (Solo Estructura Base) --}}
+    {{-- Modal Editar Interfaz dinámico --}}
     <div class="modal fade" id="modalEditarInterfaz" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content"
                 style="background: var(--card-bg); border: 1px solid var(--border-soft); border-radius: var(--radius-lg);">
                 <div class="modal-header" style="border-bottom: 1px solid var(--border-soft);">
-                    <h5 class="modal-title" style="font-weight:700; color:#e2eaff;">
-                        Interfaces » LAN
+                    <h5 class="modal-title" style="font-weight:700; color:#e2eaff;" id="editModalTitle">
+                        Interfaces » Editar
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ route('network.interfaces.lan.update') }}">
+                <form method="POST" action="" id="editForm">
                     @csrf
 
                     <div class="modal-body p-0">
@@ -325,744 +408,23 @@
 
                         <div class="tab-content p-4" id="editTabsContent">
                             <div class="tab-pane fade show active" id="general" role="tabpanel">
-
-                                <div class="row mb-4 align-items-start">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Estado</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="d-inline-flex p-3"
-                                            style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: 8px;">
-                                            <div class="me-2 text-center">
-                                                <i class="bi bi-diagram-3" style="font-size: 1.5rem; color: #5bc0de;"></i>
-                                            </div>
-                                            <div style="font-size: 0.8rem; color: var(--text-main); line-height: 1.3;">
-                                                <strong>Dispositivo: br-lan</strong><br>
-                                                <strong>Tiempo de actividad:</strong> 1h 8m 36s<br>
-                                                <strong>MAC:</strong> 90:EA:5F:C5:83:71<br>
-                                                <strong>RX:</strong> 2.14 MB (13337 Paq.)<br>
-                                                <strong>TX:</strong> 7.69 MB (11567 Paq.)<br>
-                                                <strong>IPv4:</strong> 192.168.10.1/24
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Protocolo</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <select class="form-select w-50">
-                                            <option value="dhcp">Cliente DHCP</option>
-                                            <option value="unmanaged">No administrado</option>
-                                            <option value="ppp">PPP</option>
-                                            <option value="pppoe">PPPoE</option>
-                                            <option value="static" selected>Dirección estática</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Iniciar en
-                                            el arranque</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-check m-0">
-                                            <input class="form-check-input" type="checkbox" checked>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Dirección
-                                            IPv4</label>
-                                    </div>
-                                    <div class="col-md-9 gap-2">
-                                        <div class="d-flex gap-2">
-                                            <input type="text" name="lan_ipv4_address"
-                                                class="form-control w-50 @error('lan_ipv4_address', 'updateLan') is-invalid @enderror"
-                                                value="{{ old('lan_ipv4_address', '192.168.10.1') }}">
-                                            <button type="button" class="btn btn-sm"
-                                                style="background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid var(--border-soft);"
-                                                title="Cambiar a la notación de lista CIDR">...</button>
-                                        </div>
-                                        @error('lan_ipv4_address', 'updateLan')
-                                            <div class="invalid-feedback text-start mt-1"
-                                                style="font-size: 0.8rem; display: block;">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Máscara de
-                                            red IPv4</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <select name="lan_ipv4_netmask"
-                                            class="form-select w-50 @error('lan_ipv4_netmask', 'updateLan') is-invalid @enderror">
-                                            <option value="" style="font-style: italic;">Sin especificar</option>
-                                            <option value="255.255.255.0" {{ old('lan_ipv4_netmask', '255.255.255.0') == '255.255.255.0' ? 'selected' : '' }}>255.255.255.0
-                                            </option>
-                                            <option value="255.255.0.0" {{ old('lan_ipv4_netmask') == '255.255.0.0' ? 'selected' : '' }}>255.255.0.0</option>
-                                            <option value="255.0.0.0" {{ old('lan_ipv4_netmask') == '255.0.0.0' ? 'selected' : '' }}>255.0.0.0</option>
-                                            <option value="custom" {{ old('lan_ipv4_netmask') == 'custom' ? 'selected' : '' }}>-- Personalizado --</option>
-                                        </select>
-                                        @error('lan_ipv4_netmask', 'updateLan')
-                                            <div class="invalid-feedback text-start mt-1"
-                                                style="font-size: 0.8rem; display: block;">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Puerta de
-                                            enlace IPv4</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="lan_ipv4_gateway"
-                                            class="form-control w-50 @error('lan_ipv4_gateway', 'updateLan') is-invalid @enderror"
-                                            value="{{ old('lan_ipv4_gateway') }}">
-                                        @error('lan_ipv4_gateway', 'updateLan')
-                                            <div class="invalid-feedback text-start mt-1"
-                                                style="font-size: 0.8rem; display: block;">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Difusión
-                                            IPv4</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control w-50" value="192.168.10.255">
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Usar
-                                            servidores DNS personalizados</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="d-flex w-50">
-                                            <input type="text" class="form-control form-control-sm me-2"
-                                                style="border-radius: 2px;">
-                                            <button type="button" class="btn btn-sm"
-                                                style="background: #337ab7; color: white; width: 32px;"><i
-                                                    class="bi bi-plus"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Longitud
-                                            de asignación de IPv6</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <select class="form-select w-50 mb-1">
-                                            <option value="disabled" selected>Desactivado</option>
-                                            <option value="64">64</option>
-                                            <option value="custom">-- Personalizado --</option>
-                                        </select>
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Asigna una parte de la
-                                            longitud dada de cada prefijo IPv6 público a esta interfaz.</small>
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Dirección
-                                            IPv6</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="d-flex w-50">
-                                            <input type="text" class="form-control form-control-sm me-2"
-                                                placeholder="Añadir dirección IPv6..." style="border-radius: 2px;">
-                                            <button type="button" class="btn btn-sm"
-                                                style="background: #337ab7; color: white; width: 32px;"><i
-                                                    class="bi bi-plus"></i></button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Puerta de
-                                            enlace IPv6</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control w-50">
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Prefijo
-                                            IPv6 enrutado</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control w-50 mb-1">
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Prefijo público
-                                            enrutado a este dispositivo para su distribución a los clientes.</small>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Sufijo
-                                            IPv6</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control w-50 mb-1" value="::1">
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Opcional. Valores
-                                            permitidos: 'eui64', 'random', valor fijo como '::1' o '::1:2'. Cuando se recibe
-                                            un prefijo IPv6 (como 'a:b:c:d::') desde un servidor delegante, use el sufijo
-                                            (como '::1') para formar la dirección IPv6 ('a:b:c:d::1') para la
-                                            interfaz.</small>
-                                    </div>
-                                </div>
-
+                                @include('network.partials.tab-general')
                             </div>
 
                             <div class="tab-pane fade" id="advanced" role="tabpanel">
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Utilizar
-                                            la gestión integrada de IPv6</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-check m-0">
-                                            <input class="form-check-input" type="checkbox" checked>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Forzar
-                                            enlace</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-check m-0 mb-1">
-                                            <input class="form-check-input" type="checkbox" checked>
-                                        </div>
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Configura las
-                                            propiedades de la interfaz independientemente del operador de enlace (si está
-                                            configurado, los eventos de detección de operador no invocan los controladores
-                                            de conexión en caliente).</small>
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Reemplazar
-                                            dirección MAC</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="lan_mac"
-                                            class="form-control w-50 @error('lan_mac', 'updateLan') is-invalid @enderror"
-                                            placeholder="98:BA:5F:C5:83:71" value="{{ old('lan_mac') }}">
-                                        @error('lan_mac', 'updateLan')
-                                            <div class="invalid-feedback text-start mt-1"
-                                                style="font-size: 0.8rem; display: block;">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Reemplazar
-                                            MTU</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" name="lan_mtu"
-                                            class="form-control w-50 @error('lan_mtu', 'updateLan') is-invalid @enderror"
-                                            value="{{ old('lan_mtu', '1500') }}">
-                                        @error('lan_mtu', 'updateLan')
-                                            <div class="invalid-feedback text-start mt-1"
-                                                style="font-size: 0.8rem; display: block;">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-md-3 text-md-end">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Usar
-                                            métrica de puerta de enlace</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control w-50" value="0">
-                                    </div>
-                                </div>
-
+                                @include('network.partials.tab-advanced')
                             </div>
 
                             <div class="tab-pane fade" id="physical" role="tabpanel">
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Puentear
-                                            interfaces</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-check m-0 mb-1">
-                                            <input class="form-check-input" type="checkbox" checked>
-                                        </div>
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Crea un puente sobre la
-                                            interfaz o interfaces asociadas</small>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Activar <a
-                                                href="#"
-                                                style="text-decoration: underline dotted; color: #5bc0de;">STP</a></label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-check m-0 mb-1">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Activa el protocolo
-                                            Spanning Tree en este puente</small>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-4">
-                                    <div class="col-md-3 text-md-end pt-1">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Activar <a
-                                                href="#" style="text-decoration: underline dotted; color: #5bc0de;">IGMP</a>
-                                            Snooping</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="form-check m-0 mb-1">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                        <small style="color: var(--text-muted); font-size: 0.75rem;">Activa el protocolo
-                                            IGMP Snooping en este puente</small>
-                                    </div>
-                                </div>
-
-                                <div class="row align-items-start mb-4">
-                                    <div class="col-md-3 text-md-end pt-2">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Interfaz</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="dropdown">
-                                            <button class="form-select text-start d-flex align-items-center gap-4 w-75"
-                                                type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                                data-bs-auto-close="outside"
-                                                style="min-height: 38px; color: var(--text-main); background-color: transparent;">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <i class="bi bi-hdd-network" style="color: #cfcfcf;"></i> eth0.1
-                                                </div>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <i class="bi bi-wifi" style="color: #5bc0de;"></i> wlan0
-                                                </div>
-                                            </button>
-                                            <ul class="dropdown-menu w-75 shadow"
-                                                style="background-color: var(--card-bg, #2b2b2b); border: 1px solid var(--border-soft);">
-                                                <li class="dropdown-item px-2 py-1" style="color: var(--text-main);">
-                                                    <div class="form-check m-0 d-flex align-items-center gap-2">
-                                                        <input class="form-check-input m-0" type="checkbox">
-                                                        <i class="bi bi-hdd-network"
-                                                            style="color: #cfcfcf; font-size: 0.9rem;"></i>
-                                                        <span style="font-size: 0.85rem;">Conmutador ethernet: "eth0"</span>
-                                                    </div>
-                                                </li>
-                                                <li class="dropdown-item px-2 py-1"
-                                                    style="background-color: rgba(51, 122, 183, 0.4); color: var(--text-main);">
-                                                    <div class="form-check m-0 d-flex align-items-center gap-2">
-                                                        <input class="form-check-input m-0" type="checkbox" checked>
-                                                        <i class="bi bi-hdd-network"
-                                                            style="color: #cfcfcf; font-size: 0.9rem;"></i>
-                                                        <span style="font-size: 0.85rem;">Switch VLAN: "eth0.1" (lan)</span>
-                                                    </div>
-                                                </li>
-                                                <li class="dropdown-item px-2 py-1" style="color: var(--text-main);">
-                                                    <div class="form-check m-0 d-flex align-items-center gap-2">
-                                                        <input class="form-check-input m-0" type="checkbox">
-                                                        <i class="bi bi-hdd-network"
-                                                            style="color: #cfcfcf; font-size: 0.9rem;"></i>
-                                                        <span style="font-size: 0.85rem;">Switch VLAN: "eth0.2" (wan)</span>
-                                                    </div>
-                                                </li>
-                                                <li class="dropdown-item px-2 py-1"
-                                                    style="background-color: rgba(51, 122, 183, 0.4); color: var(--text-main);">
-                                                    <div class="form-check m-0 d-flex align-items-center gap-2">
-                                                        <input class="form-check-input m-0" type="checkbox" checked>
-                                                        <i class="bi bi-wifi"
-                                                            style="color: #5bc0de; font-size: 0.9rem;"></i>
-                                                        <span style="font-size: 0.85rem;">Red Wi-Fi: Master "usuario_remoto"
-                                                            (lan)</span>
-                                                    </div>
-                                                </li>
-                                                <li>
-                                                    <hr class="dropdown-divider my-1"
-                                                        style="border-color: var(--border-soft);">
-                                                </li>
-                                                <li class="dropdown-item px-2 py-1" style="color: var(--text-muted);">
-                                                    <div class="form-check m-0 d-flex align-items-center gap-2">
-                                                        <input class="form-check-input m-0" type="checkbox" disabled>
-                                                        <span style="font-size: 0.85rem; font-style: italic;">--
-                                                            Personalizado --</span>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-
+                                @include('network.partials.tab-physical')
                             </div>
 
                             <div class="tab-pane fade" id="firewall" role="tabpanel">
-
-                                <div class="row align-items-start mb-4">
-                                    <div class="col-md-3 text-md-end pt-2">
-                                        <label class="form-label mb-0"
-                                            style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Crear /
-                                            Asignar zona de cortafuegos</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <div class="dropdown w-50">
-                                            <button
-                                                class="form-select text-start d-flex align-items-center justify-content-between p-1 w-100"
-                                                type="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                                style="min-height: 38px; background-color: var(--card-bg, #2b2b2b); border: 1px solid var(--border-soft);">
-                                                <div class="d-inline-flex align-items-center px-2 py-1 flex-grow-1"
-                                                    style="background-color: #92e592; color: #2e6c2e; font-weight: bold; border-radius: 2px;">
-                                                    lan
-                                                    <div class="d-inline-flex align-items-center gap-1 ms-2"
-                                                        style="background-color: #f8f9fa; border: 1px solid #ced4da; padding: 1px 4px; font-weight: normal; font-size: 0.8rem; border-radius: 2px;">
-                                                        lan:
-                                                        <i class="bi bi-hdd-network text-secondary"></i>
-                                                        <i class="bi bi-wifi text-secondary"></i>
-                                                    </div>
-                                                </div>
-                                            </button>
-                                            <ul class="dropdown-menu shadow w-100 p-0"
-                                                style="background-color: var(--card-bg, #2b2b2b); border: 1px solid var(--border-soft);">
-                                                <li>
-                                                    <a class="dropdown-item py-2 px-3" href="#"
-                                                        style="color: var(--text-muted); font-style: italic; background: transparent;">
-                                                        Sin especificar
-                                                    </a>
-                                                </li>
-                                                <li style="background-color: rgba(51, 122, 183, 0.4);">
-                                                    <a class="dropdown-item p-1" href="#" style="background: transparent;">
-                                                        <div class="d-inline-flex align-items-center px-2 py-1 w-100"
-                                                            style="background-color: #92e592; color: #2e6c2e; font-weight: bold; border-radius: 2px;">
-                                                            lan
-                                                            <div class="d-inline-flex align-items-center gap-1 ms-2"
-                                                                style="background-color: #f8f9fa; border: 1px solid #ced4da; padding: 1px 4px; font-weight: normal; font-size: 0.8rem; border-radius: 2px;">
-                                                                lan:
-                                                                <i class="bi bi-hdd-network text-secondary"></i>
-                                                                <i class="bi bi-wifi text-secondary"></i>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item p-1" href="#" style="background: transparent;">
-                                                        <div class="d-inline-flex align-items-center px-2 py-1 w-100"
-                                                            style="background-color: #e59292; color: #6c2e2e; font-weight: bold; border-radius: 2px;">
-                                                            wan
-                                                            <div class="d-inline-flex align-items-center gap-1 ms-2"
-                                                                style="background-color: #f8f9fa; border: 1px solid #ced4da; padding: 1px 4px; font-weight: normal; font-size: 0.8rem; border-radius: 2px;">
-                                                                wan:
-                                                                <i class="bi bi-hdd-network text-secondary"></i>
-                                                            </div>
-                                                        </div>
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item py-2 px-3" href="#"
-                                                        style="color: var(--text-muted); background: transparent;">
-                                                        -- Personalizado --
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <small class="d-block mt-2" style="color: #e2eaff; font-size: 0.75rem;">
-                                            Elija la zona del cortafuegos a la que quiere asignar esta interfaz. Seleccione
-                                            <em>Sin especificar</em> para remover la interfaz de la zona asociada o rellene
-                                            el campo <em>Personalizado</em> para definir una zona nueva a la que asignarla.
-                                        </small>
-                                    </div>
-                                </div>
-
+                                @include('network.partials.tab-firewall')
                             </div>
 
                             <div class="tab-pane fade" id="dhcp" role="tabpanel">
-
-                                <!-- Sub-Tabs for DHCP -->
-                                <ul class="nav nav-tabs mb-4 border-0" id="dhcpTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="dhcp-general-tab" data-bs-toggle="tab"
-                                            data-bs-target="#dhcp-general" type="button" role="tab"
-                                            style="font-size:0.85rem; padding: 10px 16px;">Configuración general</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="dhcp-advanced-tab" data-bs-toggle="tab"
-                                            data-bs-target="#dhcp-advanced" type="button" role="tab"
-                                            style="font-size:0.85rem; padding: 10px 16px;">Configuración avanzada</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="dhcp-ipv6-tab" data-bs-toggle="tab"
-                                            data-bs-target="#dhcp-ipv6" type="button" role="tab"
-                                            style="font-size:0.85rem; padding: 10px 16px;">Configuraciones IPv6</button>
-                                    </li>
-                                </ul>
-
-                                <div class="tab-content" id="dhcpTabsContent"
-                                    style="border-top: 1px solid var(--border-soft); padding-top: 20px;">
-                                    <!-- DHCP: General -->
-                                    <div class="tab-pane fade show active" id="dhcp-general" role="tabpanel">
-
-                                        <div class="row mb-4">
-                                            <div class="col-md-3 text-md-end pt-1">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Desactivar
-                                                    DHCP</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <div class="form-check m-0 mb-1">
-                                                    <input class="form-check-input" type="checkbox">
-                                                </div>
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">Desactivar <a href="#"
-                                                        style="color: #5bc0de; text-decoration: none;">DHCP</a> para esta
-                                                    interfaz.</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Iniciar</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <input type="text" class="form-control w-50 mb-1" value="100">
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">Dirección asignada más
-                                                    baja como compensación de la dirección de red.</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Límite</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <input type="text" class="form-control w-50 mb-1" value="150">
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">IP máxima para
-                                                    asignar.</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Tiempo
-                                                    de asignación</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <input type="text" class="form-control w-50 mb-1" value="12h">
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">Tiempo de expiración de
-                                                    direcciones asignadas, con un mínimo de dos minutos (<code
-                                                        style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; color: var(--text-main);">2m</code>).</small>
-                                            </div>
-                                        </div>
-
-                                    </div>
-
-                                    <!-- DHCP: Avanzada -->
-                                    <div class="tab-pane fade" id="dhcp-advanced" role="tabpanel">
-
-                                        <div class="row mb-4">
-                                            <div class="col-md-3 text-md-end pt-1">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">DHCP
-                                                    dinámico</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <div class="form-check m-0 mb-1">
-                                                    <input class="form-check-input" type="checkbox" checked>
-                                                </div>
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">Reparte direcciones DHCP
-                                                    dinámicamente a los clientes. Si se desactiva, solo se dará a clientes
-                                                    con asignaciones estáticas.</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row mb-4">
-                                            <div class="col-md-3 text-md-end pt-1">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Forzar</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <div class="form-check m-0 mb-1">
-                                                    <input class="form-check-input" type="checkbox">
-                                                </div>
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">Forzar DHCP en esta red
-                                                    aunque se detecte otro servidor.</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Máscara
-                                                    de red <a href="#"
-                                                        style="text-decoration: underline dotted; color: #5bc0de;">IPv4</a></label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <input type="text" class="form-control w-50 mb-1" value="255.255.255.0">
-                                                <small style="color: #e2eaff; font-size: 0.75rem;">Anula la máscara de red
-                                                    enviada a los clientes. Normalmente se calcula a partir de la subred que
-                                                    se sirve.</small>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Opciones
-                                                    de DHCP</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <div class="d-flex w-50 mb-1">
-                                                    <input type="text" class="form-control form-control-sm me-2"
-                                                        style="border-radius: 2px;">
-                                                    <button type="button" class="btn btn-sm"
-                                                        style="background: #337ab7; color: white; width: 32px;"><i
-                                                            class="bi bi-plus"></i></button>
-                                                </div>
-                                                <small class="d-block" style="color: #e2eaff; font-size: 0.75rem;">Define
-                                                    opciones adicionales de DHCP, por ejemplo <code
-                                                        style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; color: var(--text-main);">6,192.168.2.1,192.168.2.2</code>
-                                                    que publica diferentes servidores DNS a los clientes.</small>
-                                            </div>
-                                        </div>
-
-                                    </div>
-
-                                    <!-- DHCP: IPv6 -->
-                                    <div class="tab-pane fade" id="dhcp-ipv6" role="tabpanel">
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Servicio
-                                                    de anuncio de enrutador</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <select class="form-select w-50">
-                                                    <option value="disabled" selected>Desactivado</option>
-                                                    <option value="server">Modo servidor</option>
-                                                    <option value="relay">Modo relé</option>
-                                                    <option value="hybrid">Modo híbrido</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Servicio
-                                                    DHCPv6</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <select class="form-select w-50">
-                                                    <option value="disabled" selected>Desactivado</option>
-                                                    <option value="server">Modo servidor</option>
-                                                    <option value="relay">Modo relé</option>
-                                                    <option value="hybrid">Modo híbrido</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Proxy
-                                                    NDP</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <select class="form-select w-50">
-                                                    <option value="disabled" selected>Desactivado</option>
-                                                    <option value="relay">Modo relé</option>
-                                                    <option value="hybrid">Modo híbrido</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Servidores
-                                                    DNS anunciados</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <div class="d-flex w-50">
-                                                    <input type="text" class="form-control form-control-sm me-2"
-                                                        style="border-radius: 2px;">
-                                                    <button type="button" class="btn btn-sm"
-                                                        style="background: #337ab7; color: white; width: 32px;"><i
-                                                            class="bi bi-plus"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center mb-4">
-                                            <div class="col-md-3 text-md-end">
-                                                <label class="form-label mb-0"
-                                                    style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Dominios
-                                                    DNS anunciados</label>
-                                            </div>
-                                            <div class="col-md-9">
-                                                <div class="d-flex w-50">
-                                                    <input type="text" class="form-control form-control-sm me-2"
-                                                        style="border-radius: 2px;">
-                                                    <button type="button" class="btn btn-sm"
-                                                        style="background: #337ab7; color: white; width: 32px;"><i
-                                                            class="bi bi-plus"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-
+                                @include('network.partials.tab-dhcp')
                             </div>
                         </div>
 
@@ -1096,7 +458,7 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST" action="{{ route('network.interfaces.wan.update') }}">
+                <form method="POST" action="{{ route('red.interfaces.wan.update') }}">
                     @csrf
 
                     <div class="modal-body p-0">
@@ -1556,22 +918,295 @@
     </div>
 
     <script>
+        const dhcpConfigs = @json($uciDhcpConfig);
+        const uciConfigs = @json($uciConfig);
+        
         document.addEventListener('DOMContentLoaded', function () {
             @if($errors->hasBag('createInterface'))
                 var modalCrear = new bootstrap.Modal(document.getElementById('modalAgregarInterfaz'));
                 modalCrear.show();
             @endif
 
-                @if($errors->hasBag('updateLan'))
-                    var modalLan = new bootstrap.Modal(document.getElementById('modalEditarInterfaz'));
-                    modalLan.show();
-                @endif
+            @if(session('reopen_modal'))
+                var reopenName = "{{ session('reopen_modal') }}";
+                var modalInstance = new bootstrap.Modal(document.getElementById('modalEditarInterfaz'));
+                var btn = document.querySelector('.btn-editar-interfaz[data-name="' + reopenName + '"]');
+                if (btn) {
+                    cargarModalEdicion(btn);
+                    modalInstance.show();
+                }
+            @endif
+        });
 
-                @if($errors->hasBag('updateWan'))
-                    var modalWan = new bootstrap.Modal(document.getElementById('modalEditarInterfazWAN'));
-                    modalWan.show();
-                @endif
-                            });
+        // Selectores de los contenedores
+        const protoSelect = document.getElementById('editIfaceProto');
+        const protoStaticFields = document.getElementById('protoStaticFields');
+        const protoDhcpFields = document.getElementById('protoDhcpFields');
+        const protoPppFields = document.getElementById('protoPppFields');
+        const pppExtra = document.getElementById('pppExtra');
+        const protoPppExtra = document.getElementById('pppExtra');
+        const pppoeExtra = document.getElementById('pppoeExtra');
+        const protoGenericAdvancedFields = document.getElementById('protoGenericAdvancedFields');
+        const protoDhcpAdvancedFields = document.getElementById('protoDhcpAdvancedFields');
+        const protoPppAdvancedFields = document.getElementById('protoPppAdvancedFields');
+        
+        // Pestañas enteras a ocultar
+        const dhcpTab = document.getElementById('dhcp-tab');
+        const dhcpTabContent = document.getElementById('dhcp');
+        const physicalTab = document.getElementById('physical-tab');
+        const physicalTabContent = document.getElementById('physical');
+
+        if (protoSelect) {
+            protoSelect.addEventListener('change', function() {
+                toggleProtocolFields(this.value);
+            });
+        }
+
+        function toggleProtocolFields(proto) {
+            // Ocultar primero
+            if (protoStaticFields) protoStaticFields.classList.add('d-none');
+            if (protoDhcpFields) protoDhcpFields.classList.add('d-none');
+            if (protoPppFields) protoPppFields.classList.add('d-none');
+            if (pppExtra) pppExtra.classList.add('d-none');
+            if (pppoeExtra) pppoeExtra.classList.add('d-none');
+            if (protoGenericAdvancedFields) protoGenericAdvancedFields.classList.add('d-none');
+            if (protoDhcpAdvancedFields) protoDhcpAdvancedFields.classList.add('d-none');
+            if (protoPppAdvancedFields) protoPppAdvancedFields.classList.add('d-none');
+
+            // Deshabilitar todos los inputs de los bloques condicionales
+            [protoStaticFields, protoDhcpFields, protoPppFields, protoGenericAdvancedFields, protoDhcpAdvancedFields, protoPppAdvancedFields].forEach(container => {
+                if(container) {
+                    container.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                }
+            });
+
+            // Ocultar pestaña completa Servidor DHCP en caso de PPP, PPPoE o DHCP
+            if (dhcpTab && dhcpTabContent) {
+                if (proto === 'dhcp' || proto === 'ppp' || proto === 'pppoe') {
+                    dhcpTab.parentElement.classList.add('d-none');
+                    dhcpTabContent.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                    // Si la pestaña estaba activa, mover a general
+                    if (dhcpTab.classList.contains('active')) {
+                        var generalTab = new bootstrap.Tab(document.getElementById('general-tab'));
+                        generalTab.show();
+                    }
+                } else {
+                    dhcpTab.parentElement.classList.remove('d-none');
+                    dhcpTabContent.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            }
+
+            // Ocultar pestaña Física para PPP y PPPoE
+            if (physicalTab && physicalTabContent) {
+                if (proto === 'ppp' || proto === 'pppoe') {
+                    physicalTab.parentElement.classList.add('d-none');
+                    physicalTabContent.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                    if (physicalTab.classList.contains('active')) {
+                        var generalTab = new bootstrap.Tab(document.getElementById('general-tab'));
+                        generalTab.show();
+                    }
+                } else {
+                    physicalTab.parentElement.classList.remove('d-none');
+                    physicalTabContent.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            }
+
+            // Activar solo el bloque corespondiente
+            if (proto === 'static') {
+                if (protoStaticFields) {
+                    protoStaticFields.classList.remove('d-none');
+                    protoStaticFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+                if (protoGenericAdvancedFields) {
+                    protoGenericAdvancedFields.classList.remove('d-none');
+                    protoGenericAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else if (proto === 'dhcp') {
+                if (protoDhcpFields) {
+                    protoDhcpFields.classList.remove('d-none');
+                    protoDhcpFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+                if (protoDhcpAdvancedFields) {
+                    protoDhcpAdvancedFields.classList.remove('d-none');
+                    protoDhcpAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else if (proto === 'ppp') {
+                if (protoPppFields) {
+                    protoPppFields.classList.remove('d-none');
+                    protoPppFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                    if (pppExtra) {
+                        pppExtra.classList.remove('d-none');
+                        pppExtra.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                    }
+                }
+                if (protoPppAdvancedFields) {
+                    protoPppAdvancedFields.classList.remove('d-none');
+                    protoPppAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else if (proto === 'pppoe') {
+                if (protoPppFields) {
+                    protoPppFields.classList.remove('d-none');
+                    protoPppFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                    if (pppoeExtra) {
+                        pppoeExtra.classList.remove('d-none');
+                        pppoeExtra.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                    }
+                }
+                if (protoGenericAdvancedFields) {
+                    protoGenericAdvancedFields.classList.remove('d-none');
+                    protoGenericAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+                if (protoPppAdvancedFields) {
+                    protoPppAdvancedFields.classList.remove('d-none');
+                    protoPppAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            }
+        }
+
+        function cargarModalEdicion(btn) {
+            var rawName = btn.getAttribute('data-raw');
+            
+            document.getElementById('editForm').action = '/red/interfaces/' + rawName + '/update';
+            document.getElementById('editModalTitle').innerText = 'Interfaces » ' + rawName.toUpperCase();
+            
+            document.getElementById('editIfaceDev').innerText = btn.getAttribute('data-dev') || '--';
+            document.getElementById('editIfaceMac').innerText = btn.getAttribute('data-mac') || '--';
+            document.getElementById('editIfaceRx').innerText = btn.getAttribute('data-rx') || '0';
+            document.getElementById('editIfaceTx').innerText = btn.getAttribute('data-tx') || '0';
+            document.getElementById('editIfaceIpv4').innerText = btn.getAttribute('data-ipv4') || '--';
+            
+            var proto = btn.getAttribute('data-proto') || 'static';
+            if (protoSelect) {
+                 protoSelect.value = proto;
+                 toggleProtocolFields(proto);
+            }
+
+            var autoInput = document.getElementById('editIfaceAuto');
+            if (autoInput) autoInput.checked = (btn.getAttribute('data-auto') !== '0');
+            
+            // Set input values for static
+            setInputValue('editIfaceIpaddr', btn.getAttribute('data-ipaddr'));
+            setInputValue('editIfaceGateway', btn.getAttribute('data-gateway'));
+            setInputValue('editIfaceBroadcast', btn.getAttribute('data-broadcast'));
+            setInputValue('editIfaceDns', btn.getAttribute('data-dns'));
+            setInputValue('editIfaceIp6assign', btn.getAttribute('data-ip6assign'));
+            setInputValue('editIfaceIp6addr', btn.getAttribute('data-ip6addr'));
+            setInputValue('editIfaceIp6gw', btn.getAttribute('data-ip6gw'));
+            setInputValue('editIfaceIp6prefix', btn.getAttribute('data-ip6prefix'));
+            setInputValue('editIfaceIp6ifaceid', btn.getAttribute('data-ip6ifaceid'));
+            
+            // DHCP Advanced
+            setCheckboxValue('editIfaceBroadcastAdvanced', btn.getAttribute('data-broadcast'));
+            setCheckboxValue('editIfaceDefaultroute', btn.getAttribute('data-defaultroute'));
+            setCheckboxValue('editIfacePeerdnsAdvanced', btn.getAttribute('data-peerdns'));
+            setInputValue('editIfaceClientid', btn.getAttribute('data-clientid'));
+            setInputValue('editIfaceVendorid', btn.getAttribute('data-vendorid'));
+            
+            // DHCP specific overlapping fields
+            setInputValue('editIfaceMetricDhcp', btn.getAttribute('data-metric'));
+            setCheckboxValue('editIfaceDelegateDhcp', btn.getAttribute('data-delegate'), '1');
+            setCheckboxValue('editIfaceForceLinkDhcp', btn.getAttribute('data-force_link'), '1');
+            setInputValue('editIfaceMacaddrDhcp', btn.getAttribute('data-macaddr'));
+            setInputValue('editIfaceMtuDhcp', btn.getAttribute('data-mtu'));
+            
+            // PPP Advanced
+            var uConf = uciConfigs[lowerName] || {};
+            setCheckboxValue('editIfaceDelegatePpp', uConf['delegate'], '1');
+            setCheckboxValue('editIfaceForceLinkPpp', uConf['force_link'], '1');
+            setCheckboxValue('editIfaceDefaultroutePpp', uConf['defaultroute'], '1');
+            setCheckboxValue('editIfacePeerdnsPpp', uConf['peerdns'], '1');
+            setInputValue('editIfaceMetricPpp', uConf['metric']);
+            setInputValue('editIfaceLcpEchoFailure', uConf['lcp_echo_failure']);
+            setInputValue('editIfaceLcpEchoInterval', uConf['lcp_echo_interval']);
+            setInputValue('editIfaceDemand', uConf['demand']);
+            setInputValue('editIfaceMtuPpp', uConf['mtu']);
+            
+            var netmask = btn.getAttribute('data-netmask') || '';
+            var netSelect = document.getElementById('editIfaceNetmask');
+            var customInp = document.getElementById('editIfaceNetmaskCustom');
+            if (netSelect && customInp) {
+                var foundNet = Array.from(netSelect.options).some(opt => opt.value === netmask);
+                if (!foundNet && netmask) {
+                    netSelect.value = 'custom';
+                    customInp.classList.remove('d-none');
+                    customInp.value = netmask;
+                } else {
+                    netSelect.value = netmask;
+                    customInp.classList.add('d-none');
+                }
+            }
+
+            // Firewall Zone logic
+            var fz = btn.getAttribute('data-firewall-zone') || '';
+            var fzSelect = document.getElementById('editIfaceFirewallZone');
+            var fzCustomInp = document.getElementById('editIfaceFirewallZoneCustom');
+            if (fzSelect && fzCustomInp) {
+                var foundFz = Array.from(fzSelect.options).some(opt => opt.value === fz);
+                if (!foundFz && fz) {
+                    fzSelect.value = 'custom';
+                    fzCustomInp.classList.remove('d-none');
+                    fzCustomInp.value = fz;
+                } else {
+                    fzSelect.value = fz;
+                    fzCustomInp.classList.add('d-none');
+                }
+            }
+            if(fzSelect) {
+                fzSelect.onchange = function() {
+                    fzCustomInp.classList.toggle('d-none', this.value !== 'custom');
+                };
+            }
+            
+            // DHCP/Advanced properties defaults mapping...
+            setCheckboxValue('editIfaceDhcpIgnore', btn.getAttribute('data-dhcp-ignore'));
+            setInputValue('editIfaceDhcpStart', btn.getAttribute('data-dhcp-start'));
+            setInputValue('editIfaceDhcpLimit', btn.getAttribute('data-dhcp-limit'));
+            setInputValue('editIfaceDhcpLeasetime', btn.getAttribute('data-dhcp-leasetime'));
+            setCheckboxValue('editIfaceDhcpDynamic', btn.getAttribute('data-dhcp-dynamic'), '1'); // Default to 1 usually
+
+            // Extended DHCP Server settings (Advanced & IPv6)
+            var lowerName = btn.getAttribute('data-name');
+            var uciDhcp = dhcpConfigs[lowerName] || {};
+            setCheckboxValue('editIfaceDhcpForce', uciDhcp['force'], '1');
+            setInputValue('editIfaceDhcpNetmask', uciDhcp['dhcp_netmask'] || uciDhcp['netmask']);
+            
+            var dhcpOpt = uciDhcp['dhcp_option'] || '';
+            setInputValue('editIfaceDhcpOptions', Array.isArray(dhcpOpt) ? dhcpOpt.join(' ') : dhcpOpt);
+            
+            setInputValue('editIfaceDhcpRa', uciDhcp['ra']);
+            setInputValue('editIfaceDhcpDhcpv6', uciDhcp['dhcpv6']);
+            setInputValue('editIfaceDhcpNdp', uciDhcp['ndp']);
+            
+            var dnsList = uciDhcp['dns'] || '';
+            setInputValue('editIfaceDhcpDns', Array.isArray(dnsList) ? dnsList.join(' ') : dnsList);
+            
+            var domainList = uciDhcp['domain'] || '';
+            setInputValue('editIfaceDhcpDomain', Array.isArray(domainList) ? domainList.join(' ') : domainList);
+
+            // PPP inputs
+            setInputValue('editIfaceUsername', uConf['username']);
+            setInputValue('editIfacePassword', uConf['password']);
+            setInputValue('editIfaceAc', uConf['ac']);
+            setInputValue('editIfaceService', uConf['service']);
+            setInputValue('editIfaceModemDev', uConf['device']);
+
+            // Adv/Physical
+            setInputValue('editIfaceMetric', uConf['metric']);
+            setInputValue('editIfaceMacaddr', uConf['macaddr']);
+            setInputValue('editIfaceMtu', uConf['mtu']);
+            setCheckboxValue('editIfaceDelegate', uConf['delegate'], '1');
+            setCheckboxValue('editIfaceForceLink', uConf['force_link'], '1');
+        }
+
+        function setInputValue(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.value = val || '';
+        }
+
+        function setCheckboxValue(id, val, checkOnVal = '1') {
+            var el = document.getElementById(id);
+            if (el) el.checked = (val === checkOnVal);
+        }
     </script>
 
 @endsection
