@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        :root{
+        :root {
             --bg-main: linear-gradient(90deg, #020d24 0%, #071a3b 50%, #102a57 100%);
             --sidebar-bg: rgba(15, 28, 56, 0.95);
             --sidebar-hover: rgba(72, 128, 255, 0.14);
@@ -22,19 +23,20 @@
             --text-main: #f5f7fb;
             --text-soft: #c4cfdf;
             --text-muted: #95a4bf;
-            --border-soft: rgba(255,255,255,0.08);
+            --border-soft: rgba(255, 255, 255, 0.08);
             --sidebar-width: 300px;
             --topbar-height: 78px;
             --radius-lg: 24px;
             --radius-md: 16px;
-            --shadow-main: 0 20px 45px rgba(0,0,0,0.35);
+            --shadow-main: 0 20px 45px rgba(0, 0, 0, 0.35);
         }
 
-        *{
+        * {
             box-sizing: border-box;
         }
 
-        html, body{
+        html,
+        body {
             margin: 0;
             padding: 0;
             min-height: 100%;
@@ -43,11 +45,11 @@
             color: var(--text-main);
         }
 
-        body{
+        body {
             overflow-x: hidden;
         }
 
-        .app-wrapper{
+        .app-wrapper {
             display: flex;
             min-height: 100vh;
         }
@@ -55,7 +57,7 @@
         /* =========================
            SIDEBAR
         ========================= */
-        .sidebar{
+        .sidebar {
             width: var(--sidebar-width);
             background: var(--sidebar-bg);
             backdrop-filter: blur(10px);
@@ -66,10 +68,10 @@
             bottom: 0;
             overflow-y: auto;
             z-index: 1040;
-            box-shadow: 6px 0 30px rgba(0,0,0,.18);
+            box-shadow: 6px 0 30px rgba(0, 0, 0, .18);
         }
 
-        .sidebar-brand{
+        .sidebar-brand {
             height: var(--topbar-height);
             display: flex;
             align-items: center;
@@ -78,7 +80,7 @@
             border-bottom: 1px solid var(--border-soft);
         }
 
-        .brand-icon{
+        .brand-icon {
             width: 46px;
             height: 46px;
             border-radius: 14px;
@@ -91,7 +93,7 @@
             box-shadow: 0 10px 24px rgba(74, 134, 247, .35);
         }
 
-        .brand-title{
+        .brand-title {
             font-size: 1.55rem;
             font-weight: 800;
             letter-spacing: -0.5px;
@@ -99,15 +101,15 @@
             color: #fff;
         }
 
-        .sidebar-body{
+        .sidebar-body {
             padding: 18px 0 24px;
         }
 
-        .menu-section{
+        .menu-section {
             margin-bottom: 10px;
         }
 
-        .menu-toggle{
+        .menu-toggle {
             width: 100%;
             border: none;
             background: transparent;
@@ -121,17 +123,17 @@
             transition: .2s ease;
         }
 
-        .menu-toggle:hover{
-            background: rgba(255,255,255,0.03);
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.03);
         }
 
-        .submenu{
+        .submenu {
             list-style: none;
             margin: 0;
             padding: 0 10px;
         }
 
-        .submenu .nav-link{
+        .submenu .nav-link {
             color: var(--text-soft);
             border-radius: 12px;
             padding: 11px 14px 11px 16px;
@@ -145,30 +147,30 @@
             transition: all .2s ease;
         }
 
-        .submenu .nav-link:hover{
+        .submenu .nav-link:hover {
             background: var(--sidebar-hover);
             color: #ffffff;
         }
 
-        .submenu .nav-link.active{
+        .submenu .nav-link.active {
             background: linear-gradient(90deg, #4a86f7 0%, #2f73f5 100%);
             color: #fff;
             font-weight: 600;
             box-shadow: 0 8px 18px rgba(74, 134, 247, .28);
         }
 
-        .submenu-level-2{
+        .submenu-level-2 {
             list-style: none;
             margin: 0;
             padding: 0 0 0 12px;
         }
 
-        .submenu-level-2 .nav-link{
+        .submenu-level-2 .nav-link {
             font-size: .92rem;
             margin-left: 12px;
         }
 
-        .logout-link{
+        .logout-link {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -180,21 +182,21 @@
             transition: .2s ease;
         }
 
-        .logout-link:hover{
-            background: rgba(255,255,255,0.04);
+        .logout-link:hover {
+            background: rgba(255, 255, 255, 0.04);
             color: #fff;
         }
 
         /* =========================
            MAIN
         ========================= */
-        .main-content{
+        .main-content {
             margin-left: var(--sidebar-width);
             width: calc(100% - var(--sidebar-width));
             min-height: 100vh;
         }
 
-        .topbar{
+        .topbar {
             height: var(--topbar-height);
             background: var(--topbar-bg);
             backdrop-filter: blur(10px);
@@ -208,14 +210,14 @@
             z-index: 1030;
         }
 
-        .topbar-title{
+        .topbar-title {
             margin: 0;
             font-size: 1.85rem;
             font-weight: 800;
             letter-spacing: -0.7px;
         }
 
-        .btn-main{
+        .btn-main {
             background: linear-gradient(90deg, #4a86f7 0%, #3b7bf3 100%);
             border: none;
             color: white;
@@ -226,28 +228,28 @@
             box-shadow: 0 10px 24px rgba(74, 134, 247, .30);
         }
 
-        .btn-main:hover{
+        .btn-main:hover {
             background: linear-gradient(90deg, #3d7cf4 0%, #2f73f5 100%);
             color: white;
         }
 
-        .content-area{
+        .content-area {
             padding: 26px;
         }
 
         .panel-card,
-        .stats-card{
+        .stats-card {
             background: var(--card-bg);
             border: 1px solid var(--border-soft);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-main);
         }
 
-        .panel-card{
+        .panel-card {
             padding: 24px;
         }
 
-        .page-title{
+        .page-title {
             font-size: 2.1rem;
             font-weight: 800;
             letter-spacing: -1px;
@@ -255,73 +257,73 @@
             color: #fff;
         }
 
-        .nav-tabs{
+        .nav-tabs {
             border-bottom: none;
             gap: 6px;
         }
 
-        .nav-tabs .nav-link{
+        .nav-tabs .nav-link {
             border: none;
             border-radius: 12px 12px 0 0;
             color: var(--text-soft);
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             font-weight: 600;
         }
 
-        .nav-tabs .nav-link:hover{
+        .nav-tabs .nav-link:hover {
             color: #fff;
-            background: rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.08);
         }
 
-        .nav-tabs .nav-link.active{
-            background: rgba(74,134,247,.20);
+        .nav-tabs .nav-link.active {
+            background: rgba(74, 134, 247, .20);
             color: #fff;
         }
 
         .form-control,
-        .form-select{
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.08);
+        .form-select {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: #fff;
             border-radius: 14px;
             min-height: 46px;
         }
 
         .form-control:focus,
-        .form-select:focus{
-            background: rgba(255,255,255,0.08);
+        .form-select:focus {
+            background: rgba(255, 255, 255, 0.08);
             color: #fff;
             border-color: #4a86f7;
-            box-shadow: 0 0 0 .2rem rgba(74,134,247,.20);
+            box-shadow: 0 0 0 .2rem rgba(74, 134, 247, .20);
         }
 
-        .form-control::placeholder{
+        .form-control::placeholder {
             color: #9eb0ca;
         }
 
-        .form-check-input{
+        .form-check-input {
             width: 1.1rem;
             height: 1.1rem;
-            background-color: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.15);
+            background-color: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        .form-check-input:checked{
+        .form-check-input:checked {
             background-color: var(--primary);
             border-color: var(--primary);
         }
 
-        .table-dark-custom{
+        .table-dark-custom {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             overflow: hidden;
             border-radius: 18px;
-            background: rgba(255,255,255,0.02);
+            background: rgba(255, 255, 255, 0.02);
         }
 
-        .table-dark-custom thead th{
-            background: rgba(255,255,255,0.05);
+        .table-dark-custom thead th {
+            background: rgba(255, 255, 255, 0.05);
             color: #eaf1ff;
             font-size: .88rem;
             font-weight: 700;
@@ -330,29 +332,29 @@
             white-space: nowrap;
         }
 
-        .table-dark-custom tbody td{
+        .table-dark-custom tbody td {
             color: var(--text-soft);
             font-size: .9rem;
             padding: 13px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             white-space: nowrap;
         }
 
-        .table-dark-custom tbody tr:hover{
-            background: rgba(255,255,255,0.03);
+        .table-dark-custom tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
         }
 
-        .soft-badge{
+        .soft-badge {
             display: inline-block;
             padding: 6px 10px;
             border-radius: 10px;
-            background: rgba(255,255,255,0.06);
+            background: rgba(255, 255, 255, 0.06);
             color: #d9e6ff;
             font-size: .82rem;
             font-weight: 600;
         }
 
-        .sidebar-toggler{
+        .sidebar-toggler {
             display: none;
             border: none;
             background: transparent;
@@ -360,73 +362,50 @@
             font-size: 1.5rem;
         }
 
-        .small-chevron{
+        .small-chevron {
             transition: transform .2s ease;
         }
 
-        @media (max-width: 992px){
-            .sidebar{
+        @media (max-width: 992px) {
+            .sidebar {
                 transform: translateX(-100%);
                 transition: transform .28s ease;
             }
 
-            .sidebar.show{
+            .sidebar.show {
                 transform: translateX(0);
             }
 
-            .main-content{
+            .main-content {
                 margin-left: 0;
                 width: 100%;
             }
 
-            .sidebar-toggler{
+            .sidebar-toggler {
                 display: inline-flex;
             }
         }
     </style>
 </head>
+
 <body>
-<div class="app-wrapper">
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">
-                <i class="bi bi-bar-chart-fill"></i>
-            </div>
-            <h1 class="brand-title">NuupNet</h1>
-        </div>
-            <li>
-    <a href="{{ route('network.hostentries') }}"
-       class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
-        <i class="bi bi-globe2"></i> Nombres de host
-    </a>
-</li>
-        <div class="sidebar-body">
-
-            <div class="menu-section">
-                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuEstado" type="button">
-                    <span>Estado</span>
-                    <i class="bi bi-chevron-down"></i>
-                </button>
-
-                <div class="collapse show" id="menuEstado">
-                    <ul class="submenu">
-                        <li><a href="#" class="nav-link"><i class="bi bi-grid"></i> Visión general</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-shield-lock"></i> Cortafuegos</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-signpost-2"></i> Rutas</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-journal-text"></i> Registro del sistema</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-cpu"></i> Registro del núcleo</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-gear-wide-connected"></i> Procesos</a></li>
-                        <li><a href="#" class="nav-link"><i class="bi bi-graph-up-arrow"></i> Gráficos en tiempo real</a></li>
-                    </ul>
+    <div class="app-wrapper">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <i class="bi bi-bar-chart-fill"></i>
                 </div>
+                <h1 class="brand-title">NuupNet</h1>
             </div>
+            <div class="sidebar-body">
 
-            <div class="menu-section">
-                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuSistema" type="button">
-                    <span>Sistema</span>
-                    <i class="bi bi-chevron-down"></i>
-                </button>
+                <div class="menu-section">
+                    <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuEstado" type="button">
+                        <span>Estado</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
 
+<<<<<<< HEAD
                 <div class="collapse show" id="menuSistema">
                     <ul class="submenu">
 
@@ -455,145 +434,208 @@
                         <li><a href="{{ route('grabado.index') }}" class="nav-link {{ request()->routeIs('grabado.*') ? 'active' : '' }}"><i class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
                         <li><a href="{{ route('reiniciar.index') }}" class="nav-link"><i class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
                     </ul>
+=======
+                    <div class="collapse show" id="menuEstado">
+                        <ul class="submenu">
+                            <li><a href="#" class="nav-link"><i class="bi bi-grid"></i> Visión general</a></li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-shield-lock"></i> Cortafuegos</a></li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-signpost-2"></i> Rutas</a></li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-journal-text"></i> Registro del sistema</a>
+                            </li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-cpu"></i> Registro del núcleo</a></li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-gear-wide-connected"></i> Procesos</a></li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-graph-up-arrow"></i> Gráficos en tiempo
+                                    real</a></li>
+                        </ul>
+                    </div>
+>>>>>>> 4bb79f65e0fc0fa2a36a0beb0557210eb127ce3c
                 </div>
-            </div>
 
-            <div class="menu-section">
-                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuRed" type="button">
-                    <span>Red</span>
-                    <i class="bi bi-chevron-down"></i>
-                </button>
+                <div class="menu-section">
+                    <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuSistema" type="button">
+                        <span>Sistema</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
 
-                <div class="collapse show" id="menuRed">
-                    <ul class="submenu">
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-diagram-3"></i> Interfaces
-                            </a>
-                        </li>
+                    <div class="collapse show" id="menuSistema">
+                        <ul class="submenu">
+                            <li><a href="#" class="nav-link"><i class="bi bi-pc-display"></i> Sistema</a></li>
+                            <li><a href="#" class="nav-link"><i class="bi bi-person-gear"></i> Administración</a></li>
 
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-wifi"></i> Wi-Fi
-                            </a>
-                        </li>
+                            <li>
+                                <a href="{{ route('startup') }}"
+                                    class="nav-link {{ request()->routeIs('startup') || request()->routeIs('startup.*') ? 'active' : '' }}">
+                                    <i class="bi bi-power"></i> Arranque
+                                </a>
+                            </li>
 
-                        <li>
-                            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#submenuConmutador" role="button" aria-expanded="true">
-                                <span><i class="bi bi-hdd-network"></i> Conmutador</span>
-                                <i class="bi bi-chevron-down small-chevron"></i>
-                            </a>
-
-                            <div class="collapse show" id="submenuConmutador">
-                                <ul class="submenu-level-2">
-                                    <li>
-                                        <a href="{{ route('network.switch.general') }}" class="nav-link">
-                                            Configuración general
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('network.switch.vlans') }}" class="nav-link">
-                                            VLANs
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-
-                        <li>
-                            <a class="nav-link d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#submenuDhcpDns" role="button" aria-expanded="true">
-                                <span><i class="bi bi-router"></i> DHCP y DNS</span>
-                                <i class="bi bi-chevron-down small-chevron"></i>
-                            </a>
-
-                            <div class="collapse show" id="submenuDhcpDns">
-                                <ul class="submenu-level-2">
-                                    <li>
-                                        <a href="{{ route('network.dhcpdns.general') }}" class="nav-link">
-                                            Configuración general
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('network.dhcpdns.resolv') }}" class="nav-link">
-                                            Archivos Resolv y Hosts
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('network.dhcpdns.tftp') }}" class="nav-link">
-                                            Configuración TFTP
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('network.dhcpdns.advanced') }}" class="nav-link">
-                                            Configuración avanzada
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a href="{{ route('network.dhcpdns.static') }}" class="nav-link">
-                                            Asignaciones estáticas
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-
-                       <li>
-                                         <a href="{{ route('network.hostentries') }}" class="nav-link {{ request()->routeIs('network.hostentries*') ? 'active' : '' }}">
-                                                 <i class="bi bi-globe2"></i> Nombres de host
-                                         </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('network.routes.static.ipv4') }}" class="nav-link {{ request()->routeIs('network.routes.static.*') ? 'active' : '' }}">
-                                <i class="bi bi-sign-turn-right"></i> Rutas estáticas
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="nav-link">
-                                <i class="bi bi-activity"></i> Diagnósticos
-                            </a>
-                        </li>
-                    </ul>
+                            <li>
+                                <a href="{{ route('tasks') }}"
+                                    class="nav-link {{ request()->routeIs('tasks') || request()->routeIs('tasks.*') ? 'active' : '' }}">
+                                    <i class="bi bi-clock-history"></i> Tareas programadas
+                                </a>
+                            </li>
+                            <li><a href="{{ route('leds.index') }}" class="nav-link"><i class="bi bi-lightbulb"></i>
+                                    Configuración de LEDs</a></li>
+                            <li><a href="{{ route('grabado.index') }}"
+                                    class="nav-link {{ request()->routeIs('grabado.*') ? 'active' : '' }}"><i
+                                        class="bi bi-cloud-arrow-down"></i> Copia de seguridad</a></li>
+                            <li><a href="{{ route('reiniciar.index') }}" class="nav-link"><i
+                                        class="bi bi-arrow-repeat"></i> Reiniciar</a></li>
+                        </ul>
+                    </div>
                 </div>
+
+                <div class="menu-section">
+                    <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuRed" type="button">
+                        <span>Red</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+
+                    <div class="collapse show" id="menuRed">
+                        <ul class="submenu">
+                            <li>
+                                <a href="{{ route('red.interfaces') }}"
+                                    class="nav-link {{ request()->routeIs('red.interfaces*') ? 'active' : '' }}">
+                                    <i class="bi bi-diagram-3"></i> Interfaces
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="{{ route('red.wifi')}}" class="nav-link">
+                                    <i class="bi bi-wifi"></i> Wi-Fi
+                                </a>
+                            </li>
+
+                            <li>
+                                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('red.conmutador*') ? 'active' : '' }}"
+                                    data-bs-toggle="collapse" href="#submenuConmutador" role="button"
+                                    aria-expanded="true">
+                                    <span><i class="bi bi-hdd-network"></i> Conmutador</span>
+                                    <i class="bi bi-chevron-down small-chevron"></i>
+                                </a>
+
+                                <div class="collapse show" id="submenuConmutador">
+                                    <ul class="submenu-level-2">
+                                        <li>
+                                            <a href="{{ route('red.conmutador.general') }}"
+                                                class="nav-link {{ request()->routeIs('red.conmutador.general*') ? 'active' : '' }}">
+                                                Configuración general
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('red.conmutador.vlans') }}"
+                                                class="nav-link {{ request()->routeIs('red.conmutador.vlans*') ? 'active' : '' }}">
+                                                VLANs
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <li>
+                                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('red.dhcpdns*') ? 'active' : '' }}"
+                                    data-bs-toggle="collapse" href="#submenuDhcpDns" role="button" aria-expanded="true">
+                                    <span><i class="bi bi-router"></i> DHCP y DNS</span>
+                                    <i class="bi bi-chevron-down small-chevron"></i>
+                                </a>
+
+                                <div class="collapse show" id="submenuDhcpDns">
+                                    <ul class="submenu-level-2">
+                                        <li>
+                                            <a href="{{ route('red.dhcpdns.general') }}"
+                                                class="nav-link {{ request()->routeIs('red.dhcpdns.general*') ? 'active' : '' }}">
+                                                Configuración general
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('red.dhcpdns.resolv') }}"
+                                                class="nav-link {{ request()->routeIs('red.dhcpdns.resolv*') ? 'active' : '' }}">
+                                                Archivos Resolv y Hosts
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('red.dhcpdns.tftp') }}"
+                                                class="nav-link {{ request()->routeIs('red.dhcpdns.tftp*') ? 'active' : '' }}">
+                                                Configuración TFTP
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('red.dhcpdns.advanced') }}"
+                                                class="nav-link {{ request()->routeIs('red.dhcpdns.advanced*') ? 'active' : '' }}">
+                                                Configuración avanzada
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('red.dhcpdns.static') }}"
+                                                class="nav-link {{ request()->routeIs('red.dhcpdns.static*') ? 'active' : '' }}">
+                                                Asignaciones estáticas
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
+                            <li>
+                                <a href="{{ route('red.hostentries') }}"
+                                    class="nav-link {{ request()->routeIs('red.hostentries*') ? 'active' : '' }}">
+                                    <i class="bi bi-globe2"></i> Nombres de host
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="{{ route('red.routes.static.ipv4') }}"
+                                    class="nav-link {{ request()->routeIs('red.routes.static.*') ? 'active' : '' }}">
+                                    <i class="bi bi-sign-turn-right"></i> Rutas estáticas
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="#" class="nav-link">
+                                    <i class="bi bi-activity"></i> Diagnósticos
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <a href="#" class="logout-link">
+                    <i class="bi bi-box-arrow-left"></i>
+                    Cerrar sesión
+                </a>
             </div>
+        </aside>
 
-            <a href="#" class="logout-link">
-                <i class="bi bi-box-arrow-left"></i>
-                Cerrar sesión
-            </a>
-        </div>
-    </aside>
+        <main class="main-content">
+            <header class="topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="sidebar-toggler" id="sidebarToggle" type="button">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h2 class="topbar-title">@yield('page-title', 'Panel principal')</h2>
+                </div>
 
-    <main class="main-content">
-        <header class="topbar">
-            <div class="d-flex align-items-center gap-3">
-                <button class="sidebar-toggler" id="sidebarToggle" type="button">
-                    <i class="bi bi-list"></i>
-                </button>
-                <h2 class="topbar-title">@yield('page-title', 'Panel principal')</h2>
+                <button class="btn btn-main" type="button">Refrescar</button>
+            </header>
+
+            <div class="content-area">
+                @yield('content')
             </div>
+        </main>
+    </div>
 
-            <button class="btn btn-main" type="button">Refrescar</button>
-        </header>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-        <div class="content-area">
-            @yield('content')
-        </div>
-    </main>
-</div>
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('show');
-        });
-    }
-</script>
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('show');
+            });
+        }
+    </script>
 </body>
+
 </html>

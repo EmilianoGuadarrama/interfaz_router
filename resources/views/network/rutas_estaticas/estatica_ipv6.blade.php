@@ -18,10 +18,10 @@
         <!-- Pestañas -->
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('network.routes.static.ipv4') }}">Rutas IPv4 estáticas</a>
+                <a class="nav-link" href="{{ route('red.routes.static.ipv4') }}">Rutas IPv4 estáticas</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="{{ route('network.routes.static.ipv6') }}">Rutas IPv6 estáticas</a>
+                <a class="nav-link active" href="{{ route('red.routes.static.ipv6') }}">Rutas IPv6 estáticas</a>
             </li>
         </ul>
 
@@ -62,7 +62,7 @@
                             <td>{{ $route['mtu'] ?? '-' }}</td>
                             <td>
                                 <!-- Formulario para eliminar ruta IPv6 -->
-                                <form action="{{ route('network.routes.static.ipv6.destroy') }}" method="POST" style="display:inline;">
+                                <form action="{{ route('red.routes.static.ipv6.destroy') }}" method="POST" style="display:inline;">
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="route_key" value="{{ $route['key'] }}">
@@ -95,7 +95,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
-                <form action="{{ route('network.routes.static.ipv6.store') }}" method="POST">
+                <form action="{{ route('red.routes.static.ipv6.store') }}" method="POST">
                     @csrf
                     <div class="modal-body p-4">
                         
@@ -176,7 +176,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             const statusContainer = document.getElementById('router-status');
 
-            fetch("{{ route('network.estado.conexion') }}")
+            fetch("{{ route('red.estado.conexion') }}")
                 .then(response => response.json())
                 .then(data => {
                     if(data.connected) {

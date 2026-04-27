@@ -4,15 +4,8 @@
 
 @section('content')
     @php
-        $staticAssignments = $staticAssignments ?? [];
-        $activeLeases = $activeLeases ?? [
-            [
-                'host_name' => 'Susu',
-                'ipv4_address' => '192.168.10.180',
-                'mac_address' => '50:EB:F6:D1:96:1E',
-                'remaining_time' => '11h 56m 51s',
-            ]
-        ];
+        $staticEntries = $staticEntries ?? [];
+        $activeLeases = $activeLeases ?? [];
     @endphp
 
     <div class="container-fluid">
@@ -21,6 +14,12 @@
         @if(session('success'))
             <div class="alert alert-success rounded-4 mb-3">
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger rounded-4 mb-3">
+                {{ session('error') }}
             </div>
         @endif
 
@@ -37,19 +36,19 @@
         <div class="panel-card">
             <ul class="nav nav-tabs mb-4 border-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.general') }}">Configuración general</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.general') }}">Configuración general</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.resolv') }}">Archivos Resolv y Hosts</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.tftp') }}">Configuración TFTP</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.tftp') }}">Configuración TFTP</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('network.dhcpdns.advanced') }}">Configuración avanzada</a>
+                    <a class="nav-link" href="{{ route('red.dhcpdns.advanced') }}">Configuración avanzada</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('network.dhcpdns.static') }}">Asignaciones estáticas</a>
+                    <a class="nav-link active" href="{{ route('red.dhcpdns.static') }}">Asignaciones estáticas</a>
                 </li>
             </ul>
 
@@ -71,16 +70,16 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @forelse($staticAssignments as $index => $assignment)
+                    @forelse($staticEntries as $entry)
                         <tr>
-                            <td>{{ $assignment['host_name'] ?? '' }}</td>
-                            <td>{{ $assignment['mac_address'] ?? '' }}</td>
-                            <td>{{ $assignment['ipv4_address'] ?? '' }}</td>
-                            <td>{{ $assignment['lease_time'] ?? '' }}</td>
-                            <td>{{ $assignment['duid'] ?? '' }}</td>
-                            <td>{{ $assignment['ipv6_suffix'] ?? '' }}</td>
+                            <td>{{ $entry['name'] ?? '' }}</td>
+                            <td>{{ $entry['mac'] ?? '' }}</td>
+                            <td>{{ $entry['ip'] ?? '' }}</td>
+                            <td>{{ $entry['leasetime'] ?? '' }}</td>
+                            <td>{{ $entry['duid'] ?? '' }}</td>
+                            <td>{{ $entry['hostid'] ?? '' }}</td>
                             <td>
-                                <form action="{{ route('network.dhcpdns.static.destroy', $index) }}" method="POST" onsubmit="return confirm('¿Eliminar esta asignación estática?')">
+                                <form action="{{ route('red.dhcpdns.static.destroy', $entry['index'] ?? 0) }}" method="POST" onsubmit="return confirm('¿Eliminar esta asignación estática?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
@@ -115,10 +114,10 @@
                     <tbody>
                     @forelse($activeLeases as $lease)
                         <tr>
-                            <td>{{ $lease['host_name'] ?? '' }}</td>
-                            <td>{{ $lease['ipv4_address'] ?? '' }}</td>
-                            <td>{{ $lease['mac_address'] ?? '' }}</td>
-                            <td>{{ $lease['remaining_time'] ?? '' }}</td>
+                            <td>{{ $lease['name'] ?? '' }}</td>
+                            <td>{{ $lease['ip'] ?? '' }}</td>
+                            <td>{{ $lease['mac'] ?? '' }}</td>
+                            <td>{{ $lease['time'] ?? '' }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -129,12 +128,9 @@
                 </table>
             </div>
 
-            <form action="{{ route('network.dhcpdns.static.update') }}" method="POST" class="d-flex gap-2 mt-4">
-                @csrf
-                <button type="submit" name="submit_action" value="apply" class="btn btn-main">Guardar y aplicar</button>
-                <button type="submit" name="submit_action" value="save" class="btn btn-outline-light">Guardar</button>
-                <a href="{{ route('network.dhcpdns.static') }}" class="btn btn-danger">Restablecer</a>
-            </form>
+            <div class="d-flex gap-2 mt-4">
+                <a href="{{ route('red.dhcpdns.static') }}" class="btn btn-outline-light">Refrescar</a>
+            </div>
         </div>
     </div>
 
@@ -147,7 +143,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
-                <form action="{{ route('network.dhcpdns.static.store') }}" method="POST">
+                <form action="{{ route('red.dhcpdns.static.store') }}" method="POST">
                     @csrf
 
                     <div class="modal-body">

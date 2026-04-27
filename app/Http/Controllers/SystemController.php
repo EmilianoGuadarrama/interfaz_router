@@ -204,7 +204,7 @@ class SystemController extends Controller
         }
     }
 
-    //GRABADO DE IMAGEN
+   //GRABADO DE IMAGEN
 
     public function grabado()
     {
@@ -247,11 +247,15 @@ class SystemController extends Controller
     public function descargarBackup()
     {
         try {
-            $result = $this->router->execute(["sysupgrade --create-backup /tmp/backup.tar.gz && cat /tmp/backup.tar.gz | base64"]);
-            if ($result['success']) {
-                $content = base64_decode($result['output']);
-                return response($content, 200, [
-                    'Content-Type' => 'application/x-tar',
+            // Paso 1: crear el backup
+            $this->router->execute(["sysupgrade --create-backup /tmp/backup.tar.gz"]);
+
+            // Paso 2: leerlo con cat
+            $result = $this->router->execute(["cat /tmp/backup.tar.gz"]);
+
+            if ($result['success'] && !empty($result['output'])) {
+                return response($result['output'], 200, [
+                    'Content-Type'        => 'application/x-tar',
                     'Content-Disposition' => 'attachment; filename="backup.tar.gz"',
                 ]);
             }
@@ -266,11 +270,11 @@ class SystemController extends Controller
         $request->validate(['backup' => ['required', 'file']]);
 
         try {
-            $file = $request->file('backup');
-            $localPath = $file->getPathname();
+            $file       = $request->file('backup');
+            $localPath  = $file->getPathname();
             $remotePath = '/tmp/backup.tar.gz';
 
-            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int)env('ROUTER_PORT', 22));
+            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
             if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
                 throw new \Exception('Error de autenticación SFTP.');
             }
@@ -283,7 +287,7 @@ class SystemController extends Controller
 
             return back()->with([
                 'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'Backup restaurado correctamente' : 'Error al restaurar backup',
+                'result_title'   => $result['success'] ? 'Backup restaurado correctamente' : 'Error al restaurar backup',
             ]);
 
         } catch (\Throwable $e) {
@@ -298,7 +302,7 @@ class SystemController extends Controller
             $result = $this->router->execute(["firstboot -y && reboot now"]);
             return back()->with([
                 'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'Restablecimiento iniciado' : 'Error al restablecer',
+                'result_title'   => $result['success'] ? 'Restablecimiento iniciado' : 'Error al restablecer',
             ]);
         } catch (\Throwable $e) {
             Log::error('Restablecer fábrica: ' . $e->getMessage());
@@ -311,11 +315,13 @@ class SystemController extends Controller
         $request->validate(['mtdblock' => ['required', 'string']]);
         try {
             $device = $request->mtdblock;
-            $result = $this->router->execute(["dd if=/dev/{$device} | base64"]);
-            if ($result['success']) {
-                $content = base64_decode($result['output']);
-                return response($content, 200, [
-                    'Content-Type' => 'application/octet-stream',
+
+            // Lee el mtdblock directamente con cat
+            $result = $this->router->execute(["cat /dev/{$device}"]);
+
+            if ($result['success'] && !empty($result['output'])) {
+                return response($result['output'], 200, [
+                    'Content-Type'        => 'application/octet-stream',
                     'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
                 ]);
             }
@@ -330,11 +336,11 @@ class SystemController extends Controller
         $request->validate(['imagen' => ['required', 'file']]);
 
         try {
-            $file = $request->file('imagen');
-            $localPath = $file->getPathname();
+            $file       = $request->file('imagen');
+            $localPath  = $file->getPathname();
             $remotePath = '/tmp/firmware.bin';
 
-            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int)env('ROUTER_PORT', 22));
+            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
             if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
                 throw new \Exception('Error de autenticación SFTP.');
             }
@@ -344,7 +350,7 @@ class SystemController extends Controller
 
             return back()->with([
                 'result_success' => true,
-                'result_title' => 'Imagen enviada. El router se reiniciará en unos momentos.',
+                'result_title'   => 'Imagen enviada. El router se reiniciará en unos momentos.',
             ]);
 
         } catch (\Throwable $e) {
@@ -358,12 +364,12 @@ class SystemController extends Controller
         $request->validate(['lista_contenido' => ['required', 'string']]);
         try {
             $contenido = $request->lista_contenido;
-            $result = $this->router->execute([
+            $result    = $this->router->execute([
                 "cat > /etc/sysupgrade.conf << 'EOF'\n{$contenido}\nEOF"
             ]);
             return back()->with([
                 'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'Lista guardada correctamente' : 'Error al guardar la lista',
+                'result_title'   => $result['success'] ? 'Lista guardada correctamente' : 'Error al guardar la lista',
             ]);
         } catch (\Throwable $e) {
             Log::error('Guardar lista: ' . $e->getMessage());
