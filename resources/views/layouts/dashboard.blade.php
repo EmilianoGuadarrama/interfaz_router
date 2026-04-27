@@ -467,7 +467,7 @@
                         </li>
 
                         <li>
-                            <a href="#" class="nav-link">
+                            <a href="{{ route('network.wifi')}}" class="nav-link">
                                 <i class="bi bi-wifi"></i> Wi-Fi
                             </a>
                         </li>

@@ -32,6 +32,11 @@ class NetworkController extends Controller
         return back()->with('success', 'Configuración de DHCP y DNS actualizada correctamente.');
     }
 
+    public function wifi()
+    {
+        return view('wifi.index');
+    }
+
     /* =========================
        INTERFACES
     ========================= */

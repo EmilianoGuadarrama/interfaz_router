@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\RoutesController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\WifiController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -17,6 +18,18 @@ Route::prefix('red')->name('network.')->group(function () {
     Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
     Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
 
+    // Vista principal de Wi-Fi
+    Route::get('/wifi', [WifiController::class, 'index'])->name('wifi');
+    Route::get('/wifi/scan', [WifiController::class, 'scan'])->name('wifi.scan');
+    Route::post('/wifi/connect', [WifiController::class, 'connect'])->name('wifi.connect');
+    Route::post('/wifi/ssid', [WifiController::class, 'updateSSID'])->name('wifi.ssid.update');
+    Route::post('/wifi/password', [WifiController::class, 'updatePassword'])->name('wifi.password.update');
+    Route::post('/wifi/restart', [WifiController::class, 'restart'])->name('wifi.restart');
+    Route::post('/wifi/delete', [WifiController::class, 'deleteInterface'])->name('wifi.delete');
+    Route::post('/wifi/edit', [WifiController::class, 'editNetwork'])->name('wifi.edit');
+    Route::post('/wifi/add', [WifiController::class, 'addNetwork'])->name('wifi.add');
+
+    
     // Vista principal de Conmutador
     Route::get('/conmutador', [NetworkController::class, 'showSwitch'])->name('switch');
     Route::post('/conmutador', [NetworkController::class, 'updateSwitch'])->name('switch.update');
