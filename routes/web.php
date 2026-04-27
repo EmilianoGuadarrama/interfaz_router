@@ -4,12 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\Ruta_estatica\RoutesController;
 use App\Http\Controllers\SystemController;
-<<<<<<< HEAD
 use App\Http\Controllers\WifiController;
-=======
 use App\Http\Controllers\Red\DhcpDnsController;
 use App\Http\Controllers\Red\ConmutadorController;
->>>>>>> ad2a32d2f4418e2deb1e3a2db19fd039e98de7be
 
 Route::get('/', function () {
     return view('welcome');
@@ -29,7 +26,6 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
     Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
 
-<<<<<<< HEAD
     // Vista principal de Wi-Fi
     Route::get('/wifi', [WifiController::class, 'index'])->name('wifi');
     Route::get('/wifi/scan', [WifiController::class, 'scan'])->name('wifi.scan');
@@ -41,16 +37,14 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::post('/wifi/edit', [WifiController::class, 'editNetwork'])->name('wifi.edit');
     Route::post('/wifi/add', [WifiController::class, 'addNetwork'])->name('wifi.add');
 
-    
+
     // Vista principal de Conmutador
     Route::get('/conmutador', [NetworkController::class, 'showSwitch'])->name('switch');
     Route::post('/conmutador', [NetworkController::class, 'updateSwitch'])->name('switch.update');
-=======
     // =====================================================================
     // CONMUTADOR — ConmutadorController
     // =====================================================================
     Route::get('/conmutador', [ConmutadorController::class, 'index'])->name('conmutador');
->>>>>>> ad2a32d2f4418e2deb1e3a2db19fd039e98de7be
 
     Route::prefix('conmutador')->name('conmutador.')->group(function () {
         Route::get('/general', [ConmutadorController::class, 'general'])->name('general');
