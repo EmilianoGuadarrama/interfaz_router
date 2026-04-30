@@ -17,37 +17,47 @@ class RoutesController extends Controller
         $this->router = $router;
     }
 
+    /* =========================================================
+       LECTURA ULTRA RÁPIDA Y SEGURA
+    ========================================================= */
     private function getAllRoutesFast()
     {
         $routes = ['ipv4' => [], 'ipv6' => []];
         try {
-            $cmd = "keys=\$(uci show network | grep -E '=(route|route6)$' | cut -d'=' -f1); [ -n \"\$keys\" ] && uci show \$keys";
-            $result = $this->router->execute([$cmd]);
+            // Un solo comando puro que no falla sin importar cómo se crearon las rutas
+            $result = $this->router->execute(["uci show network"]);
 
             if ($result['success'] && !empty($result['output'])) {
                 $lines = explode("\n", trim($result['output']));
-                $ipv4_keys = []; $ipv6_keys = []; $data = [];
+                $ipv4_keys = [];
+                $ipv6_keys = [];
+                $data = [];
 
+                // Paso 1: Encontrar las llaves que sean de tipo route o route6
                 foreach ($lines as $line) {
                     $line = trim($line);
-                    if (empty($line)) continue;
-                    $parts = explode('=', $line, 2);
-                    if (count($parts) < 2) continue;
+                    if (preg_match('/^network\.([a-zA-Z0-9_@\[\]\-]+)=route$/', $line, $match)) {
+                        $ipv4_keys[$match[1]] = true;
+                    } elseif (preg_match('/^network\.([a-zA-Z0-9_@\[\]\-]+)=route6$/', $line, $match)) {
+                        $ipv6_keys[$match[1]] = true;
+                    }
+                }
 
-                    $left = str_replace('network.', '', $parts[0]);
-                    $val = trim($parts[1], "'\"");
+                // Paso 2: Extraer propiedades solo de las llaves encontradas
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (preg_match('/^network\.([a-zA-Z0-9_@\[\]\-]+)\.([a-zA-Z0-9_]+)=(.+)$/', $line, $match)) {
+                        $key = $match[1];
+                        $prop = $match[2];
+                        $val = trim($match[3], "'\"");
 
-                    if (strpos($left, '.') === false) {
-                        if ($val === 'route') $ipv4_keys[$left] = true;
-                        elseif ($val === 'route6') $ipv6_keys[$left] = true;
-                    } else {
-                        $propParts = explode('.', $left, 2);
-                        if (count($propParts) === 2) {
-                            $data[$propParts[0]][$propParts[1]] = $val;
+                        if (isset($ipv4_keys[$key]) || isset($ipv6_keys[$key])) {
+                            $data[$key][$prop] = $val;
                         }
                     }
                 }
 
+                // Paso 3: Empaquetar
                 foreach ($ipv4_keys as $key => $true) {
                     $route = $data[$key] ?? [];
                     $route['key'] = $key;
@@ -71,13 +81,12 @@ class RoutesController extends Controller
 
     public function staticIpv4(Request $request)
     {
-        // Si el usuario presionó el botón Refrescar, borramos la memoria
+        // Botón Refrescar
         if ($request->query('refresh')) {
             Cache::forget('all_network_routes');
-            return redirect()->route('network.routes.static.ipv4');
+            return redirect()->route('red.routes.static.ipv4');
         }
 
-        // Caché de 24 horas (86400 segundos) para que navegue ultra rápido
         $allRoutes = Cache::remember('all_network_routes', 86400, function () {
             return $this->getAllRoutesFast();
         });
@@ -89,14 +98,25 @@ class RoutesController extends Controller
     public function storeStaticIpv4(Request $request)
     {
         $validated = $request->validate([
-            'interface' => 'required|string', 'target' => 'required|string', 'netmask' => 'nullable|string', 'gateway' => 'nullable|string', 'metric' => 'nullable|integer', 'mtu' => 'nullable|integer', 'type' => 'nullable|string', 'table' => 'nullable|string', 'source' => 'nullable|string', 'onlink' => 'nullable|boolean',
+            'interface' => 'required|string',
+            'target' => 'required|string',
+            'netmask' => 'nullable|string',
+            'gateway' => 'nullable|string',
+            'metric' => 'nullable|integer',
+            'mtu' => 'nullable|integer',
+            'type' => 'nullable|string',
+            'table' => 'nullable|string',
+            'source' => 'nullable|string',
+            'onlink' => 'nullable|boolean',
         ]);
 
         try {
             $commands = ["uci add network route"];
             foreach ($validated as $key => $value) {
-                if ($key === 'onlink') $value = $value ? '1' : '0';
-                if ($value !== null && $value !== '') $commands[] = "uci set network.@route[-1].{$key}='{$value}'";
+                if ($key === 'onlink')
+                    $value = $value ? '1' : '0';
+                if ($value !== null && $value !== '')
+                    $commands[] = "uci set network.@route[-1].{$key}='{$value}'";
             }
             $commands[] = "uci commit network";
             $commands[] = "ubus call network reload";
@@ -104,7 +124,7 @@ class RoutesController extends Controller
             $singleCommand = implode(' ; ', $commands);
             $result = $this->router->execute([$singleCommand]);
 
-            Cache::forget('all_network_routes'); // Forzar lectura en la próxima recarga
+            Cache::forget('all_network_routes');
 
             return back()->with(['result_success' => $result['success'], 'result_output' => $result['output'], 'result_title' => $result['success'] ? 'Ruta IPv4 agregada' : 'Error al guardar']);
         } catch (\Throwable $e) {
@@ -120,7 +140,7 @@ class RoutesController extends Controller
             $singleCommand = implode(' ; ', ["uci delete network.{$key}", "uci commit network", "ubus call network reload"]);
             $result = $this->router->execute([$singleCommand]);
 
-            Cache::forget('all_network_routes'); // Forzar lectura
+            Cache::forget('all_network_routes');
 
             return back()->with(['result_success' => $result['success'], 'result_output' => $result['output'], 'result_title' => $result['success'] ? 'Ruta IPv4 eliminada' : 'Error']);
         } catch (\Throwable $e) {
@@ -137,7 +157,7 @@ class RoutesController extends Controller
         // Botón Refrescar
         if ($request->query('refresh')) {
             Cache::forget('all_network_routes');
-            return redirect()->route('network.routes.static.ipv6');
+            return redirect()->route('red.routes.static.ipv6');
         }
 
         $allRoutes = Cache::remember('all_network_routes', 86400, function () {
@@ -151,14 +171,24 @@ class RoutesController extends Controller
     public function storeStaticIpv6(Request $request)
     {
         $validated = $request->validate([
-            'interface' => 'required|string', 'target' => 'required|string', 'gateway' => 'nullable|string', 'metric' => 'nullable|integer', 'mtu' => 'nullable|integer', 'type' => 'nullable|string', 'table' => 'nullable|string', 'source' => 'nullable|string', 'onlink' => 'nullable|boolean',
+            'interface' => 'required|string',
+            'target' => 'required|string',
+            'gateway' => 'nullable|string',
+            'metric' => 'nullable|integer',
+            'mtu' => 'nullable|integer',
+            'type' => 'nullable|string',
+            'table' => 'nullable|string',
+            'source' => 'nullable|string',
+            'onlink' => 'nullable|boolean',
         ]);
 
         try {
             $commands = ["uci add network route6"];
             foreach ($validated as $key => $value) {
-                if ($key === 'onlink') $value = $value ? '1' : '0';
-                if ($value !== null && $value !== '') $commands[] = "uci set network.@route6[-1].{$key}='{$value}'";
+                if ($key === 'onlink')
+                    $value = $value ? '1' : '0';
+                if ($value !== null && $value !== '')
+                    $commands[] = "uci set network.@route6[-1].{$key}='{$value}'";
             }
             $commands[] = "uci commit network";
             $commands[] = "ubus call network reload";
@@ -197,10 +227,37 @@ class RoutesController extends Controller
     public function checkConnection()
     {
         return response()->json([
-            // Extendemos este caché a 60s para que no bloquee tu servidor en segundo plano
             'connected' => Cache::remember('router_status', 60, function () {
                 return $this->router->isConnected();
             })
         ]);
+    }
+
+    /* =========================================================
+       ESTADO DE INTERNET
+    ========================================================= */
+
+    public function checkInternet()
+    {
+        try {
+            $command = "ping -c 2 -W 2 8.8.8.8 > /dev/null 2>&1 && echo 'ONLINE' || echo 'OFFLINE'";
+            $result = $this->router->execute([$command]);
+
+            $isOnline = trim($result['output']) === 'ONLINE';
+
+            return response()->json([
+                'success' => true,
+                'has_internet' => $isOnline,
+                'message' => $isOnline
+                    ? 'Conectado a Internet'
+                    : 'Sin acceso a Internet'
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'has_internet' => false,
+                'message' => 'Error al comunicarse con el router.'
+            ]);
+        }
     }
 }
