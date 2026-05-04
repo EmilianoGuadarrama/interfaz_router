@@ -85,11 +85,15 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::get('/rutas/estaticas/ipv4', [RoutesController::class, 'staticIpv4'])->name('routes.static.ipv4');
     Route::post('/rutas/estaticas/ipv4/guardar', [RoutesController::class, 'storeStaticIpv4'])->name('routes.static.ipv4.store');
     Route::delete('/rutas/estaticas/ipv4/eliminar', [RoutesController::class, 'destroyStaticIpv4'])->name('routes.static.ipv4.destroy');
+    
+    // 🔥 AQUÍ ESTÁ LA LÍNEA CORREGIDA PARA ACTUALIZAR:
+    Route::put('/rutas/estaticas/ipv4/actualizar', [RoutesController::class, 'updateStaticIpv4'])->name('routes.static.ipv4.update');
 
     Route::get('/rutas/estaticas/ipv6', [RoutesController::class, 'staticIpv6'])->name('routes.static.ipv6');
     Route::post('/rutas/estaticas/ipv6/guardar', [RoutesController::class, 'storeStaticIpv6'])->name('routes.static.ipv6.store');
     Route::delete('/rutas/estaticas/ipv6/eliminar', [RoutesController::class, 'destroyStaticIpv6'])->name('routes.static.ipv6.destroy');
-
+    Route::put('/rutas/estaticas/ipv6/actualizar', [RoutesController::class, 'updateStaticIpv6'])->name('routes.static.ipv6.update');
+    
     Route::get('/estado-conexion', [RoutesController::class, 'checkConnection'])->name('estado.conexion');
 
     // =====================================================================
