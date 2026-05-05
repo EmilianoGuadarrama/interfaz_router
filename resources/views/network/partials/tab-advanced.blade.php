@@ -233,6 +233,19 @@
         </div>
     </div>
 
+    <div class="row align-items-center mb-4 d-none" id="dnsPppContainer">
+        <div class="col-md-3 text-md-end">
+            <label class="form-label mb-0"
+                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Servidores DNS personalizados</label>
+        </div>
+        <div class="col-md-9">
+            <div class="d-flex w-50">
+                <input type="text" name="dns" id="editIfaceDnsPpp" class="form-control form-control-sm"
+                    placeholder="Ej: 8.8.8.8 1.1.1.1" style="border-radius: 2px;">
+            </div>
+        </div>
+    </div>
+
     <div class="row align-items-center mb-4">
         <div class="col-md-3 text-md-end">
             <label class="form-label mb-0"
@@ -270,6 +283,17 @@
     <div class="row align-items-center mb-4">
         <div class="col-md-3 text-md-end">
             <label class="form-label mb-0"
+                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Contenido de la etiqueta Host-Uniq</label>
+        </div>
+        <div class="col-md-9">
+            <input type="text" name="host_uniq" id="editIfaceHostUniq"
+                class="form-control w-50" value="" placeholder="Ej: pppoe-wan">
+        </div>
+    </div>
+
+    <div class="row align-items-center mb-4">
+        <div class="col-md-3 text-md-end">
+            <label class="form-label mb-0"
                 style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Espera de inactividad</label>
         </div>
         <div class="col-md-9">
@@ -290,3 +314,47 @@
         </div>
     </div>
 </div>
+
+<!-- Opciones exclusivas de No administrado (none) -->
+<div id="protoNoneAdvancedFields" class="d-none">
+    <div class="row mb-4">
+        <div class="col-md-3 text-md-end pt-1">
+            <label class="form-label mb-0"
+                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Utilizar la gestión integrada de IPv6</label>
+        </div>
+        <div class="col-md-9">
+            <div class="form-check m-0">
+                <input class="form-check-input" type="checkbox" name="delegate" id="editIfaceDelegateNone" value="1">
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 text-md-end pt-1">
+            <label class="form-label mb-0"
+                style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;">Forzar enlace</label>
+        </div>
+        <div class="col-md-9">
+            <div class="form-check m-0 mb-1">
+                <input class="form-check-input" type="checkbox" name="force_link" id="editIfaceForceLinkNone" value="1">
+            </div>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Configura las propiedades de la interfaz independientemente del operador de enlace.</small>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var peerdnsPpp = document.getElementById('editIfacePeerdnsPpp');
+    var dnsContainer = document.getElementById('dnsPppContainer');
+    if (peerdnsPpp && dnsContainer) {
+        peerdnsPpp.addEventListener('change', function() {
+            if (this.checked) {
+                dnsContainer.classList.add('d-none');
+            } else {
+                dnsContainer.classList.remove('d-none');
+            }
+        });
+    }
+});
+</script>

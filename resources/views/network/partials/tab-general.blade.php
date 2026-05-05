@@ -28,7 +28,7 @@
     <div class="col-md-9">
         <select class="form-select w-50" name="proto" id="editIfaceProto">
             <option value="dhcp">Cliente DHCP</option>
-            <option value="unmanaged">No administrado</option>
+            <option value="none">No administrado</option>
             <option value="ppp">PPP</option>
             <option value="pppoe">PPPoE</option>
             <option value="static">Dirección estática</option>

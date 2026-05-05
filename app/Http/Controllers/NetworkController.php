@@ -57,7 +57,7 @@ class NetworkController extends Controller
     {
         $data = $request->validateWithBag('createInterface', [
             'name' => 'required|string|alpha_dash|max:20',
-            'protocol' => 'required|in:dhcp,unmanaged,ppp,pppoe,static',
+            'protocol' => 'required|in:dhcp,none,ppp,pppoe,static',
             'interface' => 'nullable|string',
             'bridge' => 'nullable|boolean'
         ], [
@@ -237,6 +237,7 @@ class NetworkController extends Controller
             'lcp_echo_failure' => 'nullable|integer|min:0',
             'lcp_echo_interval' => 'nullable|integer|min:1',
             'demand' => 'nullable|integer|min:0',
+            'host_uniq' => 'nullable|string',
 
             // Advanced
             'metric' => 'nullable|integer',
@@ -271,8 +272,8 @@ class NetworkController extends Controller
         try {
             $cmds = [];
 
-            // Borrar campos especÃ­ficos anteriores para limpiar la estructura
-            $clearFields = ['ipaddr', 'netmask', 'gateway', 'broadcast', 'ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'hostname', 'peerdns', 'defaultroute', 'clientid', 'vendorid', 'username', 'password', 'ac', 'service', 'device', 'metric', 'macaddr', 'mtu', 'lcp_echo_failure', 'lcp_echo_interval', 'demand'];
+            // Borrar campos específicos anteriores para limpiar la estructura (EXCLUYE PASSWORD)
+            $clearFields = ['ipaddr', 'netmask', 'gateway', 'broadcast', 'ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'hostname', 'peerdns', 'defaultroute', 'clientid', 'vendorid', 'username', 'ac', 'service', 'device', 'metric', 'macaddr', 'mtu', 'lcp_echo_failure', 'lcp_echo_interval', 'demand', 'host_uniq'];
             foreach($clearFields as $cf) {
                 $cmds[] = "uci -q delete network.{$lowerName}.{$cf} || true";
             }
@@ -281,14 +282,18 @@ class NetworkController extends Controller
             $proto = $request->input('proto', 'static');
             $cmds[] = "uci set network.{$lowerName}.proto='{$proto}'";
 
-            // Campos activos bÃ¡sicos
-            $activeFields = ['ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'metric', 'macaddr', 'mtu'];
+            // Campos activos básicos
+            $activeFields = [];
+            if ($proto !== 'none') {
+                $activeFields = ['ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'metric', 'macaddr', 'mtu'];
+            }
+
             if ($proto === 'static') {
                 array_push($activeFields, 'ipaddr', 'gateway', 'broadcast');
             } elseif ($proto === 'dhcp') {
                 array_push($activeFields, 'hostname', 'clientid', 'vendorid');
             } elseif ($proto === 'ppp' || $proto === 'pppoe') {
-                array_push($activeFields, 'username', 'password', 'ac', 'service', 'device', 'lcp_echo_failure', 'lcp_echo_interval', 'demand');
+                array_push($activeFields, 'username', 'password', 'ac', 'service', 'device', 'lcp_echo_failure', 'lcp_echo_interval', 'demand', 'host_uniq');
             }
 
             foreach ($activeFields as $field) {
@@ -477,6 +482,79 @@ class NetworkController extends Controller
     public function updateWanInterface(Request $request)
     {
         return $this->updateInterface($request, 'wan');
+    }
+
+    // =====================================================================
+    // BOTONES GLOBALES DE INTERFACES
+    // =====================================================================
+
+    public function globalApply(Request $request)
+    {
+        try {
+            $cmds = [
+                "uci commit network",
+                "uci commit dhcp",
+                "uci commit firewall",
+                "/etc/init.d/network reload",
+                "/etc/init.d/dnsmasq restart",
+                "/etc/init.d/firewall restart >/dev/null 2>&1 &"
+            ];
+            $result = $this->router->execute($cmds);
+            
+            if ($result['success']) {
+                return back()->with('success', "Cambios guardados y aplicados correctamente. La red se ha recargado.");
+            } else {
+                Log::error('Error en globalApply: ' . $result['output']);
+                return back()->with('error', "Hubo un error al aplicar la configuración global en el router.");
+            }
+        } catch (\Throwable $e) {
+            Log::error('Excepción en globalApply: ' . $e->getMessage());
+            return back()->with('error', "No se pudo conectar con el router para aplicar los cambios.");
+        }
+    }
+
+    public function globalSave(Request $request)
+    {
+        try {
+            $cmds = [
+                "uci commit network",
+                "uci commit dhcp",
+                "uci commit firewall"
+            ];
+            $result = $this->router->execute($cmds);
+            
+            if ($result['success']) {
+                return back()->with('success', "Los cambios pendientes han sido guardados permanentemente (no aplicados).");
+            } else {
+                Log::error('Error en globalSave: ' . $result['output']);
+                return back()->with('error', "Hubo un error al guardar los cambios en el router.");
+            }
+        } catch (\Throwable $e) {
+            Log::error('Excepción en globalSave: ' . $e->getMessage());
+            return back()->with('error', "No se pudo conectar con el router para guardar los cambios.");
+        }
+    }
+
+    public function globalRevert(Request $request)
+    {
+        try {
+            $cmds = [
+                "uci revert network",
+                "uci revert dhcp",
+                "uci revert firewall"
+            ];
+            $result = $this->router->execute($cmds);
+            
+            if ($result['success']) {
+                return back()->with('success', "Se han descartado los cambios no guardados. Estado restablecido.");
+            } else {
+                Log::error('Error en globalRevert: ' . $result['output']);
+                return back()->with('error', "Hubo un error al intentar revertir los cambios en el router.");
+            }
+        } catch (\Throwable $e) {
+            Log::error('Excepción en globalRevert: ' . $e->getMessage());
+            return back()->with('error', "No se pudo conectar con el router para restablecer los cambios.");
+        }
     }
 
     /*

@@ -26,6 +26,11 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
     Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
 
+    // Botones Globales
+    Route::post('/interfaces/global-apply', [NetworkController::class, 'globalApply'])->name('interfaces.global_apply');
+    Route::post('/interfaces/global-save', [NetworkController::class, 'globalSave'])->name('interfaces.global_save');
+    Route::post('/interfaces/global-revert', [NetworkController::class, 'globalRevert'])->name('interfaces.global_revert');
+
     // Vista principal de Wi-Fi
     Route::get('/wifi', [WifiController::class, 'index'])->name('wifi');
     Route::get('/wifi/scan', [WifiController::class, 'scan'])->name('wifi.scan');
