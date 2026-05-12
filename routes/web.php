@@ -140,15 +140,50 @@ Route::post('/arranque/scripts/{script}/{action}', [SystemController::class, 'st
 Route::get('/tareas-programadas', [SystemController::class, 'scheduledTasks'])->name('tasks');
 Route::post('/tareas-programadas', [SystemController::class, 'updateScheduledTasks'])->name('tasks.update');
 
-//////////SISTEMA
+////////// SISTEMA
 
 Route::prefix('system')->group(function () {
 
-    // 1. Ruta GET para MOSTRAR la vista del formulario
     Route::get('/general', [SystemController::class, 'general'])->name('system.general');
 
-    // 2. Ruta POST para PROCESAR los datos cuando le das a "Guardar" o "Guardar y Aplicar"
     Route::post('/general/update', [SystemController::class, 'updateGeneral'])->name('system.general.update');
 
-    // ... (Aquí seguramente ya tienes o pondrás tus otras rutas de leds, grabado, tareas, etc.)
 });
+
+
+// =========================
+// ESTADO
+// =========================
+
+Route::prefix('estado')->name('estado.')->group(function () {
+
+    Route::get('/general', function () {
+        return view('estado.general');
+    })->name('general');
+
+    Route::get('/cortafuegos', function () {
+        return view('estado.cortafuegos');
+    })->name('cortafuegos');
+
+    Route::get('/rutas', function () {
+        return view('estado.rutas');
+    })->name('rutas');
+
+    Route::get('/registro-sistema', function () {
+        return view('estado.registro_sistema');
+    })->name('registro_sistema');
+
+    Route::get('/registro-nucleo', function () {
+        return view('estado.registro_nucleo');
+    })->name('registro_nucleo');
+
+    Route::get('/procesos', function () {
+        return view('estado.procesos');
+    })->name('procesos');
+
+    Route::get('/graficos', function () {
+        return view('estado.graficos');
+    })->name('graficos');
+
+});
+
