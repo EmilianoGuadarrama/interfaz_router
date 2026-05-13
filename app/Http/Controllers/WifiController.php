@@ -200,24 +200,49 @@ class WifiController extends Controller
             'password' => 'required_if:encryption,psk2|nullable|string|min:8',
             'macfilter' => 'required|in:disable,allow,deny',
             'maclist' => 'nullable|string',
+            'radio_country' => 'nullable|string',
+            'radio_distance' => 'nullable|string',
+            'radio_frag' => 'nullable|string',
+            'radio_rts' => 'nullable|string',
+            'radio_beacon' => 'nullable|integer',
+            'ifname' => 'nullable|string',
+            'dtim_period' => 'nullable|integer',
+            'wpa_group_rekey' => 'nullable|integer',
+            'maxassoc' => 'nullable|integer',
+            'max_listen_int' => 'nullable|integer',
         ]);
 
         try {
-            $hidden = $request->has('hidden');
-            $wmm = $request->has('wmm');
+            $config = $request->all();
+            
+            // Asignación de valores por defecto (placeholders)
+            $config['hidden'] = $request->has('hidden');
+            $config['wmm'] = $request->has('wmm');
+            
+            // Radio Options
+            $config['radio_mode'] = $request->input('radio_mode', $request->input('add_radio_mode'));
+            $config['radio_channel'] = $request->input('radio_channel', $request->input('add_radio_channel'));
+            $config['radio_bandwidth'] = $request->input('radio_bandwidth', $request->input('add_radio_bandwidth'));
+            $config['radio_txpower'] = $request->input('radio_txpower', $request->input('add_radio_txpower'));
+            
+            $config['radio_legacy_rates'] = $request->has('radio_legacy_rates');
+            $config['radio_distance'] = $request->input('radio_distance') ?: 'auto';
+            $config['radio_frag'] = $request->input('radio_frag') ?: 'off';
+            $config['radio_rts'] = $request->input('radio_rts') ?: 'off';
+            $config['radio_force_40'] = $request->has('radio_force_40');
+            $config['radio_beacon'] = $request->input('radio_beacon') ?: 100;
 
-            $result = $this->wifiService->addNetwork(
-                $request->device,
-                $request->ssid,
-                $request->mode,
-                $request->network,
-                $request->encryption,
-                $request->password,
-                $hidden,
-                $wmm,
-                $request->macfilter,
-                $request->maclist
-            );
+            // Interface Options
+            $config['isolate'] = $request->has('isolate');
+            $config['short_preamble'] = $request->has('short_preamble');
+            $config['dtim_period'] = $request->input('dtim_period') ?: 2;
+            $config['wpa_group_rekey'] = $request->input('wpa_group_rekey') ?: 600;
+            $config['disassoc_low_ack'] = $request->has('disassoc_low_ack');
+            $config['maxassoc'] = $request->input('maxassoc') ?: 300;
+            $config['max_listen_int'] = $request->input('max_listen_int') ?: 65535;
+            $config['disassoc_low_ack_check'] = $request->has('disassoc_low_ack_check');
+
+            $result = $this->wifiService->addNetwork($config);
 
             if ($result['success']) {
                 return back()->with('success', $result['message']);
@@ -243,24 +268,49 @@ class WifiController extends Controller
             'password' => 'nullable|string|min:8',
             'macfilter' => 'required|in:disable,allow,deny',
             'maclist' => 'nullable|string',
+            'radio_country' => 'nullable|string',
+            'radio_distance' => 'nullable|string',
+            'radio_frag' => 'nullable|string',
+            'radio_rts' => 'nullable|string',
+            'radio_beacon' => 'nullable|integer',
+            'ifname' => 'nullable|string',
+            'dtim_period' => 'nullable|integer',
+            'wpa_group_rekey' => 'nullable|integer',
+            'maxassoc' => 'nullable|integer',
+            'max_listen_int' => 'nullable|integer',
         ]);
 
         try {
-            $hidden = $request->has('hidden');
-            $wmm = $request->has('wmm');
+            $config = $request->all();
+            
+            // Asignación de valores por defecto (placeholders)
+            $config['hidden'] = $request->has('hidden');
+            $config['wmm'] = $request->has('wmm');
+            
+            // Radio Options
+            $config['radio_mode'] = $request->input('radio_mode', $request->input('add_radio_mode'));
+            $config['radio_channel'] = $request->input('radio_channel', $request->input('add_radio_channel'));
+            $config['radio_bandwidth'] = $request->input('radio_bandwidth', $request->input('add_radio_bandwidth'));
+            $config['radio_txpower'] = $request->input('radio_txpower', $request->input('add_radio_txpower'));
+            
+            $config['radio_legacy_rates'] = $request->has('radio_legacy_rates');
+            $config['radio_distance'] = $request->input('radio_distance') ?: 'auto';
+            $config['radio_frag'] = $request->input('radio_frag') ?: 'off';
+            $config['radio_rts'] = $request->input('radio_rts') ?: 'off';
+            $config['radio_force_40'] = $request->has('radio_force_40');
+            $config['radio_beacon'] = $request->input('radio_beacon') ?: 100;
 
-            $result = $this->wifiService->editNetwork(
-                $request->interface_id,
-                $request->ssid,
-                $request->mode,
-                $request->network,
-                $request->encryption,
-                $request->password,
-                $hidden,
-                $wmm,
-                $request->macfilter,
-                $request->maclist
-            );
+            // Interface Options
+            $config['isolate'] = $request->has('isolate');
+            $config['short_preamble'] = $request->has('short_preamble');
+            $config['dtim_period'] = $request->input('dtim_period') ?: 2;
+            $config['wpa_group_rekey'] = $request->input('wpa_group_rekey') ?: 600;
+            $config['disassoc_low_ack'] = $request->has('disassoc_low_ack');
+            $config['maxassoc'] = $request->input('maxassoc') ?: 300;
+            $config['max_listen_int'] = $request->input('max_listen_int') ?: 65535;
+            $config['disassoc_low_ack_check'] = $request->has('disassoc_low_ack_check');
+
+            $result = $this->wifiService->editNetwork($request->interface_id, $config);
 
             if ($result['success']) {
                 return back()->with('success', $result['message']);
