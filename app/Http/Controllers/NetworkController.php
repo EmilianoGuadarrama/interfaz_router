@@ -249,6 +249,8 @@ class NetworkController extends Controller
             // Physical
             'type' => 'nullable|string',
             'ifname' => 'nullable|array',
+            'stp' => 'nullable|boolean',
+            'igmp_snooping' => 'nullable|boolean',
 
             // Firewall
             'firewall_zone' => 'nullable|string',
@@ -273,7 +275,7 @@ class NetworkController extends Controller
             $cmds = [];
 
             // Borrar campos específicos anteriores para limpiar la estructura (EXCLUYE PASSWORD)
-            $clearFields = ['ipaddr', 'netmask', 'gateway', 'broadcast', 'ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'hostname', 'peerdns', 'defaultroute', 'clientid', 'vendorid', 'username', 'ac', 'service', 'device', 'metric', 'macaddr', 'mtu', 'lcp_echo_failure', 'lcp_echo_interval', 'demand', 'host_uniq'];
+            $clearFields = ['ipaddr', 'netmask', 'gateway', 'broadcast', 'ip6assign', 'ip6addr', 'ip6gw', 'ip6prefix', 'ip6ifaceid', 'hostname', 'peerdns', 'defaultroute', 'clientid', 'vendorid', 'username', 'ac', 'service', 'device', 'metric', 'macaddr', 'mtu', 'keepalive', 'lcp_echo_failure', 'lcp_echo_interval', 'demand', 'host_uniq'];
             foreach($clearFields as $cf) {
                 $cmds[] = "uci -q delete network.{$lowerName}.{$cf} || true";
             }
@@ -293,13 +295,24 @@ class NetworkController extends Controller
             } elseif ($proto === 'dhcp') {
                 array_push($activeFields, 'hostname', 'clientid', 'vendorid');
             } elseif ($proto === 'ppp' || $proto === 'pppoe') {
-                array_push($activeFields, 'username', 'password', 'ac', 'service', 'device', 'lcp_echo_failure', 'lcp_echo_interval', 'demand', 'host_uniq');
+                array_push($activeFields, 'username', 'password', 'ac', 'service', 'device', 'demand', 'host_uniq');
             }
 
             foreach ($activeFields as $field) {
                 $val = $request->input($field);
                 if (!empty($val) || $val === '0') {
                     $cmds[] = "uci set network.{$lowerName}.{$field}='{$val}'";
+                }
+            }
+
+            // Keepalive (solo ppp/pppoe) - Combina failure e interval
+            if ($proto === 'ppp' || $proto === 'pppoe') {
+                $lcpFail = $request->input('lcp_echo_failure');
+                $lcpInt = $request->input('lcp_echo_interval');
+                if ($lcpFail !== null || $lcpInt !== null) {
+                    $lcpFail = $lcpFail !== null ? $lcpFail : '0';
+                    $lcpInt = $lcpInt !== null ? $lcpInt : '5';
+                    $cmds[] = "uci set network.{$lowerName}.keepalive='{$lcpFail} {$lcpInt}'";
                 }
             }
 
@@ -348,24 +361,36 @@ class NetworkController extends Controller
                 }
             }
 
-            // ConfiguraciÃ³n fÃ­sica
+            // Configuración física
             $type = $request->input('type');
+            $ifnames = $request->input('ifname');
+            $ifnamesArray = is_array($ifnames) ? $ifnames : [];
+            if(($idx = array_search('custom', $ifnamesArray)) !== false) {
+                 unset($ifnamesArray[$idx]);
+                 if($custom = $request->input('custom_ifname')) {
+                     $ifnamesArray[] = $custom;
+                 }
+            }
+            
             if ($type === 'bridge') {
                  $cmds[] = "uci set network.{$lowerName}.type='bridge'";
-                 $ifnames = $request->input('ifname');
-                 $ifnamesArray = is_array($ifnames) ? $ifnames : [];
-                 if(($idx = array_search('custom', $ifnamesArray)) !== false) {
-                      unset($ifnamesArray[$idx]);
-                      if($custom = $request->input('custom_ifname')) {
-                          $ifnamesArray[] = $custom;
-                      }
-                 }
+                 $stp = $request->has('stp') ? '1' : '0';
+                 $igmp = $request->has('igmp_snooping') ? '1' : '0';
+                 $cmds[] = "uci set network.{$lowerName}.stp='{$stp}'";
+                 $cmds[] = "uci set network.{$lowerName}.igmp_snooping='{$igmp}'";
                  if (!empty($ifnamesArray)) {
                      $ifacesStr = implode(' ', $ifnamesArray);
                      $cmds[] = "uci set network.{$lowerName}.ifname='{$ifacesStr}'";
                  }
             } else {
                  $cmds[] = "uci -q delete network.{$lowerName}.type || true";
+                 if (!empty($ifnamesArray)) {
+                     $ifacesStr = implode(' ', $ifnamesArray);
+                     // Modern OpenWrt typically uses 'device' instead of 'ifname' for non-bridges
+                     $cmds[] = "uci set network.{$lowerName}.device='{$ifacesStr}'";
+                 } else {
+                     $cmds[] = "uci -q delete network.{$lowerName}.device || true";
+                 }
             }
 
             // ConfiguraciÃ³n Servidor DHCP (solo guardaremos lo bÃ¡sico y avanzado IPv6)

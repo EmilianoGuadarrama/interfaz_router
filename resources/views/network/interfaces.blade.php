@@ -145,40 +145,7 @@
                                     data-tx="{{ $iface['tx_bytes'] ?? '0' }}"
                                     data-ipv4="{{ $formattedIpv4 }}"
                                     data-dev="{{ $iface['device'] ?? '--' }}"
-                                    data-proto="{{ $uConf['proto'] ?? 'static' }}"
-                                    data-auto="{{ isset($uConf['auto']) ? $uConf['auto'] : '1' }}"
-                                    data-ipaddr="{{ $uConf['ipaddr'] ?? '' }}"
-                                    data-netmask="{{ $uConf['netmask'] ?? '' }}"
-                                    data-gateway="{{ $uConf['gateway'] ?? '' }}"
-                                    data-broadcast="{{ $uConf['broadcast'] ?? '' }}"
-                                    data-dns="{{ $dnsList }}"
-                                    data-ip6assign="{{ $uConf['ip6assign'] ?? '' }}"
-                                    data-ip6addr="{{ $uConf['ip6addr'] ?? '' }}"
-                                    data-ip6gw="{{ $uConf['ip6gw'] ?? '' }}"
-                                    data-ip6prefix="{{ $uConf['ip6prefix'] ?? '' }}"
-                                    data-ip6ifaceid="{{ $uConf['ip6ifaceid'] ?? '' }}"
-                                    data-metric="{{ $uConf['metric'] ?? '' }}"
-                                    data-macaddr="{{ $uConf['macaddr'] ?? '' }}"
-                                    data-mtu="{{ $uConf['mtu'] ?? '' }}"
-                                    data-delegate="{{ $uConf['delegate'] ?? '1' }}"
-                                    data-force_link="{{ $uConf['force_link'] ?? '1' }}"
-                                    data-username="{{ $uConf['username'] ?? '' }}"
-                                    data-password="{{ $uConf['password'] ?? '' }}"
-                                    data-ac="{{ $uConf['ac'] ?? '' }}"
-                                    data-service="{{ $uConf['service'] ?? '' }}"
-                                    data-defaultroute="{{ $uConf['defaultroute'] ?? '1' }}"
-                                    data-peerdns="{{ $uConf['peerdns'] ?? '1' }}"
-                                    data-clientid="{{ $uConf['clientid'] ?? '' }}"
-                                    data-vendorid="{{ $uConf['vendorid'] ?? '' }}"
-                                    data-lcp-failure="{{ $uConf['lcp_echo_failure'] ?? '' }}"
-                                    data-lcp-interval="{{ $uConf['lcp_echo_interval'] ?? '' }}"
-                                    data-demand="{{ $uConf['demand'] ?? '' }}"
                                     data-firewall-zone="{{ $fzMatched }}"
-                                    data-dhcp-ignore="{{ $dhcpConf['ignore'] ?? '0' }}"
-                                    data-dhcp-start="{{ $dhcpConf['start'] ?? '' }}"
-                                    data-dhcp-limit="{{ $dhcpConf['limit'] ?? '' }}"
-                                    data-dhcp-leasetime="{{ $dhcpConf['leasetime'] ?? '' }}"
-                                    data-dhcp-dynamic="{{ $dhcpConf['dynamic'] ?? '1' }}"
                                     style="background: #5bc0de; color: white; font-weight: 700; border: none; font-size: 0.75rem; border-radius: 2px;">EDITAR</button>
 
                                 @php
@@ -1088,61 +1055,75 @@
             document.getElementById('editIfaceTx').innerText = btn.getAttribute('data-tx') || '0';
             document.getElementById('editIfaceIpv4').innerText = btn.getAttribute('data-ipv4') || '--';
             
-            var proto = btn.getAttribute('data-proto') || 'static';
+            var uConf = uciConfigs[lowerName] || {};
+            var uciDhcp = dhcpConfigs[lowerName] || {};
+
+            var proto = uConf['proto'] || 'static';
             if (protoSelect) {
                  protoSelect.value = proto;
                  toggleProtocolFields(proto);
             }
 
             var autoInput = document.getElementById('editIfaceAuto');
-            if (autoInput) autoInput.checked = (btn.getAttribute('data-auto') !== '0');
+            if (autoInput) autoInput.checked = (uConf['auto'] !== '0');
             
+            var getSafeStr = function(val) {
+                return val ? (Array.isArray(val) ? val.join(' ') : val) : '';
+            };
+
             // Set input values for static
-            setInputValue('editIfaceIpaddr', btn.getAttribute('data-ipaddr'));
-            setInputValue('editIfaceGateway', btn.getAttribute('data-gateway'));
-            setInputValue('editIfaceBroadcast', btn.getAttribute('data-broadcast'));
-            setInputValue('editIfaceDns', btn.getAttribute('data-dns'));
-            setInputValue('editIfaceIp6assign', btn.getAttribute('data-ip6assign'));
-            setInputValue('editIfaceIp6addr', btn.getAttribute('data-ip6addr'));
-            setInputValue('editIfaceIp6gw', btn.getAttribute('data-ip6gw'));
-            setInputValue('editIfaceIp6prefix', btn.getAttribute('data-ip6prefix'));
-            setInputValue('editIfaceIp6ifaceid', btn.getAttribute('data-ip6ifaceid'));
+            setInputValue('editIfaceIpaddr', getSafeStr(uConf['ipaddr']));
+            setInputValue('editIfaceGateway', getSafeStr(uConf['gateway']));
+            setInputValue('editIfaceBroadcast', getSafeStr(uConf['broadcast']));
+            setInputValue('editIfaceDns', getSafeStr(uConf['dns']));
+            setInputValue('editIfaceIp6assign', getSafeStr(uConf['ip6assign']));
+            setInputValue('editIfaceIp6addr', getSafeStr(uConf['ip6addr']));
+            setInputValue('editIfaceIp6gw', getSafeStr(uConf['ip6gw']));
+            setInputValue('editIfaceIp6prefix', getSafeStr(uConf['ip6prefix']));
+            setInputValue('editIfaceIp6ifaceid', getSafeStr(uConf['ip6ifaceid']));
             
             // DHCP Advanced
-            setCheckboxValue('editIfaceBroadcastAdvanced', btn.getAttribute('data-broadcast'));
-            setCheckboxValue('editIfaceDefaultroute', btn.getAttribute('data-defaultroute'));
-            setCheckboxValue('editIfacePeerdnsAdvanced', btn.getAttribute('data-peerdns'));
-            setInputValue('editIfaceClientid', btn.getAttribute('data-clientid'));
-            setInputValue('editIfaceVendorid', btn.getAttribute('data-vendorid'));
+            setCheckboxValue('editIfaceBroadcastAdvanced', uConf['broadcast'], '1');
+            setCheckboxValue('editIfaceDefaultroute', uConf['defaultroute'], '1');
+            setCheckboxValue('editIfacePeerdnsAdvanced', uConf['peerdns'], '1');
+            setInputValue('editIfaceClientid', uConf['clientid']);
+            setInputValue('editIfaceVendorid', uConf['vendorid']);
             
             // DHCP specific overlapping fields
-            setInputValue('editIfaceMetricDhcp', btn.getAttribute('data-metric'));
-            setCheckboxValue('editIfaceDelegateDhcp', btn.getAttribute('data-delegate'), '1');
-            setCheckboxValue('editIfaceForceLinkDhcp', btn.getAttribute('data-force_link'), '1');
-            setInputValue('editIfaceMacaddrDhcp', btn.getAttribute('data-macaddr'));
-            setInputValue('editIfaceMtuDhcp', btn.getAttribute('data-mtu'));
+            setInputValue('editIfaceMetricDhcp', uConf['metric']);
+            setCheckboxValue('editIfaceDelegateDhcp', uConf['delegate'], '1');
+            setCheckboxValue('editIfaceForceLinkDhcp', uConf['force_link'], '1');
+            setInputValue('editIfaceMacaddrDhcp', uConf['macaddr']);
+            setInputValue('editIfaceMtuDhcp', uConf['mtu']);
             
             // None (No administrado)
-            var uConf = uciConfigs[lowerName] || {};
             setCheckboxValue('editIfaceDelegateNone', uConf['delegate'], '1');
             setCheckboxValue('editIfaceForceLinkNone', uConf['force_link'], '1');
 
             // PPP Advanced
-            var uConf = uciConfigs[lowerName] || {};
             setCheckboxValue('editIfaceDelegatePpp', uConf['delegate'], '1');
             setCheckboxValue('editIfaceForceLinkPpp', uConf['force_link'], '1');
             setCheckboxValue('editIfaceDefaultroutePpp', uConf['defaultroute'], '1');
             setCheckboxValue('editIfacePeerdnsPpp', uConf['peerdns'], '1');
             setInputValue('editIfaceMetricPpp', uConf['metric']);
-            setInputValue('editIfaceLcpEchoFailure', uConf['lcp_echo_failure']);
-            setInputValue('editIfaceLcpEchoInterval', uConf['lcp_echo_interval']);
+            
+            // Parseo de keepalive para LCP Echo
+            var keepalive = uConf['keepalive'] || '';
+            var lcpFail = '';
+            var lcpInt = '';
+            if (keepalive) {
+                var parts = keepalive.toString().split(' ');
+                lcpFail = parts[0] || '';
+                lcpInt = parts[1] || '';
+            }
+            setInputValue('editIfaceLcpEchoFailure', lcpFail);
+            setInputValue('editIfaceLcpEchoInterval', lcpInt);
+            
             setInputValue('editIfaceDemand', uConf['demand']);
             setInputValue('editIfaceMtuPpp', uConf['mtu']);
             setInputValue('editIfaceHostUniq', uConf['host_uniq']);
             
-            var dnsVal = uConf['dns'] ? (Array.isArray(uConf['dns']) ? uConf['dns'].join(' ') : uConf['dns']) : '';
-            setInputValue('editIfaceDnsPpp', dnsVal);
-            
+            setInputValue('editIfaceDnsPpp', getSafeStr(uConf['dns']));
             setInputValue('editIfaceUsername', uConf['username']);
             setInputValue('editIfaceAc', uConf['ac']);
             setInputValue('editIfaceService', uConf['service']);
@@ -1155,7 +1136,7 @@
                 peerdnsPpp.dispatchEvent(new Event('change'));
             }
             
-            var netmask = btn.getAttribute('data-netmask') || '';
+            var netmask = uConf['netmask'] || '';
             var netSelect = document.getElementById('editIfaceNetmask');
             var customInp = document.getElementById('editIfaceNetmaskCustom');
             if (netSelect && customInp) {
@@ -1168,6 +1149,44 @@
                     netSelect.value = netmask;
                     customInp.classList.add('d-none');
                 }
+            }
+
+            // Configuración Física (Type and Ifname/Device, STP, IGMP)
+            var typeVal = uConf['type'] || '';
+            setCheckboxValue('editIfaceType', typeVal, 'bridge');
+            setCheckboxValue('editIfaceStp', uConf['stp'], '1');
+            setCheckboxValue('editIfaceIgmp', uConf['igmp_snooping'], '1');
+            
+            var editIfaceTypeElem = document.getElementById('editIfaceType');
+            if (editIfaceTypeElem) {
+                editIfaceTypeElem.dispatchEvent(new Event('change'));
+            }
+            
+            var deviceVal = uConf['device'] || uConf['ifname'] || '';
+            var devSelect = document.getElementById('editIfaceIfname');
+            var devCustom = document.getElementById('editIfaceIfnameCustom');
+            if (devSelect && devCustom) {
+                 Array.from(devSelect.options).forEach(opt => opt.selected = false);
+                 if (deviceVal) {
+                      var devs = Array.isArray(deviceVal) ? deviceVal : deviceVal.split(' ');
+                      var hasCustom = false;
+                      devs.forEach(d => {
+                          var found = Array.from(devSelect.options).find(opt => opt.value === d);
+                          if (found) found.selected = true;
+                          else { hasCustom = true; devCustom.value = d; }
+                      });
+                      if (hasCustom) {
+                          var customOpt = Array.from(devSelect.options).find(opt => opt.value === 'custom');
+                          if(customOpt) customOpt.selected = true;
+                          devCustom.classList.remove('d-none');
+                      } else {
+                          devCustom.classList.add('d-none');
+                          devCustom.value = '';
+                      }
+                 } else {
+                      devCustom.classList.add('d-none');
+                      devCustom.value = '';
+                 }
             }
 
             // Firewall Zone logic
@@ -1184,42 +1203,33 @@
                     fzSelect.value = fz;
                     fzCustomInp.classList.add('d-none');
                 }
-            }
-            if(fzSelect) {
-                fzSelect.onchange = function() {
+                
+                fzSelect.onchange = function () {
                     fzCustomInp.classList.toggle('d-none', this.value !== 'custom');
                 };
             }
             
             // DHCP/Advanced properties defaults mapping...
-            setCheckboxValue('editIfaceDhcpIgnore', btn.getAttribute('data-dhcp-ignore'));
-            setInputValue('editIfaceDhcpStart', btn.getAttribute('data-dhcp-start'));
-            setInputValue('editIfaceDhcpLimit', btn.getAttribute('data-dhcp-limit'));
-            setInputValue('editIfaceDhcpLeasetime', btn.getAttribute('data-dhcp-leasetime'));
-            setCheckboxValue('editIfaceDhcpDynamic', btn.getAttribute('data-dhcp-dynamic'), '1'); // Default to 1 usually
+            setCheckboxValue('editIfaceDhcpIgnore', uciDhcp['ignore']);
+            setInputValue('editIfaceDhcpStart', uciDhcp['start']);
+            setInputValue('editIfaceDhcpLimit', uciDhcp['limit']);
+            setInputValue('editIfaceDhcpLeasetime', uciDhcp['leasetime']);
+            setCheckboxValue('editIfaceDhcpDynamic', uciDhcp['dynamic'], '1'); // Default to 1 usually
 
             // Extended DHCP Server settings (Advanced & IPv6)
-            var lowerName = btn.getAttribute('data-name');
-            var uciDhcp = dhcpConfigs[lowerName] || {};
             setCheckboxValue('editIfaceDhcpForce', uciDhcp['force'], '1');
             setInputValue('editIfaceDhcpNetmask', uciDhcp['dhcp_netmask'] || uciDhcp['netmask']);
             
-            var dhcpOpt = uciDhcp['dhcp_option'] || '';
-            setInputValue('editIfaceDhcpOptions', Array.isArray(dhcpOpt) ? dhcpOpt.join(' ') : dhcpOpt);
+            setInputValue('editIfaceDhcpOptions', getSafeStr(uciDhcp['dhcp_option']));
             
             setInputValue('editIfaceDhcpRa', uciDhcp['ra']);
             setInputValue('editIfaceDhcpDhcpv6', uciDhcp['dhcpv6']);
             setInputValue('editIfaceDhcpNdp', uciDhcp['ndp']);
             
-            var dnsList = uciDhcp['dns'] || '';
-            setInputValue('editIfaceDhcpDns', Array.isArray(dnsList) ? dnsList.join(' ') : dnsList);
-            
-            var domainList = uciDhcp['domain'] || '';
-            setInputValue('editIfaceDhcpDomain', Array.isArray(domainList) ? domainList.join(' ') : domainList);
+            setInputValue('editIfaceDhcpDns', getSafeStr(uciDhcp['dns']));
+            setInputValue('editIfaceDhcpDomain', getSafeStr(uciDhcp['domain']));
 
-            // (PPP inputs moved to higher up)
-
-            // Adv/Physical
+            // Adv/Physical genérico
             setInputValue('editIfaceMetric', uConf['metric']);
             setInputValue('editIfaceMacaddr', uConf['macaddr']);
             setInputValue('editIfaceMtu', uConf['mtu']);
