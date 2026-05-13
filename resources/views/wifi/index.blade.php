@@ -246,19 +246,32 @@
                                             <div>
                                                 <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Modo</label>
                                                 <select name="radio_mode" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                    <option>N</option>
+                                                    <option value="11n">N</option>
+                                                    <option value="11g">Legacy</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Canal</label>
                                                 <select name="radio_channel" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                    <option>11 (2462 MHz)</option>
+                                                    <option value="auto">auto</option>
+                                                    <option value="1">1 (2412 MHz)</option>
+                                                    <option value="2">2 (2417 MHz)</option>
+                                                    <option value="3">3 (2422 MHz)</option>
+                                                    <option value="4">4 (2427 MHz)</option>
+                                                    <option value="5">5 (2432 MHz)</option>
+                                                    <option value="6">6 (2437 MHz)</option>
+                                                    <option value="7">7 (2442 MHz)</option>
+                                                    <option value="8">8 (2447 MHz)</option>
+                                                    <option value="9">9 (2452 MHz)</option>
+                                                    <option value="10">10 (2457 MHz)</option>
+                                                    <option value="11">11 (2462 MHz)</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Ancho de banda</label>
                                                 <select name="radio_bandwidth" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                    <option>20 MHz</option>
+                                                    <option value="HT20">20 MHz</option>
+                                                    <option value="HT40">40 MHz</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -268,7 +281,28 @@
                                         <div class="col-sm-8">
                                             <div class="d-flex align-items-center gap-2 mb-1">
                                                 <select name="radio_txpower" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width: 250px;">
-                                                    <option>Predeterminado por el controlador</option>
+                                                    <option value="Predeterminado por el controlador">Predeterminado por el controlador</option>
+                                                    <option value="0">0 dBm (1 mW)</option>
+                                                    <option value="1">1 dBm (1 mW)</option>
+                                                    <option value="2">2 dBm (1 mW)</option>
+                                                    <option value="3">3 dBm (1 mW)</option>
+                                                    <option value="4">4 dBm (2 mW)</option>
+                                                    <option value="5">5 dBm (3 mW)</option>
+                                                    <option value="6">6 dBm (3 mW)</option>
+                                                    <option value="7">7 dBm (5 mW)</option>
+                                                    <option value="8">8 dBm (6 mW)</option>
+                                                    <option value="9">9 dBm (7 mW)</option>
+                                                    <option value="10">10 dBm (10 mW)</option>
+                                                    <option value="11">11 dBm (12 mW)</option>
+                                                    <option value="12">12 dBm (15 mW)</option>
+                                                    <option value="13">13 dBm (19 mW)</option>
+                                                    <option value="14">14 dBm (25 mW)</option>
+                                                    <option value="15">15 dBm (31 mW)</option>
+                                                    <option value="16">16 dBm (39 mW)</option>
+                                                    <option value="17">17 dBm (50 mW)</option>
+                                                    <option value="18">18 dBm (63 mW)</option>
+                                                    <option value="19">19 dBm (79 mW)</option>
+                                                    <option value="20">20 dBm (100 mW)</option>
                                                 </select>
                                                 <span class="text-soft" style="font-size: 0.85rem;">- Potencia actual: <em class="text-muted">Desconocido</em></span>
                                             </div>
@@ -282,7 +316,24 @@
                                         <label class="col-sm-4 col-form-label text-md-end text-soft">Código de país</label>
                                         <div class="col-sm-8">
                                             <select name="radio_country" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                <option>Predeterminado por el controlador</option>
+                                                <option value="00">Predeterminado por el controlador</option>
+                                                <option value="MR">MR - Mauritania</option>
+                                                <option value="MS">MS - Montserrat</option>
+                                                <option value="MT">MT - Malta</option>
+                                                <option value="MU">MU - Mauritius</option>
+                                                <option value="MV">MV - Maldives</option>
+                                                <option value="MW">MW - Malawi</option>
+                                                <option value="MX">MX - Mexico</option>
+                                                <option value="MY">MY - Malaysia</option>
+                                                <option value="MZ">MZ - Mozambique</option>
+                                                <option value="NA">NA - Namibia</option>
+                                                <option value="NC">NC - New Caledonia</option>
+                                                <option value="NE">NE - Niger</option>
+                                                <option value="NF">NF - Norfolk Island</option>
+                                                <option value="NG">NG - Nigeria</option>
+                                                <option value="NI">NI - Nicaragua</option>
+                                                <option value="NL">NL - Netherlands</option>
+                                                <option value="NO">NO - Norway</option>
                                             </select>
                                         </div>
                                     </div>
@@ -369,7 +420,13 @@
                                         <select name="mode" id="editMode"
                                             class="form-select bg-dark text-white border-secondary">
                                             <option value="ap">Punto de acceso (AP)</option>
-                                            <option value="sta">Cliente (STA)</option>
+                                            <option value="sta">Cliente</option>
+                                            <option value="adhoc">Ad-Hoc</option>
+                                            <option value="mesh">802.11s</option>
+                                            <option value="ahdemo">Pseudo Ad-Hoc (ahdemo)</option>
+                                            <option value="monitor">Monitor</option>
+                                            <option value="ap-wds">AP (WDS)</option>
+                                            <option value="sta-wds">Cliente (WDS)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1055,19 +1112,32 @@
                                             <div>
                                                 <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Modo</label>
                                                 <select name="add_radio_mode" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                    <option>N</option>
+                                                    <option value="11n">N</option>
+                                                    <option value="11g">Legacy</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Canal</label>
                                                 <select name="add_radio_channel" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                    <option>11 (2462 MHz)</option>
+                                                    <option value="auto">auto</option>
+                                                    <option value="1">1 (2412 MHz)</option>
+                                                    <option value="2">2 (2417 MHz)</option>
+                                                    <option value="3">3 (2422 MHz)</option>
+                                                    <option value="4">4 (2427 MHz)</option>
+                                                    <option value="5">5 (2432 MHz)</option>
+                                                    <option value="6">6 (2437 MHz)</option>
+                                                    <option value="7">7 (2442 MHz)</option>
+                                                    <option value="8">8 (2447 MHz)</option>
+                                                    <option value="9">9 (2452 MHz)</option>
+                                                    <option value="10">10 (2457 MHz)</option>
+                                                    <option value="11">11 (2462 MHz)</option>
                                                 </select>
                                             </div>
                                             <div>
                                                 <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Ancho de banda</label>
                                                 <select name="add_radio_bandwidth" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                    <option>20 MHz</option>
+                                                    <option value="HT20">20 MHz</option>
+                                                    <option value="HT40">40 MHz</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -1077,7 +1147,28 @@
                                         <div class="col-sm-8">
                                             <div class="d-flex align-items-center gap-2 mb-1">
                                                 <select name="add_radio_txpower" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width: 250px;">
-                                                    <option>Predeterminado por el controlador</option>
+                                                    <option value="Predeterminado por el controlador">Predeterminado por el controlador</option>
+                                                    <option value="0">0 dBm (1 mW)</option>
+                                                    <option value="1">1 dBm (1 mW)</option>
+                                                    <option value="2">2 dBm (1 mW)</option>
+                                                    <option value="3">3 dBm (1 mW)</option>
+                                                    <option value="4">4 dBm (2 mW)</option>
+                                                    <option value="5">5 dBm (3 mW)</option>
+                                                    <option value="6">6 dBm (3 mW)</option>
+                                                    <option value="7">7 dBm (5 mW)</option>
+                                                    <option value="8">8 dBm (6 mW)</option>
+                                                    <option value="9">9 dBm (7 mW)</option>
+                                                    <option value="10">10 dBm (10 mW)</option>
+                                                    <option value="11">11 dBm (12 mW)</option>
+                                                    <option value="12">12 dBm (15 mW)</option>
+                                                    <option value="13">13 dBm (19 mW)</option>
+                                                    <option value="14">14 dBm (25 mW)</option>
+                                                    <option value="15">15 dBm (31 mW)</option>
+                                                    <option value="16">16 dBm (39 mW)</option>
+                                                    <option value="17">17 dBm (50 mW)</option>
+                                                    <option value="18">18 dBm (63 mW)</option>
+                                                    <option value="19">19 dBm (79 mW)</option>
+                                                    <option value="20">20 dBm (100 mW)</option>
                                                 </select>
                                                 <span class="text-soft" style="font-size: 0.85rem;">- Potencia actual: <em class="text-muted">Desconocido</em></span>
                                             </div>
@@ -1091,7 +1182,24 @@
                                         <label class="col-sm-4 col-form-label text-md-end text-soft">Código de país</label>
                                         <div class="col-sm-8">
                                             <select name="radio_country" class="form-select form-select-sm bg-dark text-white border-secondary">
-                                                <option>Predeterminado por el controlador</option>
+                                                <option value="00">Predeterminado por el controlador</option>
+                                                <option value="MR">MR - Mauritania</option>
+                                                <option value="MS">MS - Montserrat</option>
+                                                <option value="MT">MT - Malta</option>
+                                                <option value="MU">MU - Mauritius</option>
+                                                <option value="MV">MV - Maldives</option>
+                                                <option value="MW">MW - Malawi</option>
+                                                <option value="MX">MX - Mexico</option>
+                                                <option value="MY">MY - Malaysia</option>
+                                                <option value="MZ">MZ - Mozambique</option>
+                                                <option value="NA">NA - Namibia</option>
+                                                <option value="NC">NC - New Caledonia</option>
+                                                <option value="NE">NE - Niger</option>
+                                                <option value="NF">NF - Norfolk Island</option>
+                                                <option value="NG">NG - Nigeria</option>
+                                                <option value="NI">NI - Nicaragua</option>
+                                                <option value="NL">NL - Netherlands</option>
+                                                <option value="NO">NO - Norway</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1177,7 +1285,13 @@
                                     <div class="col-sm-9">
                                         <select name="mode" class="form-select bg-dark text-white border-secondary">
                                             <option value="ap" selected>Punto de acceso (AP)</option>
-                                            <option value="sta">Cliente (STA)</option>
+                                            <option value="sta">Cliente</option>
+                                            <option value="adhoc">Ad-Hoc</option>
+                                            <option value="mesh">802.11s</option>
+                                            <option value="ahdemo">Pseudo Ad-Hoc (ahdemo)</option>
+                                            <option value="monitor">Monitor</option>
+                                            <option value="ap-wds">AP (WDS)</option>
+                                            <option value="sta-wds">Cliente (WDS)</option>
                                         </select>
                                     </div>
                                 </div>

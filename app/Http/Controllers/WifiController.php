@@ -194,7 +194,7 @@ class WifiController extends Controller
         $request->validate([
             'device' => 'required|string',
             'ssid' => 'required|string|max:50',
-            'mode' => 'required|in:ap,sta',
+            'mode' => 'required|in:ap,sta,adhoc,mesh,ahdemo,monitor,ap-wds,sta-wds',
             'network' => 'required|string',
             'encryption' => 'required|in:none,psk2',
             'password' => 'required_if:encryption,psk2|nullable|string|min:8',
@@ -262,7 +262,7 @@ class WifiController extends Controller
         $request->validate([
             'interface_id' => 'required|string',
             'ssid' => 'required|string|max:50',
-            'mode' => 'required|in:ap,sta',
+            'mode' => 'required|in:ap,sta,adhoc,mesh,ahdemo,monitor,ap-wds,sta-wds',
             'network' => 'required|string',
             'encryption' => 'required|in:none,psk2',
             'password' => 'nullable|string|min:8',
