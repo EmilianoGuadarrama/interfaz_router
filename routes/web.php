@@ -7,10 +7,17 @@ use App\Http\Controllers\SystemController;
 use App\Http\Controllers\WifiController;
 use App\Http\Controllers\Red\DhcpDnsController;
 use App\Http\Controllers\Red\ConmutadorController;
+use App\Http\Controllers\DiagnosticoController;
+use App\Http\Controllers\AuthController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware(['custom.auth'])->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('estado.general');
+    });
 
 Route::prefix('red')->name('red.')->group(function () {
 
@@ -25,6 +32,11 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::post('/interfaces/{name}/update', [NetworkController::class, 'updateInterface'])->name('interfaces.update');
     Route::post('/interfaces/lan/update', [NetworkController::class, 'updateLanInterface'])->name('interfaces.lan.update');
     Route::post('/interfaces/wan/update', [NetworkController::class, 'updateWanInterface'])->name('interfaces.wan.update');
+
+    // Botones Globales
+    Route::post('/interfaces/global-apply', [NetworkController::class, 'globalApply'])->name('interfaces.global_apply');
+    Route::post('/interfaces/global-save', [NetworkController::class, 'globalSave'])->name('interfaces.global_save');
+    Route::post('/interfaces/global-revert', [NetworkController::class, 'globalRevert'])->name('interfaces.global_revert');
 
     // Vista principal de Wi-Fi
     Route::get('/wifi', [WifiController::class, 'index'])->name('wifi');
@@ -85,11 +97,15 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::get('/rutas/estaticas/ipv4', [RoutesController::class, 'staticIpv4'])->name('routes.static.ipv4');
     Route::post('/rutas/estaticas/ipv4/guardar', [RoutesController::class, 'storeStaticIpv4'])->name('routes.static.ipv4.store');
     Route::delete('/rutas/estaticas/ipv4/eliminar', [RoutesController::class, 'destroyStaticIpv4'])->name('routes.static.ipv4.destroy');
+    
+    // 🔥 AQUÍ ESTÁ LA LÍNEA CORREGIDA PARA ACTUALIZAR:
+    Route::put('/rutas/estaticas/ipv4/actualizar', [RoutesController::class, 'updateStaticIpv4'])->name('routes.static.ipv4.update');
 
     Route::get('/rutas/estaticas/ipv6', [RoutesController::class, 'staticIpv6'])->name('routes.static.ipv6');
     Route::post('/rutas/estaticas/ipv6/guardar', [RoutesController::class, 'storeStaticIpv6'])->name('routes.static.ipv6.store');
     Route::delete('/rutas/estaticas/ipv6/eliminar', [RoutesController::class, 'destroyStaticIpv6'])->name('routes.static.ipv6.destroy');
-
+    Route::put('/rutas/estaticas/ipv6/actualizar', [RoutesController::class, 'updateStaticIpv6'])->name('routes.static.ipv6.update');
+    
     Route::get('/estado-conexion', [RoutesController::class, 'checkConnection'])->name('estado.conexion');
 
     // =====================================================================
@@ -98,6 +114,14 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::get('/nombres-host', [NetworkController::class, 'hostEntries'])->name('hostentries');
     Route::post('/nombres-host/agregar', [NetworkController::class, 'storeHostEntry'])->name('hostentries.store');
     Route::delete('/nombres-host/eliminar', [NetworkController::class, 'destroyHostEntry'])->name('hostentries.destroy');
+
+    // =====================================================================
+    // DIAGNOSTICOS
+    // =====================================================================
+    Route::get('/diagnosticos', [DiagnosticoController::class, 'index'])->name('diagnostico');
+    Route::post('/diagnosticos/ping', [DiagnosticoController::class, 'ping'])->name('diagnostico.ping');
+    Route::post('/diagnosticos/traceroute', [DiagnosticoController::class, 'traceroute'])->name('diagnostico.traceroute');
+    Route::post('/diagnosticos/nslookup', [DiagnosticoController::class, 'nslookup'])->name('diagnostico.nslookup');
 });
 
 // LEDs
@@ -130,3 +154,52 @@ Route::post('/arranque/scripts/{script}/{action}', [SystemController::class, 'st
 
 Route::get('/tareas-programadas', [SystemController::class, 'scheduledTasks'])->name('tasks');
 Route::post('/tareas-programadas', [SystemController::class, 'updateScheduledTasks'])->name('tasks.update');
+
+////////// SISTEMA
+
+Route::prefix('system')->group(function () {
+
+    Route::get('/general', [SystemController::class, 'general'])->name('system.general');
+
+    Route::post('/general/update', [SystemController::class, 'updateGeneral'])->name('system.general.update');
+
+});
+
+
+// =========================
+// ESTADO
+// =========================
+
+Route::prefix('estado')->name('estado.')->group(function () {
+
+    Route::get('/general', function () {
+        return view('estado.general');
+    })->name('general');
+
+    Route::get('/cortafuegos', function () {
+        return view('estado.cortafuegos');
+    })->name('cortafuegos');
+
+    Route::get('/rutas', function () {
+        return view('estado.rutas');
+    })->name('rutas');
+
+    Route::get('/registro-sistema', function () {
+        return view('estado.registro_sistema');
+    })->name('registro_sistema');
+
+    Route::get('/registro-nucleo', function () {
+        return view('estado.registro_nucleo');
+    })->name('registro_nucleo');
+
+    Route::get('/procesos', function () {
+        return view('estado.procesos');
+    })->name('procesos');
+
+    Route::get('/graficos', function () {
+        return view('estado.graficos');
+    })->name('graficos');
+
+});
+
+}); // End of custom.auth middleware group

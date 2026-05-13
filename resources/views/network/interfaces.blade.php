@@ -222,23 +222,41 @@
 
         <!-- Bottom Actions -->
         <div class="d-flex justify-content-end gap-2 mt-4">
-            <div class="btn-group">
-                <button class="btn btn-sm"
-                    style="color: white; font-weight: 700; font-size: 0.75rem; background-color: #5bc0de; border: none; border-radius: 2px 0 0 2px;">GUARDAR
-                    Y APLICAR</button>
-                <button type="button" class="btn btn-sm dropdown-toggle dropdown-toggle-split"
-                    style="color: white; background-color: #5bc0de; border: none; border-radius: 0 2px 2px 0;"
-                    data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="visually-hidden">Toggle Dropdown</span>
+            
+            <form action="{{ route('red.interfaces.global_apply') }}" method="POST" class="m-0 p-0">
+                @csrf
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-sm"
+                        style="color: white; font-weight: 700; font-size: 0.75rem; background-color: #5bc0de; border: none; border-radius: 2px 0 0 2px;">
+                        GUARDAR Y APLICAR
+                    </button>
+                    <button type="button" class="btn btn-sm dropdown-toggle dropdown-toggle-split"
+                        style="color: white; background-color: #5bc0de; border: none; border-radius: 0 2px 2px 0;"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                        <li><a class="dropdown-item" style="font-size: 0.85rem;" href="#" onclick="document.getElementById('global-save-btn').click(); return false;">Aplicar sin guardar (Solo guardar)</a></li>
+                    </ul>
+                </div>
+            </form>
+
+            <form action="{{ route('red.interfaces.global_save') }}" method="POST" class="m-0 p-0">
+                @csrf
+                <button id="global-save-btn" type="submit" class="btn btn-sm"
+                    style="font-weight: 700; font-size: 0.75rem; background-color: #337ab7; color: white; border: none; border-radius: 2px;">
+                    GUARDAR
                 </button>
-                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                    <li><a class="dropdown-item" style="font-size: 0.85rem;" href="#">Aplicar sin guardar</a></li>
-                </ul>
-            </div>
-            <button class="btn btn-sm"
-                style="font-weight: 700; font-size: 0.75rem; background-color: #337ab7; color: white; border: none; border-radius: 2px;">GUARDAR</button>
-            <button class="btn btn-sm"
-                style="font-weight: 700; font-size: 0.75rem; background-color: #d9534f; color: white; border: none; border-radius: 2px;">RESTABLECER</button>
+            </form>
+
+            <form action="{{ route('red.interfaces.global_revert') }}" method="POST" class="m-0 p-0" onsubmit="return confirm('¿Está seguro que desea descartar todos los cambios no guardados? Esta acción recargará el estado original desde el router y no se puede deshacer.');">
+                @csrf
+                <button type="submit" class="btn btn-sm"
+                    style="font-weight: 700; font-size: 0.75rem; background-color: #d9534f; color: white; border: none; border-radius: 2px;">
+                    RESTABLECER
+                </button>
+            </form>
+
         </div>
 
     </div>
@@ -949,6 +967,7 @@
         const protoGenericAdvancedFields = document.getElementById('protoGenericAdvancedFields');
         const protoDhcpAdvancedFields = document.getElementById('protoDhcpAdvancedFields');
         const protoPppAdvancedFields = document.getElementById('protoPppAdvancedFields');
+        const protoNoneAdvancedFields = document.getElementById('protoNoneAdvancedFields');
         
         // Pestañas enteras a ocultar
         const dhcpTab = document.getElementById('dhcp-tab');
@@ -972,17 +991,18 @@
             if (protoGenericAdvancedFields) protoGenericAdvancedFields.classList.add('d-none');
             if (protoDhcpAdvancedFields) protoDhcpAdvancedFields.classList.add('d-none');
             if (protoPppAdvancedFields) protoPppAdvancedFields.classList.add('d-none');
+            if (protoNoneAdvancedFields) protoNoneAdvancedFields.classList.add('d-none');
 
             // Deshabilitar todos los inputs de los bloques condicionales
-            [protoStaticFields, protoDhcpFields, protoPppFields, protoGenericAdvancedFields, protoDhcpAdvancedFields, protoPppAdvancedFields].forEach(container => {
+            [protoStaticFields, protoDhcpFields, protoPppFields, protoGenericAdvancedFields, protoDhcpAdvancedFields, protoPppAdvancedFields, protoNoneAdvancedFields].forEach(container => {
                 if(container) {
                     container.querySelectorAll('input, select').forEach(el => el.disabled = true);
                 }
             });
 
-            // Ocultar pestaña completa Servidor DHCP en caso de PPP, PPPoE o DHCP
+            // Ocultar pestaña completa Servidor DHCP en caso de PPP, PPPoE, DHCP o NONE
             if (dhcpTab && dhcpTabContent) {
-                if (proto === 'dhcp' || proto === 'ppp' || proto === 'pppoe') {
+                if (proto === 'dhcp' || proto === 'ppp' || proto === 'pppoe' || proto === 'none') {
                     dhcpTab.parentElement.classList.add('d-none');
                     dhcpTabContent.querySelectorAll('input, select').forEach(el => el.disabled = true);
                     // Si la pestaña estaba activa, mover a general
@@ -996,19 +1016,10 @@
                 }
             }
 
-            // Ocultar pestaña Física para PPP y PPPoE
+            // Ocultar pestaña Física (NO SE OCULTA PARA PPP/PPPoE AHORA, TODOS USAN FÍSICA)
             if (physicalTab && physicalTabContent) {
-                if (proto === 'ppp' || proto === 'pppoe') {
-                    physicalTab.parentElement.classList.add('d-none');
-                    physicalTabContent.querySelectorAll('input, select').forEach(el => el.disabled = true);
-                    if (physicalTab.classList.contains('active')) {
-                        var generalTab = new bootstrap.Tab(document.getElementById('general-tab'));
-                        generalTab.show();
-                    }
-                } else {
-                    physicalTab.parentElement.classList.remove('d-none');
-                    physicalTabContent.querySelectorAll('input, select').forEach(el => el.disabled = false);
-                }
+                physicalTab.parentElement.classList.remove('d-none');
+                physicalTabContent.querySelectorAll('input, select').forEach(el => el.disabled = false);
             }
 
             // Activar solo el bloque corespondiente
@@ -1052,19 +1063,21 @@
                         pppoeExtra.querySelectorAll('input, select').forEach(el => el.disabled = false);
                     }
                 }
-                if (protoGenericAdvancedFields) {
-                    protoGenericAdvancedFields.classList.remove('d-none');
-                    protoGenericAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
-                }
                 if (protoPppAdvancedFields) {
                     protoPppAdvancedFields.classList.remove('d-none');
                     protoPppAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                }
+            } else if (proto === 'none') {
+                if (protoNoneAdvancedFields) {
+                    protoNoneAdvancedFields.classList.remove('d-none');
+                    protoNoneAdvancedFields.querySelectorAll('input, select').forEach(el => el.disabled = false);
                 }
             }
         }
 
         function cargarModalEdicion(btn) {
             var rawName = btn.getAttribute('data-raw');
+            var lowerName = rawName ? rawName.toLowerCase() : '';
             
             document.getElementById('editForm').action = '/red/interfaces/' + rawName + '/update';
             document.getElementById('editModalTitle').innerText = 'Interfaces » ' + rawName.toUpperCase();
@@ -1109,6 +1122,11 @@
             setInputValue('editIfaceMacaddrDhcp', btn.getAttribute('data-macaddr'));
             setInputValue('editIfaceMtuDhcp', btn.getAttribute('data-mtu'));
             
+            // None (No administrado)
+            var uConf = uciConfigs[lowerName] || {};
+            setCheckboxValue('editIfaceDelegateNone', uConf['delegate'], '1');
+            setCheckboxValue('editIfaceForceLinkNone', uConf['force_link'], '1');
+
             // PPP Advanced
             var uConf = uciConfigs[lowerName] || {};
             setCheckboxValue('editIfaceDelegatePpp', uConf['delegate'], '1');
@@ -1120,6 +1138,22 @@
             setInputValue('editIfaceLcpEchoInterval', uConf['lcp_echo_interval']);
             setInputValue('editIfaceDemand', uConf['demand']);
             setInputValue('editIfaceMtuPpp', uConf['mtu']);
+            setInputValue('editIfaceHostUniq', uConf['host_uniq']);
+            
+            var dnsVal = uConf['dns'] ? (Array.isArray(uConf['dns']) ? uConf['dns'].join(' ') : uConf['dns']) : '';
+            setInputValue('editIfaceDnsPpp', dnsVal);
+            
+            setInputValue('editIfaceUsername', uConf['username']);
+            setInputValue('editIfaceAc', uConf['ac']);
+            setInputValue('editIfaceService', uConf['service']);
+            setInputValue('editIfaceModemDev', uConf['device']);
+            document.getElementById('editIfacePassword').value = ''; // No mostrar la contraseña real, el backend no la sobreescribe si llega vacía
+            
+            // Disparar lógica condicional de DNS para PPP
+            var peerdnsPpp = document.getElementById('editIfacePeerdnsPpp');
+            if(peerdnsPpp) {
+                peerdnsPpp.dispatchEvent(new Event('change'));
+            }
             
             var netmask = btn.getAttribute('data-netmask') || '';
             var netSelect = document.getElementById('editIfaceNetmask');
@@ -1183,12 +1217,7 @@
             var domainList = uciDhcp['domain'] || '';
             setInputValue('editIfaceDhcpDomain', Array.isArray(domainList) ? domainList.join(' ') : domainList);
 
-            // PPP inputs
-            setInputValue('editIfaceUsername', uConf['username']);
-            setInputValue('editIfacePassword', uConf['password']);
-            setInputValue('editIfaceAc', uConf['ac']);
-            setInputValue('editIfaceService', uConf['service']);
-            setInputValue('editIfaceModemDev', uConf['device']);
+            // (PPP inputs moved to higher up)
 
             // Adv/Physical
             setInputValue('editIfaceMetric', uConf['metric']);

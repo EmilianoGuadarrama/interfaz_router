@@ -54,9 +54,7 @@
             min-height: 100vh;
         }
 
-        /* =========================
-           SIDEBAR
-        ========================= */
+        
         .sidebar {
             width: var(--sidebar-width);
             background: var(--sidebar-bg);
@@ -187,9 +185,7 @@
             color: #fff;
         }
 
-        /* =========================
-           MAIN
-        ========================= */
+        
         .main-content {
             margin-left: var(--sidebar-width);
             width: calc(100% - var(--sidebar-width));
@@ -389,36 +385,79 @@
 </head>
 
 <body>
+
     <div class="app-wrapper">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <div class="brand-icon">
                     <i class="bi bi-bar-chart-fill"></i>
-                </div>
-                <h1 class="brand-title">NuupNet</h1>
             </div>
-            <div class="sidebar-body">
+            <h1 class="brand-title">NuupNet</h1>
+        </div>
+            
+        <div class="sidebar-body">
 
-                <div class="menu-section">
-                    <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuEstado" type="button">
-                        <span>Estado</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </button>
+            <div class="menu-section">
+                <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuEstado" type="button">
+                    <span>Estado</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
 
+                
                     <div class="collapse show" id="menuEstado">
-                        <ul class="submenu">
-                            <li><a href="#" class="nav-link"><i class="bi bi-grid"></i> Visión general</a></li>
-                            <li><a href="#" class="nav-link"><i class="bi bi-shield-lock"></i> Cortafuegos</a></li>
-                            <li><a href="#" class="nav-link"><i class="bi bi-signpost-2"></i> Rutas</a></li>
-                            <li><a href="#" class="nav-link"><i class="bi bi-journal-text"></i> Registro del sistema</a>
-                            </li>
-                            <li><a href="#" class="nav-link"><i class="bi bi-cpu"></i> Registro del núcleo</a></li>
-                            <li><a href="#" class="nav-link"><i class="bi bi-gear-wide-connected"></i> Procesos</a></li>
-                            <li><a href="#" class="nav-link"><i class="bi bi-graph-up-arrow"></i> Gráficos en tiempo
-                                    real</a></li>
-                        </ul>
-                    </div>
-                </div>
+    <ul class="submenu">
+
+        <li>
+            <a href="{{ route('estado.general') }}"
+               class="nav-link {{ request()->routeIs('estado.general') ? 'active' : '' }}">
+                <i class="bi bi-grid"></i> Visión general
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('estado.cortafuegos') }}"
+               class="nav-link {{ request()->routeIs('estado.cortafuegos') ? 'active' : '' }}">
+                <i class="bi bi-shield-lock"></i> Cortafuegos
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('estado.rutas') }}"
+               class="nav-link {{ request()->routeIs('estado.rutas') ? 'active' : '' }}">
+                <i class="bi bi-signpost-2"></i> Rutas
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('estado.registro_sistema') }}"
+               class="nav-link {{ request()->routeIs('estado.registro_sistema') ? 'active' : '' }}">
+                <i class="bi bi-journal-text"></i> Registro del sistema
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('estado.registro_nucleo') }}"
+               class="nav-link {{ request()->routeIs('estado.registro_nucleo') ? 'active' : '' }}">
+                <i class="bi bi-cpu"></i> Registro del núcleo
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('estado.procesos') }}"
+               class="nav-link {{ request()->routeIs('estado.procesos') ? 'active' : '' }}">
+                <i class="bi bi-gear-wide-connected"></i> Procesos
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ route('estado.graficos') }}"
+               class="nav-link {{ request()->routeIs('estado.graficos') ? 'active' : '' }}">
+                <i class="bi bi-graph-up-arrow"></i> Gráficos en tiempo real
+            </a>
+        </li>
+
+    </ul>
+</div>
 
                 <div class="menu-section">
                     <button class="menu-toggle" data-bs-toggle="collapse" data-bs-target="#menuSistema" type="button">
@@ -560,7 +599,7 @@
                             </li>
 
                             <li>
-                                <a href="#" class="nav-link">
+                                <a href="{{ route('red.diagnostico') }}" class="nav-link {{ request()->routeIs('red.diagnostico') ? 'active' : '' }}">
                                     <i class="bi bi-activity"></i> Diagnósticos
                                 </a>
                             </li>
@@ -568,10 +607,13 @@
                     </div>
                 </div>
 
-                <a href="#" class="logout-link">
-                    <i class="bi bi-box-arrow-left"></i>
-                    Cerrar sesión
-                </a>
+                <form action="{{ route('logout') }}" method="POST" class="m-0 p-0">
+                    @csrf
+                    <button type="submit" class="logout-link w-100" style="border:none; background:transparent; text-align:left;">
+                        <i class="bi bi-box-arrow-left"></i>
+                        Cerrar sesión
+                    </button>
+                </form>
             </div>
         </aside>
 
