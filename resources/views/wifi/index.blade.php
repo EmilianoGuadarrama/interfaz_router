@@ -96,7 +96,27 @@
                                                 data-encryption="{{ $interface['encryption'] ?? 'none' }}"
                                                 data-key="{{ $interface['key'] ?? '' }}"
                                                 data-macfilter="{{ $interface['macfilter'] ?? 'disable' }}"
-                                                data-maclist="{{ isset($interface['maclist']) ? (is_array($interface['maclist']) ? implode('\n', $interface['maclist']) : str_replace(' ', '\n', $interface['maclist'])) : '' }}">EDITAR</button>
+                                                data-maclist="{{ isset($interface['maclist']) ? (is_array($interface['maclist']) ? implode('\n', $interface['maclist']) : str_replace(' ', '\n', $interface['maclist'])) : '' }}"
+                                                data-isolate="{{ $interface['isolate'] ?? '0' }}"
+                                                data-ifname="{{ $interface['ifname'] ?? '' }}"
+                                                data-short-preamble="{{ $interface['short_preamble'] ?? '1' }}"
+                                                data-dtim-period="{{ $interface['dtim_period'] ?? '' }}"
+                                                data-wpa-group-rekey="{{ $interface['wpa_group_rekey'] ?? '' }}"
+                                                data-disassoc-low-ack-check="{{ $interface['disassoc_low_ack'] ?? '1' }}"
+                                                data-disassoc-low-ack="{{ $interface['skip_inactivity_poll'] ?? '0' }}"
+                                                data-maxassoc="{{ $interface['maxassoc'] ?? '' }}"
+                                                data-max-listen-int="{{ $interface['max_listen_interval'] ?? '' }}"
+                                                data-radio-mode="{{ $radio['hwmode'] ?? '' }}"
+                                                data-radio-channel="{{ $radio['channel'] ?? '' }}"
+                                                data-radio-bandwidth="{{ $radio['htmode'] ?? '' }}"
+                                                data-radio-txpower="{{ $radio['txpower'] ?? '' }}"
+                                                data-radio-country="{{ $radio['country'] ?? '' }}"
+                                                data-radio-legacy-rates="{{ $radio['legacy_rates'] ?? '0' }}"
+                                                data-radio-distance="{{ $radio['distance'] ?? '' }}"
+                                                data-radio-frag="{{ $radio['frag'] ?? '' }}"
+                                                data-radio-rts="{{ $radio['rts'] ?? '' }}"
+                                                data-radio-force-40="{{ $radio['noscan'] ?? '0' }}"
+                                                data-radio-beacon="{{ $radio['beacon_int'] ?? '' }}">EDITAR</button>
                                             <form action="{{ route('red.wifi.delete') }}" method="POST" class="m-0 p-0">
                                                 @csrf
                                                 <input type="hidden" name="interface_id" value="{{ $interface['id'] }}">
@@ -187,8 +207,180 @@
                         @csrf
                         <input type="hidden" name="interface_id" id="editInterfaceName" value="">
 
+                        <!-- Top Box: Radio Config -->
+                        <div class="border-bottom border-secondary mb-4 bg-dark">
+                            <!-- Tabs Nav Radio -->
+                            <ul class="nav nav-tabs border-secondary bg-secondary bg-opacity-25 px-3 pt-2" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active text-white border-secondary border-bottom-0" data-bs-toggle="tab" data-bs-target="#edit-radio-general-pane" type="button" role="tab" aria-selected="true" style="background-color: transparent;">Configuración general</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-soft border-secondary border-bottom-0" data-bs-toggle="tab" data-bs-target="#edit-radio-adv-pane" type="button" role="tab" aria-selected="false" style="background-color: transparent;">Configuración avanzada</button>
+                                </li>
+                            </ul>
+                            <!-- Tabs Content Radio -->
+                            <div class="tab-content p-4">
+                                <!-- Pestaña Configuración general (Radio) -->
+                                <div class="tab-pane fade show active" id="edit-radio-general-pane" role="tabpanel" tabindex="0">
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Estado</label>
+                                        <div class="col-sm-8">
+                                            <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); max-width: 300px;">
+                                                <i class="bi bi-bar-chart-fill text-muted me-3 fs-4"></i>
+                                                <div>
+                                                    <div class="fw-bold" style="font-size: 0.85rem;">Modo: Master | SSID: OpenWrt</div>
+                                                    <div class="text-soft" style="font-size: 0.75rem;">--- dBm Red Wi-Fi no asociada</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Red Wi-Fi activada</label>
+                                        <div class="col-sm-8">
+                                            <button type="button" class="btn btn-danger btn-sm px-3 fw-bold" style="background: #db4444; font-size: 0.75rem;">DESACTIVAR</button>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Frecuencia de operación</label>
+                                        <div class="col-sm-8 d-flex gap-2">
+                                            <div>
+                                                <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Modo</label>
+                                                <select name="radio_mode" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                    <option value="11n">N</option>
+                                                    <option value="11g">Legacy</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Canal</label>
+                                                <select name="radio_channel" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                    <option value="auto">auto</option>
+                                                    <option value="1">1 (2412 MHz)</option>
+                                                    <option value="2">2 (2417 MHz)</option>
+                                                    <option value="3">3 (2422 MHz)</option>
+                                                    <option value="4">4 (2427 MHz)</option>
+                                                    <option value="5">5 (2432 MHz)</option>
+                                                    <option value="6">6 (2437 MHz)</option>
+                                                    <option value="7">7 (2442 MHz)</option>
+                                                    <option value="8">8 (2447 MHz)</option>
+                                                    <option value="9">9 (2452 MHz)</option>
+                                                    <option value="10">10 (2457 MHz)</option>
+                                                    <option value="11">11 (2462 MHz)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Ancho de banda</label>
+                                                <select name="radio_bandwidth" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                    <option value="HT20">20 MHz</option>
+                                                    <option value="HT40">40 MHz</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-0 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Máxima potencia de transmisión</label>
+                                        <div class="col-sm-8">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <select name="radio_txpower" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width: 250px;">
+                                                    <option value="Predeterminado por el controlador">Predeterminado por el controlador</option>
+                                                    <option value="0">0 dBm (1 mW)</option>
+                                                    <option value="1">1 dBm (1 mW)</option>
+                                                    <option value="2">2 dBm (1 mW)</option>
+                                                    <option value="3">3 dBm (1 mW)</option>
+                                                    <option value="4">4 dBm (2 mW)</option>
+                                                    <option value="5">5 dBm (3 mW)</option>
+                                                    <option value="6">6 dBm (3 mW)</option>
+                                                    <option value="7">7 dBm (5 mW)</option>
+                                                    <option value="8">8 dBm (6 mW)</option>
+                                                    <option value="9">9 dBm (7 mW)</option>
+                                                    <option value="10">10 dBm (10 mW)</option>
+                                                    <option value="11">11 dBm (12 mW)</option>
+                                                    <option value="12">12 dBm (15 mW)</option>
+                                                    <option value="13">13 dBm (19 mW)</option>
+                                                    <option value="14">14 dBm (25 mW)</option>
+                                                    <option value="15">15 dBm (31 mW)</option>
+                                                    <option value="16">16 dBm (39 mW)</option>
+                                                    <option value="17">17 dBm (50 mW)</option>
+                                                    <option value="18">18 dBm (63 mW)</option>
+                                                    <option value="19">19 dBm (79 mW)</option>
+                                                    <option value="20">20 dBm (100 mW)</option>
+                                                </select>
+                                                <span class="text-soft" style="font-size: 0.85rem;">- Potencia actual: <em class="text-muted">Desconocido</em></span>
+                                            </div>
+                                            <div class="form-text text-muted mt-2" style="font-size: 0.75rem;">Especifique la potencia de transmisión máxima que puede usar la radio inalámbrica. Dependiendo de los requisitos reglamentarios y el uso inalámbrico, el controlador puede reducir la potencia de transmisión real.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Pestaña Configuración avanzada (Radio) -->
+                                <div class="tab-pane fade" id="edit-radio-adv-pane" role="tabpanel" tabindex="0">
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Código de país</label>
+                                        <div class="col-sm-8">
+                                            <select name="radio_country" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                <option value="00">Predeterminado por el controlador</option>
+                                                <option value="MR">MR - Mauritania</option>
+                                                <option value="MS">MS - Montserrat</option>
+                                                <option value="MT">MT - Malta</option>
+                                                <option value="MU">MU - Mauritius</option>
+                                                <option value="MV">MV - Maldives</option>
+                                                <option value="MW">MW - Malawi</option>
+                                                <option value="MX">MX - Mexico</option>
+                                                <option value="MY">MY - Malaysia</option>
+                                                <option value="MZ">MZ - Mozambique</option>
+                                                <option value="NA">NA - Namibia</option>
+                                                <option value="NC">NC - New Caledonia</option>
+                                                <option value="NE">NE - Niger</option>
+                                                <option value="NF">NF - Norfolk Island</option>
+                                                <option value="NG">NG - Nigeria</option>
+                                                <option value="NI">NI - Nicaragua</option>
+                                                <option value="NL">NL - Netherlands</option>
+                                                <option value="NO">NO - Norway</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Permitir tasas de 802.11b heredadas</label>
+                                        <div class="col-sm-8">
+                                            <input type="checkbox" class="form-check-input mt-2" name="radio_legacy_rates" checked>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-start">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Optimización de distancia</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_distance" placeholder="auto">
+                                            <div class="form-text text-muted" style="font-size: 0.75rem;">Distancia en metros al miembro más lejano de la red.</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Umbral de fragmentación</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_frag" placeholder="Apagado">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Umbral RTS/CTS</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_rts" placeholder="Apagado">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-start">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Forzar modo 40MHz</label>
+                                        <div class="col-sm-8">
+                                            <input type="checkbox" class="form-check-input mt-2" name="radio_force_40">
+                                            <div class="form-text text-muted" style="font-size: 0.75rem;">Usará siempre canales de 40MHz incluso si el canal secundario se superpone. ¡El uso de esta opción no cumple con IEEE 802.11n-2009!</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-0 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Intervalo de baliza</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_beacon" placeholder="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Tabs Nav -->
-                        <ul class="nav nav-tabs border-secondary bg-secondary bg-opacity-25" id="editWifiTabs"
+                        <ul class="nav nav-tabs border-secondary bg-secondary bg-opacity-25 px-3" id="editWifiTabs"
                             role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active text-white border-secondary border-bottom-0"
@@ -208,6 +400,12 @@
                                     aria-controls="edit-mac-pane" aria-selected="false"
                                     style="background-color: transparent;">Filtro por MAC</button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-soft border-secondary border-bottom-0" id="edit-adv-tab"
+                                    data-bs-toggle="tab" data-bs-target="#edit-adv-pane" type="button" role="tab"
+                                    aria-controls="edit-adv-pane" aria-selected="false"
+                                    style="background-color: transparent;">Configuración avanzada</button>
+                            </li>
                         </ul>
 
                         <!-- Tabs Content -->
@@ -222,7 +420,13 @@
                                         <select name="mode" id="editMode"
                                             class="form-select bg-dark text-white border-secondary">
                                             <option value="ap">Punto de acceso (AP)</option>
-                                            <option value="sta">Cliente (STA)</option>
+                                            <option value="sta">Cliente</option>
+                                            <option value="adhoc">Ad-Hoc</option>
+                                            <option value="mesh">802.11s</option>
+                                            <option value="ahdemo">Pseudo Ad-Hoc (ahdemo)</option>
+                                            <option value="monitor">Monitor</option>
+                                            <option value="ap-wds">AP (WDS)</option>
+                                            <option value="sta-wds">Cliente (WDS)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -306,16 +510,81 @@
                                         </select>
                                     </div>
                                 </div>
-
                                 <div class="row mb-3 align-items-start d-none" id="editMacListContainer">
-                                    <label class="col-sm-3 col-form-label text-md-end text-soft">Direcciones MAC</label>
-                                    <div class="col-sm-9">
-                                        <textarea name="maclist" id="editMacList"
-                                            class="form-control bg-dark text-white border-secondary" rows="3"
-                                            placeholder="Ej: 00:11:22:33:44:55&#10;AA:BB:CC:DD:EE:FF" disabled></textarea>
-                                        <div class="form-text text-muted">Ingrese múltiples direcciones MAC separadas por
-                                            salto de línea o coma.</div>
-                                    </div>
+                                <label class="col-sm-3 col-form-label text-md-end text-soft">Direcciones MAC</label>
+                                <div class="col-sm-9">
+                                    <textarea name="maclist" id="editMacList"
+                                        class="form-control bg-dark text-white border-secondary" rows="3"
+                                        placeholder="Ej: 00:11:22:33:44:55&#10;AA:BB:CC:DD:EE:FF" disabled></textarea>
+                                    <div class="form-text text-muted">Ingrese múltiples direcciones MAC separadas por salto de
+                                        línea o coma.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pestaña Configuración avanzada -->
+                        <div class="tab-pane fade" id="edit-adv-pane" role="tabpanel" aria-labelledby="edit-adv-tab" tabindex="0">
+                            <div class="row mb-3 align-items-start">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Aislar clientes</label>
+                                <div class="col-sm-8">
+                                    <input type="checkbox" class="form-check-input mt-2" name="isolate">
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">Impide la comunicación entre los clientes</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-start">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Nombre de interfaz</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="ifname">
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">Reemplaza el nombre de interfaz predeterminado</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-center">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Preámbulo corto</label>
+                                <div class="col-sm-8">
+                                    <input type="checkbox" class="form-check-input mt-2" name="short_preamble" checked>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-start">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Intervalo DTIM</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="dtim_period" placeholder="2">
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">Intervalo de mensaje de indicación de tráfico de entrega</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-start">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Intervalo de tiempo para reprogramar GTK</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="wpa_group_rekey" placeholder="600">
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">Seg</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-center">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Desactivar sondeo de inactividad</label>
+                                <div class="col-sm-8">
+                                    <input type="checkbox" class="form-check-input mt-2" name="disassoc_low_ack">
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-start">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Límite de inactividad de la estación</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="maxassoc" placeholder="300">
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">Seg</div>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-center">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Máximo permitido de intervalo de escucha</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="max_listen_int" placeholder="65535">
+                                </div>
+                            </div>
+                            <div class="row mb-0 align-items-start">
+                                <label class="col-sm-4 col-form-label text-md-end text-soft">Desasociarse en un reconocimiento bajo</label>
+                                <div class="col-sm-8">
+                                    <input type="checkbox" class="form-check-input mt-2" name="disassoc_low_ack_check" checked>
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">Permitir que el modo AP desconecte los clientes por una condición de ACK bajo</div>
+                                </div>
+                            </div>
+                        </div>                                   </div>
                                 </div>
                             </div>
 
@@ -532,6 +801,72 @@
 
                     const macl = button.getAttribute('data-maclist') || '';
                     modalEditElement.querySelector('#editMacList').value = macl;
+
+                    // Avanzado Interfaz
+                    modalEditElement.querySelector('input[name="isolate"]').checked = (button.getAttribute('data-isolate') === '1');
+                    modalEditElement.querySelector('input[name="ifname"]').value = button.getAttribute('data-ifname') || '';
+                    modalEditElement.querySelector('input[name="short_preamble"]').checked = (button.getAttribute('data-short-preamble') !== '0');
+                    modalEditElement.querySelector('input[name="dtim_period"]').value = button.getAttribute('data-dtim-period') || '';
+                    modalEditElement.querySelector('input[name="wpa_group_rekey"]').value = button.getAttribute('data-wpa-group-rekey') || '';
+                    modalEditElement.querySelector('input[name="disassoc_low_ack_check"]').checked = (button.getAttribute('data-disassoc-low-ack-check') !== '0');
+                    modalEditElement.querySelector('input[name="disassoc_low_ack"]').checked = (button.getAttribute('data-disassoc-low-ack') === '1');
+                    modalEditElement.querySelector('input[name="maxassoc"]').value = button.getAttribute('data-maxassoc') || '';
+                    modalEditElement.querySelector('input[name="max_listen_int"]').value = button.getAttribute('data-max-listen-int') || '';
+
+                    // Avanzado Radio
+                    const selRadioMode = modalEditElement.querySelector('select[name="radio_mode"]');
+                    if (selRadioMode) {
+                        const v = button.getAttribute('data-radio-mode') || '11g';
+                        if (!Array.from(selRadioMode.options).some(o => o.value === v)) {
+                            selRadioMode.add(new Option(v, v));
+                        }
+                        selRadioMode.value = v;
+                    }
+
+                    const selRadioChannel = modalEditElement.querySelector('select[name="radio_channel"]');
+                    if (selRadioChannel) {
+                        const v = button.getAttribute('data-radio-channel') || 'auto';
+                        if (!Array.from(selRadioChannel.options).some(o => o.value === v)) {
+                            selRadioChannel.add(new Option(v, v));
+                        }
+                        selRadioChannel.value = v;
+                    }
+
+                    const selRadioBw = modalEditElement.querySelector('select[name="radio_bandwidth"]');
+                    if (selRadioBw) {
+                        const v = button.getAttribute('data-radio-bandwidth') || 'HT20';
+                        if (!Array.from(selRadioBw.options).some(o => o.value === v)) {
+                            selRadioBw.add(new Option(v, v));
+                        }
+                        selRadioBw.value = v;
+                    }
+
+                    const selRadioTx = modalEditElement.querySelector('select[name="radio_txpower"]');
+                    if (selRadioTx) {
+                        const v = button.getAttribute('data-radio-txpower');
+                        if (v && v !== 'Predeterminado por el controlador' && !Array.from(selRadioTx.options).some(o => o.value === v)) {
+                            selRadioTx.add(new Option(v + ' dBm', v));
+                            selRadioTx.value = v;
+                        } else if (v) {
+                            selRadioTx.value = v;
+                        }
+                    }
+
+                    const selRadioCountry = modalEditElement.querySelector('select[name="radio_country"]');
+                    if (selRadioCountry) {
+                        const v = button.getAttribute('data-radio-country');
+                        if (v && !Array.from(selRadioCountry.options).some(o => o.value === v)) {
+                            selRadioCountry.add(new Option(v, v));
+                        }
+                        selRadioCountry.value = v || '00';
+                    }
+
+                    modalEditElement.querySelector('input[name="radio_legacy_rates"]').checked = (button.getAttribute('data-radio-legacy-rates') === '1');
+                    modalEditElement.querySelector('input[name="radio_distance"]').value = button.getAttribute('data-radio-distance') || '';
+                    modalEditElement.querySelector('input[name="radio_frag"]').value = button.getAttribute('data-radio-frag') || '';
+                    modalEditElement.querySelector('input[name="radio_rts"]').value = button.getAttribute('data-radio-rts') || '';
+                    modalEditElement.querySelector('input[name="radio_force_40"]').checked = (button.getAttribute('data-radio-force-40') === '1');
+                    modalEditElement.querySelector('input[name="radio_beacon"]').value = button.getAttribute('data-radio-beacon') || '';
                 });
 
                 // Tabs UI logic fix
@@ -738,8 +1073,180 @@
                         @csrf
                         <input type="hidden" name="device" id="addDeviceName" value="radio0">
 
+                        <!-- Top Box: Radio Config -->
+                        <div class="border-bottom border-secondary mb-4 bg-dark">
+                            <!-- Tabs Nav Radio -->
+                            <ul class="nav nav-tabs border-secondary bg-secondary bg-opacity-25 px-3 pt-2" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active text-white border-secondary border-bottom-0" data-bs-toggle="tab" data-bs-target="#add-radio-general-pane" type="button" role="tab" aria-selected="true" style="background-color: transparent;">Configuración general</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link text-soft border-secondary border-bottom-0" data-bs-toggle="tab" data-bs-target="#add-radio-adv-pane" type="button" role="tab" aria-selected="false" style="background-color: transparent;">Configuración avanzada</button>
+                                </li>
+                            </ul>
+                            <!-- Tabs Content Radio -->
+                            <div class="tab-content p-4">
+                                <!-- Pestaña Configuración general (Radio) -->
+                                <div class="tab-pane fade show active" id="add-radio-general-pane" role="tabpanel" tabindex="0">
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Estado</label>
+                                        <div class="col-sm-8">
+                                            <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); max-width: 300px;">
+                                                <i class="bi bi-bar-chart-fill text-muted me-3 fs-4"></i>
+                                                <div>
+                                                    <div class="fw-bold" style="font-size: 0.85rem;">Modo: Master | SSID: OpenWrt</div>
+                                                    <div class="text-soft" style="font-size: 0.75rem;">--- dBm Red Wi-Fi no asociada</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Red Wi-Fi activada</label>
+                                        <div class="col-sm-8">
+                                            <button type="button" class="btn btn-danger btn-sm px-3 fw-bold" style="background: #db4444; font-size: 0.75rem;">DESACTIVAR</button>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Frecuencia de operación</label>
+                                        <div class="col-sm-8 d-flex gap-2">
+                                            <div>
+                                                <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Modo</label>
+                                                <select name="add_radio_mode" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                    <option value="11n">N</option>
+                                                    <option value="11g">Legacy</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Canal</label>
+                                                <select name="add_radio_channel" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                    <option value="auto">auto</option>
+                                                    <option value="1">1 (2412 MHz)</option>
+                                                    <option value="2">2 (2417 MHz)</option>
+                                                    <option value="3">3 (2422 MHz)</option>
+                                                    <option value="4">4 (2427 MHz)</option>
+                                                    <option value="5">5 (2432 MHz)</option>
+                                                    <option value="6">6 (2437 MHz)</option>
+                                                    <option value="7">7 (2442 MHz)</option>
+                                                    <option value="8">8 (2447 MHz)</option>
+                                                    <option value="9">9 (2452 MHz)</option>
+                                                    <option value="10">10 (2457 MHz)</option>
+                                                    <option value="11">11 (2462 MHz)</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label text-soft mb-1" style="font-size: 0.75rem;">Ancho de banda</label>
+                                                <select name="add_radio_bandwidth" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                    <option value="HT20">20 MHz</option>
+                                                    <option value="HT40">40 MHz</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-0 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Máxima potencia de transmisión</label>
+                                        <div class="col-sm-8">
+                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                <select name="add_radio_txpower" class="form-select form-select-sm bg-dark text-white border-secondary" style="max-width: 250px;">
+                                                    <option value="Predeterminado por el controlador">Predeterminado por el controlador</option>
+                                                    <option value="0">0 dBm (1 mW)</option>
+                                                    <option value="1">1 dBm (1 mW)</option>
+                                                    <option value="2">2 dBm (1 mW)</option>
+                                                    <option value="3">3 dBm (1 mW)</option>
+                                                    <option value="4">4 dBm (2 mW)</option>
+                                                    <option value="5">5 dBm (3 mW)</option>
+                                                    <option value="6">6 dBm (3 mW)</option>
+                                                    <option value="7">7 dBm (5 mW)</option>
+                                                    <option value="8">8 dBm (6 mW)</option>
+                                                    <option value="9">9 dBm (7 mW)</option>
+                                                    <option value="10">10 dBm (10 mW)</option>
+                                                    <option value="11">11 dBm (12 mW)</option>
+                                                    <option value="12">12 dBm (15 mW)</option>
+                                                    <option value="13">13 dBm (19 mW)</option>
+                                                    <option value="14">14 dBm (25 mW)</option>
+                                                    <option value="15">15 dBm (31 mW)</option>
+                                                    <option value="16">16 dBm (39 mW)</option>
+                                                    <option value="17">17 dBm (50 mW)</option>
+                                                    <option value="18">18 dBm (63 mW)</option>
+                                                    <option value="19">19 dBm (79 mW)</option>
+                                                    <option value="20">20 dBm (100 mW)</option>
+                                                </select>
+                                                <span class="text-soft" style="font-size: 0.85rem;">- Potencia actual: <em class="text-muted">Desconocido</em></span>
+                                            </div>
+                                            <div class="form-text text-muted mt-2" style="font-size: 0.75rem;">Especifique la potencia de transmisión máxima que puede usar la radio inalámbrica. Dependiendo de los requisitos reglamentarios y el uso inalámbrico, el controlador puede reducir la potencia de transmisión real.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Pestaña Configuración avanzada (Radio) -->
+                                <div class="tab-pane fade" id="add-radio-adv-pane" role="tabpanel" tabindex="0">
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Código de país</label>
+                                        <div class="col-sm-8">
+                                            <select name="radio_country" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                                <option value="00">Predeterminado por el controlador</option>
+                                                <option value="MR">MR - Mauritania</option>
+                                                <option value="MS">MS - Montserrat</option>
+                                                <option value="MT">MT - Malta</option>
+                                                <option value="MU">MU - Mauritius</option>
+                                                <option value="MV">MV - Maldives</option>
+                                                <option value="MW">MW - Malawi</option>
+                                                <option value="MX">MX - Mexico</option>
+                                                <option value="MY">MY - Malaysia</option>
+                                                <option value="MZ">MZ - Mozambique</option>
+                                                <option value="NA">NA - Namibia</option>
+                                                <option value="NC">NC - New Caledonia</option>
+                                                <option value="NE">NE - Niger</option>
+                                                <option value="NF">NF - Norfolk Island</option>
+                                                <option value="NG">NG - Nigeria</option>
+                                                <option value="NI">NI - Nicaragua</option>
+                                                <option value="NL">NL - Netherlands</option>
+                                                <option value="NO">NO - Norway</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Permitir tasas de 802.11b heredadas</label>
+                                        <div class="col-sm-8">
+                                            <input type="checkbox" class="form-check-input mt-2" name="radio_legacy_rates" checked>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-start">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Optimización de distancia</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_distance" placeholder="auto">
+                                            <div class="form-text text-muted" style="font-size: 0.75rem;">Distancia en metros al miembro más lejano de la red.</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Umbral de fragmentación</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_frag" placeholder="Apagado">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Umbral RTS/CTS</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_rts" placeholder="Apagado">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 align-items-start">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Forzar modo 40MHz</label>
+                                        <div class="col-sm-8">
+                                            <input type="checkbox" class="form-check-input mt-2" name="radio_force_40">
+                                            <div class="form-text text-muted" style="font-size: 0.75rem;">Usará siempre canales de 40MHz incluso si el canal secundario se superpone. ¡El uso de esta opción no cumple con IEEE 802.11n-2009!</div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-0 align-items-center">
+                                        <label class="col-sm-4 col-form-label text-md-end text-soft">Intervalo de baliza</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="radio_beacon" placeholder="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Tabs Nav -->
-                        <ul class="nav nav-tabs border-secondary bg-secondary bg-opacity-25" id="addWifiTabs"
+                        <ul class="nav nav-tabs border-secondary bg-secondary bg-opacity-25 px-3" id="addWifiTabs"
                             role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active text-white border-secondary border-bottom-0" id="general-tab"
@@ -759,6 +1266,12 @@
                                     aria-controls="mac-pane" aria-selected="false"
                                     style="background-color: transparent;">Filtro por MAC</button>
                             </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-soft border-secondary border-bottom-0" id="adv-tab"
+                                    data-bs-toggle="tab" data-bs-target="#adv-pane" type="button" role="tab"
+                                    aria-controls="adv-pane" aria-selected="false"
+                                    style="background-color: transparent;">Configuración avanzada</button>
+                            </li>
                         </ul>
 
                         <!-- Tabs Content -->
@@ -772,7 +1285,13 @@
                                     <div class="col-sm-9">
                                         <select name="mode" class="form-select bg-dark text-white border-secondary">
                                             <option value="ap" selected>Punto de acceso (AP)</option>
-                                            <option value="sta">Cliente (STA)</option>
+                                            <option value="sta">Cliente</option>
+                                            <option value="adhoc">Ad-Hoc</option>
+                                            <option value="mesh">802.11s</option>
+                                            <option value="ahdemo">Pseudo Ad-Hoc (ahdemo)</option>
+                                            <option value="monitor">Monitor</option>
+                                            <option value="ap-wds">AP (WDS)</option>
+                                            <option value="sta-wds">Cliente (WDS)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -864,6 +1383,70 @@
                                             placeholder="Ej: 00:11:22:33:44:55&#10;AA:BB:CC:DD:EE:FF" disabled></textarea>
                                         <div class="form-text text-muted">Ingrese múltiples direcciones MAC separadas por
                                             salto de línea o coma.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pestaña Configuración avanzada -->
+                            <div class="tab-pane fade" id="adv-pane" role="tabpanel" aria-labelledby="adv-tab" tabindex="0">
+                                <div class="row mb-3 align-items-start">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Aislar clientes</label>
+                                    <div class="col-sm-8">
+                                        <input type="checkbox" class="form-check-input mt-2" name="isolate">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Impide la comunicación entre los clientes</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-start">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Nombre de interfaz</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="ifname">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Reemplaza el nombre de interfaz predeterminado</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Preámbulo corto</label>
+                                    <div class="col-sm-8">
+                                        <input type="checkbox" class="form-check-input mt-2" name="short_preamble" checked>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-start">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Intervalo DTIM</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="dtim_period" placeholder="2">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Intervalo de mensaje de indicación de tráfico de entrega</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-start">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Intervalo de tiempo para reprogramar GTK</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="wpa_group_rekey" placeholder="600">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Seg</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Desactivar sondeo de inactividad</label>
+                                    <div class="col-sm-8">
+                                        <input type="checkbox" class="form-check-input mt-2" name="disassoc_low_ack">
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-start">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Límite de inactividad de la estación</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="maxassoc" placeholder="300">
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Seg</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 align-items-center">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Máximo permitido de intervalo de escucha</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary" name="max_listen_int" placeholder="65535">
+                                    </div>
+                                </div>
+                                <div class="row mb-0 align-items-start">
+                                    <label class="col-sm-4 col-form-label text-md-end text-soft">Desasociarse en un reconocimiento bajo</label>
+                                    <div class="col-sm-8">
+                                        <input type="checkbox" class="form-check-input mt-2" name="disassoc_low_ack_check" checked>
+                                        <div class="form-text text-muted" style="font-size: 0.75rem;">Permitir que el modo AP desconecte los clientes por una condición de ACK bajo</div>
                                     </div>
                                 </div>
                             </div>

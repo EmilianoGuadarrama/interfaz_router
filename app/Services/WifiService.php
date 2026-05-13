@@ -474,40 +474,84 @@ class WifiService
     /**
      * Añade una nueva red inalámbrica (interfaz).
      *
-     * @param string $device
-     * @param string $ssid
-     * @param string $mode
-     * @param string $network
-     * @param string $encryption
-     * @param string|null $password
-     * @param bool $hidden
-     * @param bool $wmm
+     * @param array $config
      * @return array
      */
-    public function addNetwork(string $device, string $ssid, string $mode, string $network, string $encryption, ?string $password, bool $hidden, bool $wmm, string $macfilter = 'disable', ?string $maclist = null): array
+    public function addNetwork(array $config): array
     {
         try {
             $timestamp = time();
             $ifaceId = "wifinet_{$timestamp}";
+            $device = $config['device'] ?? 'radio0';
 
-            $commands = [
-                "uci set wireless.$ifaceId=wifi-iface",
-                "uci set wireless.$ifaceId.device='$device'",
-                "uci set wireless.$ifaceId.mode='$mode'",
-                "uci set wireless.$ifaceId.ssid='$ssid'",
-                "uci set wireless.$ifaceId.network='$network'",
-                "uci set wireless.$ifaceId.encryption='$encryption'",
-                "uci set wireless.$ifaceId.wmm='" . ($wmm ? '1' : '0') . "'"
-            ];
+            $commands = [];
 
-            if ($encryption === 'psk2' && !empty($password)) {
-                $commands[] = "uci set wireless.$ifaceId.key='$password'";
+            // --- Configuraciones del Radio (Dispositivo) ---
+            if (!empty($config['radio_mode'])) {
+                $commands[] = "uci set wireless.$device.hwmode='{$config['radio_mode']}'";
+            }
+            if (!empty($config['radio_channel'])) {
+                $commands[] = "uci set wireless.$device.channel='{$config['radio_channel']}'";
+            }
+            if (!empty($config['radio_bandwidth'])) {
+                $commands[] = "uci set wireless.$device.htmode='{$config['radio_bandwidth']}'";
+            }
+            if (!empty($config['radio_txpower']) && $config['radio_txpower'] !== 'Predeterminado por el controlador') {
+                $commands[] = "uci set wireless.$device.txpower='{$config['radio_txpower']}'";
             }
 
+            if (!empty($config['radio_country']) && $config['radio_country'] !== 'Predeterminado por el controlador') {
+                $commands[] = "uci set wireless.$device.country='{$config['radio_country']}'";
+            } else {
+                $commands[] = "uci delete wireless.$device.country || true";
+            }
+
+            $commands[] = "uci set wireless.$device.legacy_rates='" . ($config['radio_legacy_rates'] ? '1' : '0') . "'";
+            
+            if ($config['radio_distance'] === 'auto') {
+                $commands[] = "uci delete wireless.$device.distance || true";
+            } else {
+                $commands[] = "uci set wireless.$device.distance='{$config['radio_distance']}'";
+            }
+
+            if ($config['radio_frag'] === 'off' || $config['radio_frag'] === 'Apagado') {
+                $commands[] = "uci delete wireless.$device.frag || true";
+            } else {
+                $commands[] = "uci set wireless.$device.frag='{$config['radio_frag']}'";
+            }
+
+            if ($config['radio_rts'] === 'off' || $config['radio_rts'] === 'Apagado') {
+                $commands[] = "uci delete wireless.$device.rts || true";
+            } else {
+                $commands[] = "uci set wireless.$device.rts='{$config['radio_rts']}'";
+            }
+
+            $commands[] = "uci set wireless.$device.noscan='" . ($config['radio_force_40'] ? '1' : '0') . "'";
+            $commands[] = "uci set wireless.$device.beacon_int='{$config['radio_beacon']}'";
+
+            // --- Configuraciones de la Interfaz (Red) ---
+            $commands[] = "uci set wireless.$ifaceId=wifi-iface";
+            $commands[] = "uci set wireless.$ifaceId.device='$device'";
+            $commands[] = "uci set wireless.$ifaceId.mode='{$config['mode']}'";
+            $commands[] = "uci set wireless.$ifaceId.ssid='{$config['ssid']}'";
+            $commands[] = "uci set wireless.$ifaceId.network='{$config['network']}'";
+            $commands[] = "uci set wireless.$ifaceId.encryption='{$config['encryption']}'";
+            
+            if ($config['wmm']) {
+                $commands[] = "uci set wireless.$ifaceId.wmm='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.wmm || true";
+            }
+
+            if ($config['encryption'] === 'psk2' && !empty($config['password'])) {
+                $commands[] = "uci set wireless.$ifaceId.key='{$config['password']}'";
+            }
+
+            $macfilter = $config['macfilter'] ?? 'disable';
             if ($macfilter !== 'disable') {
                 $commands[] = "uci set wireless.$ifaceId.macfilter='$macfilter'";
-                if (!empty($maclist)) {
-                    $macs = preg_split('/[\s,]+/', trim($maclist), -1, PREG_SPLIT_NO_EMPTY);
+                if (!empty($config['maclist'])) {
+                    $macs = preg_split('/[\s,]+/', trim($config['maclist']), -1, PREG_SPLIT_NO_EMPTY);
                     foreach ($macs as $mac) {
                         if (preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', trim($mac))) {
                             $commands[] = "uci add_list wireless.$ifaceId.maclist='" . trim($mac) . "'";
@@ -516,9 +560,44 @@ class WifiService
                 }
             }
 
-            if ($hidden) {
+            if ($config['hidden']) {
                 $commands[] = "uci set wireless.$ifaceId.hidden='1'";
             }
+
+            // Opciones Avanzadas de Interfaz
+            if ($config['isolate']) {
+                $commands[] = "uci set wireless.$ifaceId.isolate='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.isolate || true";
+            }
+
+            if (!empty($config['ifname'])) {
+                $commands[] = "uci set wireless.$ifaceId.ifname='{$config['ifname']}'";
+            }
+            
+            if ($config['short_preamble']) {
+                $commands[] = "uci set wireless.$ifaceId.short_preamble='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.short_preamble || true";
+            }
+
+            $commands[] = "uci set wireless.$ifaceId.dtim_period='{$config['dtim_period']}'";
+            $commands[] = "uci set wireless.$ifaceId.wpa_group_rekey='{$config['wpa_group_rekey']}'";
+            
+            if ($config['disassoc_low_ack_check']) {
+                $commands[] = "uci set wireless.$ifaceId.disassoc_low_ack='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.disassoc_low_ack || true";
+            }
+
+            if ($config['disassoc_low_ack']) {
+                $commands[] = "uci set wireless.$ifaceId.skip_inactivity_poll='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.skip_inactivity_poll || true";
+            }
+
+            $commands[] = "uci set wireless.$ifaceId.maxassoc='{$config['maxassoc']}'";
+            $commands[] = "uci set wireless.$ifaceId.max_listen_interval='{$config['max_listen_int']}'";
 
             $commands[] = "uci commit";
             $commands[] = "wifi reload";
@@ -527,7 +606,7 @@ class WifiService
 
             return [
                 'success' => true,
-                'message' => "La red '$ssid' ha sido añadida exitosamente."
+                'message' => "La red '{$config['ssid']}' ha sido añadida exitosamente."
             ];
         } catch (Exception $e) {
             return [
@@ -541,18 +620,10 @@ class WifiService
      * Edita una red inalámbrica (interfaz) existente.
      *
      * @param string $ifaceId El Id UCI ej. wifinet1
-     * @param string $ssid
-     * @param string $mode
-     * @param string $network
-     * @param string $encryption
-     * @param string|null $password
-     * @param bool $hidden
-     * @param bool $wmm
-     * @param string $macfilter
-     * @param string|null $maclist
+     * @param array $config
      * @return array
      */
-    public function editNetwork(string $ifaceId, string $ssid, string $mode, string $network, string $encryption, ?string $password, bool $hidden, bool $wmm, string $macfilter = 'disable', ?string $maclist = null): array
+    public function editNetwork(string $ifaceId, array $config): array
     {
         try {
             // Validar ID
@@ -560,25 +631,77 @@ class WifiService
                 throw new Exception('ID de interfaz inválido.');
             }
             
-            $commands = [
-                "uci set wireless.$ifaceId.mode='$mode'",
-                "uci set wireless.$ifaceId.ssid='$ssid'",
-                "uci set wireless.$ifaceId.network='$network'",
-                "uci set wireless.$ifaceId.encryption='$encryption'",
-                "uci set wireless.$ifaceId.wmm='" . ($wmm ? '1' : '0') . "'",
-                "uci delete wireless.$ifaceId.maclist || true"
-            ];
+            $device = $config['device'] ?? 'radio0';
+            $commands = [];
 
-            if ($encryption === 'psk2' && !empty($password)) {
-                $commands[] = "uci set wireless.$ifaceId.key='$password'";
-            } else if ($encryption === 'none') {
+            // --- Configuraciones del Radio (Dispositivo) ---
+            if (!empty($config['radio_mode'])) {
+                $commands[] = "uci set wireless.$device.hwmode='{$config['radio_mode']}'";
+            }
+            if (!empty($config['radio_channel'])) {
+                $commands[] = "uci set wireless.$device.channel='{$config['radio_channel']}'";
+            }
+            if (!empty($config['radio_bandwidth'])) {
+                $commands[] = "uci set wireless.$device.htmode='{$config['radio_bandwidth']}'";
+            }
+            if (!empty($config['radio_txpower']) && $config['radio_txpower'] !== 'Predeterminado por el controlador') {
+                $commands[] = "uci set wireless.$device.txpower='{$config['radio_txpower']}'";
+            }
+
+            if (!empty($config['radio_country']) && $config['radio_country'] !== 'Predeterminado por el controlador') {
+                $commands[] = "uci set wireless.$device.country='{$config['radio_country']}'";
+            } else {
+                $commands[] = "uci delete wireless.$device.country || true";
+            }
+
+            $commands[] = "uci set wireless.$device.legacy_rates='" . ($config['radio_legacy_rates'] ? '1' : '0') . "'";
+            
+            if ($config['radio_distance'] === 'auto') {
+                $commands[] = "uci delete wireless.$device.distance || true";
+            } else {
+                $commands[] = "uci set wireless.$device.distance='{$config['radio_distance']}'";
+            }
+
+            if ($config['radio_frag'] === 'off' || $config['radio_frag'] === 'Apagado') {
+                $commands[] = "uci delete wireless.$device.frag || true";
+            } else {
+                $commands[] = "uci set wireless.$device.frag='{$config['radio_frag']}'";
+            }
+
+            if ($config['radio_rts'] === 'off' || $config['radio_rts'] === 'Apagado') {
+                $commands[] = "uci delete wireless.$device.rts || true";
+            } else {
+                $commands[] = "uci set wireless.$device.rts='{$config['radio_rts']}'";
+            }
+
+            $commands[] = "uci set wireless.$device.noscan='" . ($config['radio_force_40'] ? '1' : '0') . "'";
+            $commands[] = "uci set wireless.$device.beacon_int='{$config['radio_beacon']}'";
+
+            // --- Configuraciones de la Interfaz (Red) ---
+            $commands[] = "uci set wireless.$ifaceId.mode='{$config['mode']}'";
+            $commands[] = "uci set wireless.$ifaceId.ssid='{$config['ssid']}'";
+            $commands[] = "uci set wireless.$ifaceId.network='{$config['network']}'";
+            $commands[] = "uci set wireless.$ifaceId.encryption='{$config['encryption']}'";
+            
+            if ($config['wmm']) {
+                $commands[] = "uci set wireless.$ifaceId.wmm='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.wmm || true";
+            }
+            
+            $commands[] = "uci delete wireless.$ifaceId.maclist || true";
+
+            if ($config['encryption'] === 'psk2' && !empty($config['password'])) {
+                $commands[] = "uci set wireless.$ifaceId.key='{$config['password']}'";
+            } else if ($config['encryption'] === 'none') {
                 $commands[] = "uci delete wireless.$ifaceId.key || true";
             }
 
+            $macfilter = $config['macfilter'] ?? 'disable';
             if ($macfilter !== 'disable') {
                 $commands[] = "uci set wireless.$ifaceId.macfilter='$macfilter'";
-                if (!empty($maclist)) {
-                    $macs = preg_split('/[\s,]+/', trim($maclist), -1, PREG_SPLIT_NO_EMPTY);
+                if (!empty($config['maclist'])) {
+                    $macs = preg_split('/[\s,]+/', trim($config['maclist']), -1, PREG_SPLIT_NO_EMPTY);
                     foreach ($macs as $mac) {
                         if (preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', trim($mac))) {
                             $commands[] = "uci add_list wireless.$ifaceId.maclist='" . trim($mac) . "'";
@@ -589,11 +712,48 @@ class WifiService
                  $commands[] = "uci delete wireless.$ifaceId.macfilter || true";
             }
 
-            if ($hidden) {
+            if ($config['hidden']) {
                 $commands[] = "uci set wireless.$ifaceId.hidden='1'";
             } else {
                 $commands[] = "uci delete wireless.$ifaceId.hidden || true";
             }
+
+            // Opciones Avanzadas de Interfaz
+            if ($config['isolate']) {
+                $commands[] = "uci set wireless.$ifaceId.isolate='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.isolate || true";
+            }
+
+            if (!empty($config['ifname'])) {
+                $commands[] = "uci set wireless.$ifaceId.ifname='{$config['ifname']}'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.ifname || true";
+            }
+            
+            if ($config['short_preamble']) {
+                $commands[] = "uci set wireless.$ifaceId.short_preamble='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.short_preamble || true";
+            }
+
+            $commands[] = "uci set wireless.$ifaceId.dtim_period='{$config['dtim_period']}'";
+            $commands[] = "uci set wireless.$ifaceId.wpa_group_rekey='{$config['wpa_group_rekey']}'";
+            
+            if ($config['disassoc_low_ack_check']) {
+                $commands[] = "uci set wireless.$ifaceId.disassoc_low_ack='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.disassoc_low_ack || true";
+            }
+
+            if ($config['disassoc_low_ack']) {
+                $commands[] = "uci set wireless.$ifaceId.skip_inactivity_poll='1'";
+            } else {
+                $commands[] = "uci delete wireless.$ifaceId.skip_inactivity_poll || true";
+            }
+
+            $commands[] = "uci set wireless.$ifaceId.maxassoc='{$config['maxassoc']}'";
+            $commands[] = "uci set wireless.$ifaceId.max_listen_interval='{$config['max_listen_int']}'";
 
             $commands[] = "uci commit";
             $commands[] = "wifi reload";
@@ -602,7 +762,7 @@ class WifiService
 
             return [
                 'success' => true,
-                'message' => "La red '$ssid' ha sido editada exitosamente."
+                'message' => "La red '{$config['ssid']}' ha sido editada exitosamente."
             ];
         } catch (Exception $e) {
             return [
