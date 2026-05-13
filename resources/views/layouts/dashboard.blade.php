@@ -599,7 +599,7 @@
                             </li>
 
                             <li>
-                                <a href="#" class="nav-link">
+                                <a href="{{ route('red.diagnostico') }}" class="nav-link {{ request()->routeIs('red.diagnostico') ? 'active' : '' }}">
                                     <i class="bi bi-activity"></i> Diagnósticos
                                 </a>
                             </li>
@@ -607,10 +607,13 @@
                     </div>
                 </div>
 
-                <a href="#" class="logout-link">
-                    <i class="bi bi-box-arrow-left"></i>
-                    Cerrar sesión
-                </a>
+                <form action="{{ route('logout') }}" method="POST" class="m-0 p-0">
+                    @csrf
+                    <button type="submit" class="logout-link w-100" style="border:none; background:transparent; text-align:left;">
+                        <i class="bi bi-box-arrow-left"></i>
+                        Cerrar sesión
+                    </button>
+                </form>
             </div>
         </aside>
 

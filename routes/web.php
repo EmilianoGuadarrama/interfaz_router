@@ -7,10 +7,17 @@ use App\Http\Controllers\SystemController;
 use App\Http\Controllers\WifiController;
 use App\Http\Controllers\Red\DhcpDnsController;
 use App\Http\Controllers\Red\ConmutadorController;
+use App\Http\Controllers\DiagnosticoController;
+use App\Http\Controllers\AuthController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware(['custom.auth'])->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('estado.general');
+    });
 
 Route::prefix('red')->name('red.')->group(function () {
 
@@ -107,6 +114,14 @@ Route::prefix('red')->name('red.')->group(function () {
     Route::get('/nombres-host', [NetworkController::class, 'hostEntries'])->name('hostentries');
     Route::post('/nombres-host/agregar', [NetworkController::class, 'storeHostEntry'])->name('hostentries.store');
     Route::delete('/nombres-host/eliminar', [NetworkController::class, 'destroyHostEntry'])->name('hostentries.destroy');
+
+    // =====================================================================
+    // DIAGNOSTICOS
+    // =====================================================================
+    Route::get('/diagnosticos', [DiagnosticoController::class, 'index'])->name('diagnostico');
+    Route::post('/diagnosticos/ping', [DiagnosticoController::class, 'ping'])->name('diagnostico.ping');
+    Route::post('/diagnosticos/traceroute', [DiagnosticoController::class, 'traceroute'])->name('diagnostico.traceroute');
+    Route::post('/diagnosticos/nslookup', [DiagnosticoController::class, 'nslookup'])->name('diagnostico.nslookup');
 });
 
 // LEDs
@@ -187,3 +202,4 @@ Route::prefix('estado')->name('estado.')->group(function () {
 
 });
 
+}); // End of custom.auth middleware group
