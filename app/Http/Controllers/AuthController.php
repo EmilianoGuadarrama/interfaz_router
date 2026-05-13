@@ -15,31 +15,13 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request, WifiService $wifiService)
+    public function login(Request $request)
     {
         $request->validate([
             'password' => 'required'
         ]);
 
-        $inputPassword = $request->password;
-        $wifiStatus = $wifiService->getWifiStatus();
-        $valid = false;
-
-        if ($wifiStatus['success']) {
-            foreach ($wifiStatus['data']['interfaces'] as $interface) {
-                if (isset($interface['key']) && $interface['key'] === $inputPassword) {
-                    $valid = true;
-                    break;
-                }
-            }
-        }
-
-        // Fallback admin password just in case wifi is unconfigured or has error
-        if ($inputPassword === 'admin') {
-            $valid = true;
-        }
-
-        if ($valid) {
+        if ($request->password === 'nupnetadmin') {
             session(['authenticated' => true]);
             return redirect('/');
         }

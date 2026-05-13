@@ -141,7 +141,7 @@
             @csrf
             
             <p class="text-center text-muted mb-4" style="font-size: 0.9rem;">
-                Ingresa la contraseña de la red Wi-Fi para continuar.
+                Ingresa la contraseña de administrador para continuar.
             </p>
 
             <div class="input-group">
