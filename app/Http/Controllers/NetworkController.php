@@ -652,41 +652,81 @@ class NetworkController extends Controller
 }
 
     public function storeHostEntry(Request $request)
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:63', 'regex:/^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?$/'],
-            'ip' => ['required', 'ip'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'name.regex' => 'Solo letras, nÃºmeros y guiones. No debe haber espacios.',
-            'ip.required' => 'La direcciÃ³n IP es obligatoria.',
-            'ip.ip' => 'Ingresa una direcciÃ³n IP vÃ¡lida.',
+{
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:63', 'regex:/^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?$/'],
+        'ip' => ['required', 'ip'],
+    ], [
+        'name.required' => 'El nombre es obligatorio.',
+        'name.regex' => 'Solo letras, números y guiones. No debe haber espacios.',
+        'ip.required' => 'La dirección IP es obligatoria.',
+        'ip.ip' => 'Ingresa una dirección IP válida.',
+    ]);
+
+    try {
+
+        // 🔴 OBTENER HOSTS YA REGISTRADOS
+        $result = $this->router->execute([
+            "uci show dhcp | grep -E '@domain|name|ip'"
         ]);
 
-        try {
-            $commands = [
-                "uci add dhcp domain",
-                "uci set dhcp.@domain[-1].name='{$data['name']}'",
-                "uci set dhcp.@domain[-1].ip='{$data['ip']}'",
-                "uci commit dhcp",
-                "/etc/init.d/dnsmasq restart",
-            ];
+        $lines = explode("\n", $result['output']);
 
-            $result = $this->router->execute($commands);
+        $existingIps = [];
+        $existingNames = [];
 
-            return back()->with([
-                'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'Entrada agregada correctamente' : 'Error al agregar entrada',
-            ]);
+        foreach ($lines as $line) {
+            if (preg_match("/dhcp\.@domain\[\d+\]\.ip='(.+)'/", $line, $m)) {
+                $existingIps[] = trim($m[1]);
+            }
 
-        } catch (\Throwable $e) {
-            Log::error('Error agregando host entry: ' . $e->getMessage());
+            if (preg_match("/dhcp\.@domain\[\d+\]\.name='(.+)'/", $line, $m)) {
+                $existingNames[] = strtolower(trim($m[1]));
+            }
+        }
+
+        // 🔴 VALIDAR IP DUPLICADA
+        if (in_array($data['ip'], $existingIps)) {
             return back()->with([
                 'result_success' => false,
-                'result_title' => 'Error de conexiÃ³n o ejecuciÃ³n',
+                'result_title' => 'Esa IP ya tiene un nombre asignado, no es posible duplicarla',
             ]);
         }
+
+        // 🔴 VALIDAR NOMBRE DUPLICADO (case insensitive)
+        if (in_array(strtolower($data['name']), $existingNames)) {
+            return back()->with([
+                'result_success' => false,
+                'result_title' => 'Ese nombre de host ya existe, usa otro diferente',
+            ]);
+        }
+
+        // ✅ INSERTAR
+        $commands = [
+            "uci add dhcp domain",
+            "uci set dhcp.@domain[-1].name='{$data['name']}'",
+            "uci set dhcp.@domain[-1].ip='{$data['ip']}'",
+            "uci commit dhcp",
+            "/etc/init.d/dnsmasq restart",
+        ];
+
+        $resultInsert = $this->router->execute($commands);
+
+        return back()->with([
+            'result_success' => $resultInsert['success'],
+            'result_title' => $resultInsert['success']
+                ? 'Entrada agregada correctamente'
+                : 'Error al agregar entrada',
+        ]);
+
+    } catch (\Throwable $e) {
+        Log::error('Error agregando host entry: ' . $e->getMessage());
+        return back()->with([
+            'result_success' => false,
+            'result_title' => 'Error de conexión o ejecución',
+        ]);
     }
+}
 
     public function destroyHostEntry(Request $request)
     {
