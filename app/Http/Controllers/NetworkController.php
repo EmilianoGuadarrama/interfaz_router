@@ -588,45 +588,68 @@ class NetworkController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function hostEntries()
-    {
-        try {
-            $result = $this->router->execute([
-                "uci show dhcp | grep -E '@domain|name|ip'"
-            ]);
+   public function hostEntries()
+{
+    try {
+        // 🔹 Entradas guardadas (UCI)
+        $result = $this->router->execute([
+            "uci show dhcp | grep -E '@domain|name|ip'"
+        ]);
 
-            $entries = [];
-            $lines = explode("\n", $result['output']);
-            $temp = [];
+        $entries = [];
+        $lines = explode("\n", $result['output']);
+        $temp = [];
 
-            foreach ($lines as $line) {
-                $line = trim($line);
+        foreach ($lines as $line) {
+            $line = trim($line);
 
-                if (preg_match("/dhcp\.@domain\[(\d+)\]\.(name|ip)='(.+)'/", $line, $m)) {
-                    $index = $m[1];
-                    $key = $m[2];
-                    $value = $m[3];
-                    $temp[$index][$key] = $value;
-                }
+            if (preg_match("/dhcp\.@domain\[(\d+)\]\.(name|ip)='(.+)'/", $line, $m)) {
+                $index = $m[1];
+                $key = $m[2];
+                $value = $m[3];
+                $temp[$index][$key] = $value;
             }
-
-            foreach ($temp as $i => $entry) {
-                if (isset($entry['name'], $entry['ip'])) {
-                    $entries[] = [
-                        'index' => $i,
-                        'name' => $entry['name'],
-                        'ip' => $entry['ip'],
-                    ];
-                }
-            }
-
-        } catch (\Throwable $e) {
-            Log::error('Error listando host entries: ' . $e->getMessage());
-            $entries = [];
         }
 
-        return view('network.hostname', compact('entries'));
+        foreach ($temp as $i => $entry) {
+            if (isset($entry['name'], $entry['ip'])) {
+                $entries[] = [
+                    'index' => $i,
+                    'name' => $entry['name'],
+                    'ip' => $entry['ip'],
+                ];
+            }
+        }
+        $activeIps = [];
+
+        $leases = $this->router->execute([
+            "cat /tmp/dhcp.leases"
+        ]);
+
+        foreach (explode("\n", $leases['output']) as $line) {
+            $line = trim($line);
+
+            if (empty($line)) continue;
+
+            $parts = preg_split('/\s+/', $line);
+
+            if (count($parts) >= 4) {
+                $activeIps[] = [
+                    'ip' => $parts[2],
+                    'mac' => $parts[1],
+                    'name' => $parts[3],
+                ];
+            }
+        }
+
+    } catch (\Throwable $e) {
+        Log::error('Error listando host entries: ' . $e->getMessage());
+        $entries = [];
+        $activeIps = [];
     }
+
+    return view('network.hostname', compact('entries', 'activeIps'));
+}
 
     public function storeHostEntry(Request $request)
     {

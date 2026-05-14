@@ -17,9 +17,19 @@
             <h5 class="m-0" style="font-weight:700; color:#e2eaff;">
                 <i class="bi bi-list-ul me-2" style="color:#4a86f7;"></i>Entradas de host
             </h5>
-            <button class="btn btn-main" type="button" data-bs-toggle="modal" data-bs-target="#modalAgregar">
-                <i class="bi bi-plus-lg me-1"></i> Añadir
-            </button>
+
+            <div class="d-flex gap-2">
+                {{-- BOTÓN REFRESCAR --}}
+                <button class="btn btn-sm"
+                    onclick="location.reload()"
+                    style="background:rgba(255,255,255,0.06); color:#e2eaff; border-radius:10px;">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+
+                <button class="btn btn-main" type="button" data-bs-toggle="modal" data-bs-target="#modalAgregar">
+                    <i class="bi bi-plus-lg me-1"></i> Añadir
+                </button>
+            </div>
         </div>
 
         @if(count($entries) > 0)
@@ -42,8 +52,7 @@
                                 <span class="soft-badge">{{ $entry['ip'] }}</span>
                             </td>
                             <td>
-                                <form method="POST" action="{{ route('red.hostentries.destroy') }}"
-                                      onsubmit="return confirm('¿Eliminar esta entrada?')">
+                                <form method="POST" action="{{ route('red.hostentries.destroy') }}" class="form-eliminar">
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="index" value="{{ $entry['index'] }}">
@@ -77,6 +86,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
+
             <form method="POST" action="{{ route('red.hostentries.store') }}">
                 @csrf
                 <div class="modal-body" style="padding: 24px;">
@@ -97,18 +107,27 @@
 
                     <div class="mb-1">
                         <label class="form-label" style="color: var(--text-soft); font-weight:600;">Dirección IP</label>
-                        <input type="text"
+
+                        <input list="ips"
                                name="ip"
                                class="form-control {{ $errors->has('ip') ? 'is-invalid' : '' }}"
                                placeholder="ej: 192.168.10.206"
                                value="{{ old('ip') }}"
                                required>
+
+                        <datalist id="ips">
+                           @foreach($activeIps ?? [] as $ip)
+                                <option value="{{ $ip['ip'] }}">
+                            @endforeach
+                        </datalist>
+
                         @error('ip')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                 </div>
+
                 <div class="modal-footer" style="border-top: 1px solid var(--border-soft);">
                     <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
                         style="background:rgba(255,255,255,0.06); color:var(--text-soft); border-radius:12px; padding:8px 18px;">
@@ -123,7 +142,6 @@
     </div>
 </div>
 
-{{-- Abrir modal si hay errores de validación --}}
 @if($errors->any())
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -131,5 +149,29 @@
     });
 </script>
 @endif
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.form-eliminar').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: '¿Eliminar entrada?',
+                text: "Esta acción no se puede deshacer",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+                backdrop: 'rgba(2,13,36,0.8)',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 
 @endsection
