@@ -125,13 +125,16 @@ Route::prefix('red')->name('red.')->group(function () {
 });
 
 // LEDs
-Route::prefix('sistema')->name('leds.')->group(function () {
+    Route::prefix('sistema')->name('leds.')->group(function () {
     Route::get('/leds', [SystemController::class, 'leds'])->name('index');
     Route::get('/leds/crear', [SystemController::class, 'createLed'])->name('create');
     Route::post('/leds', [SystemController::class, 'storeLed'])->name('store');
     Route::get('/leds/{key}/editar', [SystemController::class, 'editLed'])->name('edit');
     Route::post('/leds/{key}', [SystemController::class, 'updateLed'])->name('update');
     Route::post('/leds/{key}/eliminar', [SystemController::class, 'destroyLed'])->name('destroy');
+    Route::post('/leds/guardar-aplicar', [SystemController::class, 'guardarYAplicar'])->name('guardar-aplicar');
+    Route::post('/leds/guardar',         [SystemController::class, 'guardarLeds'])    ->name('guardar');
+    Route::post('/leds/restablecer',     [SystemController::class, 'restablecerLeds'])->name('restablecer');
 });
 
 // GRABADO DE IMAGEN

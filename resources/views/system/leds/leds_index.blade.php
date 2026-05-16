@@ -7,6 +7,12 @@
     Personaliza el comportamiento de los <a href="#" style="color:var(--primary);">LEDs</a> del dispositivo, si es posible.
 </p>
 
+@if(session('result_title'))
+    <div class="alert {{ session('result_success') ? 'alert-success' : 'alert-danger' }} mb-4">
+        {{ session('result_title') }}
+    </div>
+@endif
+
 <div class="panel-card">
     @if(count($leds) > 0)
         <table class="table-dark-custom">
@@ -57,35 +63,66 @@
 
 {{-- Bottom bar --}}
 <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;padding-top:22px;">
+
     <div style="position:relative;" id="ddWrap">
         <div style="display:inline-flex;border-radius:14px;overflow:hidden;">
-            <button class="btn btn-main" style="border-radius:0;">GUARDAR Y APLICAR</button>
-            <button class="btn btn-main" style="border-radius:0;border-left:1px solid rgba(255,255,255,.2);padding:10px 12px;"
-                    onclick="document.getElementById('dd1').classList.toggle('show')">▼</button>
+            <form method="POST" action="{{ route('leds.guardar-aplicar') }}">
+                @csrf
+                <button type="submit" class="btn btn-main" style="border-radius:0;">
+                    GUARDAR Y APLICAR
+                </button>
+            </form>
+            <button class="btn btn-main"
+                    style="border-radius:0;border-left:1px solid rgba(255,255,255,.2);padding:10px 12px;"
+                    onclick="toggleDd()">▼</button>
         </div>
         <div id="dd1" class="dropdown-menu dropdown-menu-dark"
              style="display:none;position:absolute;right:0;top:calc(100% + 4px);min-width:210px;z-index:100;">
-            <button class="dropdown-item" style="color:var(--text-main);">GUARDAR Y APLICAR</button>
-            <button class="dropdown-item" style="color:var(--text-main);">APLICAR SIN RESTRICCIÓN</button>
+            <form method="POST" action="{{ route('leds.guardar-aplicar') }}">
+                @csrf
+                <button type="submit" class="dropdown-item" style="color:var(--text-main);width:100%;text-align:left;">
+                    GUARDAR Y APLICAR
+                </button>
+            </form>
+            <form method="POST" action="{{ route('leds.guardar-aplicar') }}">
+                @csrf
+                <button type="submit" class="dropdown-item" style="color:var(--text-main);width:100%;text-align:left;">
+                    APLICAR SIN RESTRICCIÓN
+                </button>
+            </form>
         </div>
     </div>
-    <button class="btn btn-sm"
-            style="background:rgba(255,255,255,.08);color:var(--text-main);border:1px solid var(--border-soft);border-radius:10px;padding:8px 18px;font-weight:600;">
-        GUARDAR
-    </button>
-    <button class="btn btn-sm"
-            style="background:#dc3545;color:white;border:none;border-radius:10px;padding:8px 18px;font-weight:700;cursor:pointer;">
-        RESTABLECER
-    </button>
+
+    <form method="POST" action="{{ route('leds.guardar') }}">
+        @csrf
+        <button type="submit" class="btn btn-sm"
+                style="background:rgba(255,255,255,.08);color:var(--text-main);border:1px solid var(--border-soft);border-radius:10px;padding:8px 18px;font-weight:600;">
+            GUARDAR
+        </button>
+    </form>
+
+    <form method="POST" action="{{ route('leds.restablecer') }}"
+          onsubmit="return confirm('¿Restablecer la configuración de LEDs?')">
+        @csrf
+        <button type="submit" class="btn btn-sm"
+                style="background:#dc3545;color:white;border:none;border-radius:10px;padding:8px 18px;font-weight:700;cursor:pointer;">
+            RESTABLECER
+        </button>
+    </form>
+
 </div>
 
 @push('scripts')
 <script>
 const dd1 = document.getElementById('dd1');
+
+function toggleDd() {
+    dd1.style.display = dd1.style.display === 'none' ? 'block' : 'none';
+}
+
 document.addEventListener('click', e => {
     if (!e.target.closest('#ddWrap')) dd1.style.display = 'none';
 });
-dd1.addEventListener('click', () => dd1.style.display = 'none');
 </script>
 @endpush
 

@@ -31,7 +31,10 @@ class SystemController extends Controller
     {
         $leds = [];
         try {
-            $result = $this->router->execute(["uci show system | grep -E 'led'"]);
+            $result = $this->router->execute([
+                "sleep 1",
+                "uci show system | grep 'system.led_'",
+            ]);
             $temp = [];
             foreach (explode("\n", $result['output']) as $line) {
                 if (preg_match("/system\.led_(\w+)\.(name|sysfs|default|trigger|mode|delayon|delayoff)='(.+)'/", trim($line), $m)) {
@@ -40,14 +43,14 @@ class SystemController extends Controller
             }
             foreach ($temp as $key => $e) {
                 $leds[] = [
-                    'key' => $key,
-                    'nombre' => $e['name'] ?? $key,
-                    'led_name' => $e['sysfs'] ?? '-',
-                    'estado' => ($e['default'] ?? '0') === '1' ? 'Encendido' : 'Apagado',
-                    'disparador' => $e['trigger'] ?? 'defaulton',
-                    'modo' => isset($e['mode']) ? explode(' ', $e['mode']) : [],
-                    'timer_on' => $e['delayon'] ?? null,
-                    'timer_off' => $e['delayoff'] ?? null,
+                    'key'        => $key,
+                    'nombre'     => $e['name']     ?? $key,
+                    'led_name'   => $e['sysfs']    ?? '-',
+                    'estado'     => ($e['default'] ?? '0') === '1' ? 'Encendido' : 'Apagado',
+                    'disparador' => $e['trigger']  ?? 'defaulton',
+                    'modo'       => isset($e['mode']) ? explode(' ', $e['mode']) : [],
+                    'timer_on'   => $e['delayon']  ?? null,
+                    'timer_off'  => $e['delayoff'] ?? null,
                 ];
             }
         } catch (\Throwable $e) {
@@ -56,9 +59,9 @@ class SystemController extends Controller
 
         if (empty($leds)) {
             $leds = [
-                ['key' => 'wlan', 'nombre' => 'wlan', 'led_name' => 'green:wlan', 'estado' => 'Apagado', 'disparador' => 'netdev', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
-                ['key' => 'wan', 'nombre' => 'wan', 'led_name' => 'orange:wan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
-                ['key' => 'lan', 'nombre' => 'lan', 'led_name' => 'green:lan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'wlan', 'nombre' => 'wlan', 'led_name' => 'green:wlan', 'estado' => 'Apagado', 'disparador' => 'netdev',  'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'wan',  'nombre' => 'wan',  'led_name' => 'orange:wan', 'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
+                ['key' => 'lan',  'nombre' => 'lan',  'led_name' => 'green:lan',  'estado' => 'Apagado', 'disparador' => 'switch0', 'modo' => [], 'timer_on' => null, 'timer_off' => null],
             ];
         }
 
@@ -68,8 +71,8 @@ class SystemController extends Controller
     public function createLed()
     {
         return view('system.leds.leds_form', [
-            'led' => null,
-            'ledNames' => $this->ledNames,
+            'led'          => null,
+            'ledNames'     => $this->ledNames,
             'disparadores' => $this->disparadores,
         ]);
     }
@@ -77,13 +80,13 @@ class SystemController extends Controller
     public function storeLed(Request $request)
     {
         $request->validate([
-            'nombre' => ['required', 'string', 'max:50'],
-            'led_name' => ['required', 'string'],
+            'nombre'     => ['required', 'string', 'max:50'],
+            'led_name'   => ['required', 'string'],
             'disparador' => ['required', 'string'],
         ]);
 
         try {
-            $key = strtolower(preg_replace('/\s+/', '_', $request->nombre));
+            $key     = strtolower(preg_replace('/\s+/', '_', $request->nombre));
             $default = $request->boolean('estado_predeterminado') ? '1' : '0';
 
             $cmds = [
@@ -94,7 +97,7 @@ class SystemController extends Controller
                 "uci set system.led_{$key}.trigger='{$request->disparador}'",
             ];
             if ($request->disparador === 'netdev') {
-                $modo = implode(' ', $request->input('modo_disparador', []));
+                $modo   = implode(' ', $request->input('modo_disparador', []));
                 $cmds[] = "uci set system.led_{$key}.mode='{$modo}'";
             }
             if ($request->disparador === 'timer') {
@@ -107,7 +110,7 @@ class SystemController extends Controller
             $result = $this->router->execute($cmds);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'LED creado' : 'Error al crear LED',
+                'result_title'   => $result['success'] ? 'LED creado' : 'Error al crear LED',
             ]);
         } catch (\Throwable $e) {
             Log::error('storeLed: ' . $e->getMessage());
@@ -128,22 +131,22 @@ class SystemController extends Controller
             }
             if ($e) {
                 $led = [
-                    'key' => $key,
-                    'nombre' => $e['name'] ?? $key,
-                    'led_name' => $e['sysfs'] ?? '',
-                    'estado' => ($e['default'] ?? '0') === '1',
-                    'disparador' => $e['trigger'] ?? 'defaulton',
-                    'modo' => isset($e['mode']) ? explode(' ', $e['mode']) : [],
-                    'timer_on' => $e['delayon'] ?? 500,
-                    'timer_off' => $e['delayoff'] ?? 500,
+                    'key'        => $key,
+                    'nombre'     => $e['name']     ?? $key,
+                    'led_name'   => $e['sysfs']    ?? '',
+                    'estado'     => ($e['default'] ?? '0') === '1',
+                    'disparador' => $e['trigger']  ?? 'defaulton',
+                    'modo'       => isset($e['mode']) ? explode(' ', $e['mode']) : [],
+                    'timer_on'   => $e['delayon']  ?? 500,
+                    'timer_off'  => $e['delayoff'] ?? 500,
                 ];
             }
         } catch (\Throwable $e) {
             Log::error('editLed: ' . $e->getMessage());
         }
         return view('system.leds.leds_form', [
-            'led' => $led,
-            'ledNames' => $this->ledNames,
+            'led'          => $led,
+            'ledNames'     => $this->ledNames,
             'disparadores' => $this->disparadores,
         ]);
     }
@@ -151,8 +154,8 @@ class SystemController extends Controller
     public function updateLed(Request $request, $key)
     {
         $request->validate([
-            'nombre' => ['required', 'string', 'max:50'],
-            'led_name' => ['required', 'string'],
+            'nombre'     => ['required', 'string', 'max:50'],
+            'led_name'   => ['required', 'string'],
             'disparador' => ['required', 'string'],
         ]);
 
@@ -165,7 +168,7 @@ class SystemController extends Controller
                 "uci set system.led_{$key}.trigger='{$request->disparador}'",
             ];
             if ($request->disparador === 'netdev') {
-                $modo = implode(' ', $request->input('modo_disparador', []));
+                $modo   = implode(' ', $request->input('modo_disparador', []));
                 $cmds[] = "uci set system.led_{$key}.mode='{$modo}'";
             }
             if ($request->disparador === 'timer') {
@@ -178,7 +181,7 @@ class SystemController extends Controller
             $result = $this->router->execute($cmds);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'LED actualizado' : 'Error al actualizar',
+                'result_title'   => $result['success'] ? 'LED actualizado' : 'Error al actualizar',
             ]);
         } catch (\Throwable $e) {
             Log::error('updateLed: ' . $e->getMessage());
@@ -196,7 +199,7 @@ class SystemController extends Controller
             ]);
             return redirect()->route('leds.index')->with([
                 'result_success' => $result['success'],
-                'result_title' => $result['success'] ? 'LED eliminado' : 'Error al eliminar',
+                'result_title'   => $result['success'] ? 'LED eliminado' : 'Error al eliminar',
             ]);
         } catch (\Throwable $e) {
             Log::error('destroyLed: ' . $e->getMessage());
@@ -204,7 +207,58 @@ class SystemController extends Controller
         }
     }
 
+    public function guardarYAplicar()
+    {
+        try {
+            $result = $this->router->execute([
+                "uci commit system",
+                "/etc/init.d/led restart",
+            ]);
+            return redirect()->route('leds.index')->with([
+                'result_success' => $result['success'],
+                'result_title'   => $result['success'] ? 'Configuración guardada y aplicada' : 'Error al guardar y aplicar',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('guardarYAplicar LEDs: ' . $e->getMessage());
+            return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
+        }
+    }
+
+    public function guardarLeds()
+    {
+        try {
+            $result = $this->router->execute(["uci commit system"]);
+            return redirect()->route('leds.index')->with([
+                'result_success' => $result['success'],
+                'result_title'   => $result['success'] ? 'Configuración guardada' : 'Error al guardar',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('guardarLeds: ' . $e->getMessage());
+            return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
+        }
+    }
+
+    public function restablecerLeds()
+    {
+        try {
+            $result = $this->router->execute([
+                "uci revert system",
+                "/etc/init.d/led restart",
+            ]);
+            return redirect()->route('leds.index')->with([
+                'result_success' => $result['success'],
+                'result_title'   => $result['success'] ? 'LEDs restablecidos' : 'Error al restablecer',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('restablecerLeds: ' . $e->getMessage());
+            return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
+        }
+    }
+
+    
+
    //GRABADO DE IMAGEN
+
 
     public function grabado()
     {
@@ -316,11 +370,22 @@ class SystemController extends Controller
         try {
             $device = $request->mtdblock;
 
-            // Lee el mtdblock directamente con cat
-            $result = $this->router->execute(["cat /dev/{$device}"]);
+            // Paso 1: copiar a archivo temporal con bs=4096 para mayor velocidad
+            $this->router->execute(["dd if=/dev/{$device} of=/tmp/{$device}.bin bs=4096"]);
 
-            if ($result['success'] && !empty($result['output'])) {
-                return response($result['output'], 200, [
+            // Paso 2: descargar via SFTP para manejar correctamente datos binarios
+            $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
+            if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
+                throw new \Exception('Error de autenticación SFTP.');
+            }
+
+            $content = $sftp->get("/tmp/{$device}.bin");
+
+            // Paso 3: limpiar archivo temporal
+            $this->router->execute(["rm -f /tmp/{$device}.bin"]);
+
+            if ($content !== false) {
+                return response($content, 200, [
                     'Content-Type'        => 'application/octet-stream',
                     'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
                 ]);
@@ -376,7 +441,7 @@ class SystemController extends Controller
             return back()->with(['result_success' => false, 'result_title' => 'Error de conexión']);
         }
     }
-
+    
 // GET /reiniciar
     public function reiniciar()
     {
