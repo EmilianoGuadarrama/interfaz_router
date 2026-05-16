@@ -256,7 +256,6 @@ class SystemController extends Controller
     }
 
     
-
    //GRABADO DE IMAGEN
 
 
@@ -365,37 +364,25 @@ class SystemController extends Controller
     }
 
     public function descargarMtdblock(Request $request)
-{
-    $request->validate(['mtdblock' => ['required', 'string']]);
-    try {
-        $device = $request->mtdblock;
+    {
+        $request->validate(['mtdblock' => ['required', 'string']]);
+        try {
+            $device = $request->mtdblock;
 
-        // paso 1: copiar el bloque a un archivo binario real en /tmp usando dd
-        $this->router->execute(["dd if=/dev/{$device} of=/tmp/{$device}.bin bs=4096"]);
+            // Lee el mtdblock directamente con cat
+            $result = $this->router->execute(["cat /dev/{$device}"]);
 
-        // paso 2: inicializar sftp para transferir el archivo binario de forma segura
-        $sftp = new SFTP(env('ROUTER_HOST', '192.168.10.1'), (int) env('ROUTER_PORT', 22));
-        if (!$sftp->login(env('ROUTER_USER', 'root'), env('ROUTER_PASSWORD', ''))) {
-            throw new \Exception('error de autenticacion sftp.');
+            if ($result['success'] && !empty($result['output'])) {
+                return response($result['output'], 200, [
+                    'Content-Type'        => 'application/octet-stream',
+                    'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Descargar mtdblock: ' . $e->getMessage());
         }
-
-        // obtener el contenido del archivo directamente en binario
-        $content = $sftp->get("/tmp/{$device}.bin");
-
-        // paso 3: limpiar el archivo temporal creado en el router para no saturar la ram
-        $this->router->execute(["rm -f /tmp/{$device}.bin"]);
-
-        if ($content !== false) {
-            return response($content, 200, [
-                'Content-Type'        => 'application/octet-stream',
-                'Content-Disposition' => "attachment; filename=\"{$device}.bin\"",
-            ]);
-        }
-    } catch (\Throwable $e) {
-        Log::error('Descargar mtdblock: ' . $e->getMessage());
+        return back()->with(['result_success' => false, 'result_title' => 'Error al descargar mtdblock']);
     }
-    return back()->with(['result_success' => false, 'result_title' => 'Error al descargar mtdblock']);
-}
 
     public function grabarImagen(Request $request)
     {
